@@ -301,6 +301,15 @@ def room_grid():
     
     return dict(year_data=year_data)
 
+## Admin
+
+@auth.requires_membership('admin')
+def user_requests():
+    
+    form = SQLFORM.grid(db(db.auth_user.registration_key == 'pending'))
+    
+    return dict(form = form)
+
 ##
 ## Data services
 ##

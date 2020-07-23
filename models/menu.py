@@ -16,3 +16,5 @@ response.menu = [
     ]),
 ]
 
+if auth.has_membership('admin'):
+    response.menu.append((T('User requests'), False, URL('default', 'user_requests'), []))
