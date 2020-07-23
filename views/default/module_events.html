@@ -1,0 +1,175 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+
+<script>
+	// The examples for fullcalendar v5 all embed the mechaniscs of the calendar within
+	// a DOM loop. That means that the calendar instance isn't readily available to a 
+	// other javascript. The code is also allowing a bunch of other properties to be
+	// edited and set. 
+	// The other issue is that the event model for fullcalendar is tricky:
+	// - dragging in a new event fires eventReceive
+	// - dragging and dropping an existing event fires eventDrop
+	// - changing the duration fires eventResize.
+	// - All of those events then fire eventChange - which looks promising as 
+	//   a callback that could be used to run an AJAX update, except that it 
+	//   fires on _any_ change to an event (bg color etc.) and that makes it 
+	//   too indiscriminate and it is also really easy to get into loops of 
+	//   recursive changing.
+	// This solution uses fullcalendar to control dates and times and
+	// writes other properties of an edited event into the document so that they are 
+	// accessible. This feels immensely clunky. 
+	
+	document.addEventListener('DOMContentLoaded', function() {
+		
+		
+		var Calendar = FullCalendar.Calendar;
+		var Draggable = FullCalendar.Draggable;
+
+		var containerEl = document.getElementById('external-events');
+		var calendarEl = document.getElementById('calendar');
+		
+		// get the module id, which is saved as an attribute in the html
+		var module_id = document.getElementById('module_data').getAttribute('module_id');
+		var module_start = document.getElementById('module_data').getAttribute('module_start');
+		var event_id = document.getElementById('event_data').getAttribute('event_id');
+		
+		// function to update the form when events dropped, resized or received
+		
+		var event_to_form = function(event){
+			
+			var form_event_day = document.getElementsByName('event_day')
+			if (form_event_day.length == 1){
+				form_event_day[0].value = event.start.getDay();
+			}
+			
+			var form_start_date = document.getElementsByName('start_time')
+			if (form_start_date.length == 1){
+				form_start_date[0].value = event.start.getHours() + ":" + event.start.getMinutes();
+			}
+
+			var form_event_duration = document.getElementsByName('duration')
+			if (form_event_duration.length === 1){
+				form_event_duration[0].value = (event.end - event.start) / 3600000;
+			}
+		};
+		
+		// initialize the external events if one is present
+		// -----------------------------------------------------------------
+		if( containerEl != null){
+			new Draggable(containerEl, {
+				itemSelector: '.fc-event',
+				eventData: function(eventEl) {
+					return {
+						title: "New Event",
+						duration: "01:00"
+					};
+				}
+			});
+		}
+		
+		// initialize the calendar
+		// -----------------------------------------------------------------
+
+		var calendar = new Calendar(calendarEl, {
+			headerToolbar: {
+				left: 'title',
+				right: 'timeGridWeek,listWeek'
+				
+			},
+			views: {
+				timeGridWeek: {
+					type: 'timeGridWeek',
+					weekends: false,
+					slotDuration: "00:15:00",
+					slotMinTime: "06:00:00",
+					slotMaxTime: "18:00:00",
+					scrollTime: "09:00:00",
+					slotLabelFormat: {'hour':'numeric', 'minute': '2-digit', 'hour12': false},
+					allDaySlot: false
+				},
+				listWeek: {
+					type: 'listWeek',
+					weekends: false
+				}
+			},
+			initialView: 'timeGridWeek',
+			eventReceive: function(info) {
+				// Compile information and send off to create the new event
+				
+				var info = {event_day: info.event.start.getDay(),
+							start_time: info.event.start.getHours() + ":" + info.event.start.getMinutes(),
+							duration: (info.event.end - info.event.start) / 3600000,
+							module_id: module_id};
+				
+				// open an AJAX PUT request
+				var xhr = new XMLHttpRequest();
+				xhr.open('POST', '../call/json/post_new_event', true);
+				xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+
+				// function to handle success of PUT
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState === 4 && xhr.status === 200) {
+						var res = JSON.parse(xhr.response);
+						window.location.href = '/test_fc/default/module_events/' + module_id + '/' + res
+					}
+				};
+				xhr.send(JSON.stringify(info));
+				return false;
+			},
+			eventResize: function(info) {
+				// update form hidden fields
+				event_to_form(info.event)
+			},
+			eventDrop: function(info) {
+				// update form hidden fields
+				event_to_form(info.event)
+			},
+			eventTimeFormat: { // like '14:30'
+				hour: '2-digit',
+				minute: '2-digit',
+				hour12: false
+			},
+			businessHours: true,
+			editable: true,
+			droppable: true, // this allows things to be dropped onto the calendar
+			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+			eventSources: [{
+				url: '/test_fc/default/call/json/get_module_events',
+				extraParams: {
+					'module_id': module_id,
+					'event_id': event_id
+				}
+			}, {
+				url: '/test_fc/default/call/json/get_college_dates',
+				color: 'lightgrey',
+				textColor: 'black',
+				editable: false
+			}],
+			resources: '/test_fc/default/call/json/get_locations',
+			initialDate: module_start
+		});
+		calendar.render();
+	});
+
+</script>
+{{end}}
+
+
+{{=module_data}}
+{{=event_data}}
+
+<div class='row'>
+	<div class='col-7'>
+		<div id='calendar'></div>
+	</div>
+	<div id='event-info' class='col-5'>
+		{{=form}}
+	</div>
+</div>

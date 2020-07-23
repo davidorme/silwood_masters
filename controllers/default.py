@@ -1,0 +1,398 @@
+# -*- coding: utf-8 -*-
+from timetable_functions import (module_markdown, update_module_record_with_dates,
+                                 update_event_record_with_dates, get_year_start_datetime)
+from gluon.contrib.markdown import WIKI as MARKDOWN
+import io
+import gluon
+import uuid
+import datetime
+from dateutil import parser
+import pypandoc
+
+
+def index():
+
+    return dict()
+
+## TABLE VIEW CONTROLLERS - some of these should be locked down.
+
+def teaching_staff():
+    
+    form = SQLFORM.grid(db.teaching_staff)
+    
+    return dict(form=form)
+
+def locations():
+    
+    form = SQLFORM.grid(db.locations)
+    
+    return dict(form=form)
+
+def courses():
+    
+    form = SQLFORM.grid(db.courses)
+    
+    return dict(form=form)
+
+def college_dates():
+    
+    form = SQLFORM.grid(db.college_dates)
+    
+    return dict(form=form)
+
+def events():
+    
+    form = SQLFORM.grid(db.module_events,
+                        fields=[db.module_events.module_id,
+                                db.module_events.title,
+                                db.module_events.teacher_id])
+    
+    return dict(form=form)
+
+def modules():
+    
+    form = SQLFORM.grid(db.modules,
+                        fields=[db.modules.title,
+                                db.modules.convenor_id,
+                                db.modules.courses])
+    
+    return dict(form=form)
+
+## MODULE INFORMATION CONTROLLERS
+## - information shows a form for the module level data
+## - events provides a week calendar for event editing
+## - view renders the existing information as html
+## - docx downloads the existing information as docx
+
+def _module_page_header(module_id, current):
+    """A helper function to generate the common header for module controllers.
+    It also embeds some module data in the html for client side use by the 
+    events calendar
+    """
+    
+    # Set of links to create - keep the current link as plain text
+    links = [{'title': 'Events', 'url': URL('module_events', args=[module_id])},
+             {'title': 'Info', 'url': URL('module_information', args=[module_id])},
+             {'title': 'View', 'url': URL('module_view', args=[module_id])},
+             {'title': 'Docx', 'url': URL('module_docx', args=[module_id])}]
+
+    links = [B(lnk['title'], _style="margin:5px")
+                if lnk['title'] == current 
+                else B(A(lnk['title'], _href=lnk['url']), _style="margin:5px")
+                for lnk in links]
+    
+    module_record = db.modules[module_id]
+    update_module_record_with_dates(module_record)
+    module_header = DIV(DIV(H2(module_record.title),
+                            _class='col-8'),
+                        DIV(CAT(links, _class='pull-right'),
+                            _class='col-4'),
+                        _class='row', _id='module_data', 
+                        _module_id = module_id, _module_start = module_record.start) + HR()
+    
+    return module_header
+
+def module_information():
+    """Controller to return a SQLFORM for module level information"""
+    module_id = request.args[0]
+    
+    
+    form = SQLFORM(db.modules, 
+                   fields = ['title',
+                             'convenor_id',
+                             'courses',
+                             'description',
+                             'aims',
+                             'reading',
+                             'other_notes'],
+                   showid=False,
+                   record=module_id, 
+                   readonly=False)
+    
+    return dict(form=form, module_data=_module_page_header(module_id, 'Info'))
+    
+
+def module_events():
+    """Controller to deliver a module level calendar and handle event creation and update"""
+    
+    if len(request.args) == 1:
+        module_id = request.args[0]
+        event_id = None
+    else:
+        module_id = request.args[0]
+        event_id = request.args[1]
+        
+    module_record = db.modules[module_id]
+    update_module_record_with_dates(module_record)
+    
+    # USE SQLFORM to create the event form when an event id is passed in the arguments
+    # otherwise create some instructions. The day, time and duration fields are not 
+    # included. This information is stored in hidden fields in the form and updated 
+    # by using fullcalendar - the resulting information is copied back into the form
+    # internally below
+    if event_id is not None:
+        record = db(db.module_events.uuid == event_id).select().first()
+        form=SQLFORM(db.module_events,
+                     deletable=True,
+                     record = record,
+                     fields = ['title', 'description', 'teacher_id', 
+                               'location_id', 'courses'],
+                     hidden = dict(event_day= record.event_day,
+                                   duration=record.duration,
+                                   start_time=record.start_time),
+                     #formstyle='bootstrap3_stacked',
+                     showid=False)
+    else:
+        form= DIV(H4('Options'),
+                  UL(LI('Click on an existing event to unlock it for editing. '
+                        'You can drag and resize the event to reschedule it and '
+                        'edit the event details in the form that will appear. '
+                        'Remember to press the Submit button after making changes!'),
+                     LI(P('Drag and drop the event below to create a new event:'),
+                        DIV(DIV(DIV('Drag new event',
+                                    _class='fc-event-main', 
+                                    **{'data-event': '{ "title": "my event", "duration": "02:00" }'}),
+                                _class='fc-event fc-h-event fc-daygrid-event fc-daygrid-block-event',
+                                _style='padding:10px;width:150px'),
+                            _id='external-events'))),
+                  _class='jumbotron')
+    
+    # Process the form if that is what comes back, first adding the hidden fields back in
+    if isinstance(form, gluon.sqlhtml.SQLFORM):
+        form.vars.start_time = request.vars.start_time
+        form.vars.event_day = request.vars.event_day
+        form.vars.duration = request.vars.duration
+    
+    if isinstance(form, gluon.sqlhtml.SQLFORM) and form.process().accepted:
+        redirect(URL(args=[module_id]))
+    
+    return dict(module_data=_module_page_header(module_id, 'Events'),
+                event_data=DIV(_id='event_data', _event_id=event_id),
+                form=form)
+
+
+def module_view():
+    """A controller to combine module and event email and then display, converting
+    markdown to HTML along the way.
+    """
+    
+    module_id = request.args[0] 
+    
+    content= module_markdown(module_id)
+    
+    return dict(content = MARKDOWN(content), module_data=_module_page_header(module_id, 'View'))
+
+def module_docx():
+    """A controller to push out a DOCX version of the view, using pandoc to convert 
+    markdown into the docx.
+    """
+    
+    module_id = request.args[0] 
+    
+    content= module_markdown(module_id, title=True)
+    
+    filename = f'Module_{module_id}_{datetime.date.today()}.docx'
+    url = os.path.join('static', 'module_docx',  filename)
+    filepath = os.path.join(request.folder, url)
+    pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath)
+    
+    # This is really odd - if I use a reference to the open file directly in HTTP below
+    # then I get wierd stalling behaviour and failure, but if I load it and provide the
+    # data directly, it works flawlessly. <shrugs>
+    
+    with open(filepath, 'rb') as fin:
+        data = io.BytesIO(fin.read())
+
+    disposition = f'attachment; filename={filename}'
+    ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    raise HTTP(200, data,
+               **{'Content-Type': ctype,
+               'Content-Disposition': disposition})
+
+
+## Other views
+
+def module_grid():
+    
+    # Use a div to pass the year academic start data to the client for use by fullcalendar
+    year_data = DIV(_id='year_data', _day_one=get_year_start_datetime())
+    
+    return dict(year_data=year_data)
+
+
+def room_grid():
+    
+    # Use a div to pass the year academic start data to the client for use by fullcalendar
+    year_data = DIV(_id='year_data', _day_one=get_year_start_datetime())
+    
+    return dict(year_data=year_data)
+
+##
+## Data services
+##
+## fullcalendar automatically sends start and end to do lazy loading of events, 
+## but that is currently not implemented in any of these services.
+
+
+def call():
+    session.forget()
+    return service()
+
+@service.json
+def get_college_dates(start=None, end=None):
+    
+    college_dates = db(db.college_dates).select()
+    
+    json = []
+    
+    for record in college_dates:
+        if record.event_startdate is not None:
+            json.append(dict(id=record.uuid,
+                             title=record.name,
+                             start=record.event_startdate,
+                             end=record.event_startdate + 
+                                 datetime.timedelta(days=record.event_duration - 1)))
+    
+    return json
+@service.json
+def get_module_events(module_id, start=None, end=None, event_id=None):
+    
+    
+    # Use the module_events set from the module to get the 
+    # module details and the events 
+    module = db.modules[module_id]
+    update_module_record_with_dates(module)
+    events = module.module_events.select()
+    
+    events_json = []
+    
+    for ev in events:
+        update_event_record_with_dates(ev, module.start)
+        
+        ev = dict(id=ev.uuid,
+                  title=ev.title,
+                  start=ev.start,
+                  end=ev.end,
+                  resourceIds=ev.location_id,
+                  extendedProps=dict(description=ev.description,
+                                     teacher_id=ev.teacher_id),
+                  url=URL('module_events',args=[module_id, ev.uuid]))
+        
+        ev['color'] = 'salmon' if ev['id'] == event_id else 'grey'
+        ev['editable'] = True if ev['id'] == event_id else False
+        
+        events_json.append(ev)
+        
+    return events_json
+
+@service.json
+def post_new_event(module_id, event_day, start_time, duration):
+    
+    recid = db.module_events.insert(title='New event',
+                                    **request.vars)
+    record = db.module_events[recid]
+    
+    return record.uuid
+
+@service.json
+def get_events_by_week(start=None, end=None):
+    
+    # Get modules that intersect the start date
+    start = parser.isoparse(start).date()
+    modules = db(db.modules).select()
+    [update_module_record_with_dates(mod) for mod in modules]
+    
+    these_modules = [mod for mod in modules if (mod.start <= start) and (mod.end > start)]
+    
+    if not these_modules:
+        return []
+    
+    module_start_date = these_modules[0].start
+    events = db(db.module_events.module_id.belongs([mod.id for mod in modules])).select()
+    
+    events_json = []
+    
+    for ev in events:
+        update_event_record_with_dates(ev, module_start_date)
+        
+        ev = dict(id=ev.uuid,
+                  title=ev.title,
+                  start=ev.start,
+                  end=ev.end,
+                  resourceIds=ev.location_id,
+                  extendedProps=dict(description=ev.description,
+                                     teacher_id=ev.teacher_id),
+                  url=URL('module_events',args=[ev.module_id, ev.uuid]))
+        
+        ev['color'] = 'grey'
+        
+        events_json.append(ev)
+        
+    return events_json
+
+@service.json
+def get_locations():
+    
+    locs = db(db.locations).select(db.locations.id, db.locations.title)
+
+    return locs
+
+@service.json
+def get_courses():
+    """Service to provide courses as fullcalendar resource data"""
+    ""
+    courses = db(db.courses).select(db.courses.id, db.courses.abbrname)
+    
+    for crs in courses:
+        crs.title = crs.abbrname
+        crs.pop('abbrname')
+    
+    return courses
+
+@service.json
+def get_modules(start=None, end=None):
+    
+    
+    modules = db(db.modules).select(db.modules.id, 
+                                    db.modules.title,
+                                    db.modules.module_week,
+                                    db.modules.module_ndays,
+                                    db.modules.courses)
+    
+    # This is a bit clumsy - need to add start, end and url
+    # and convert courses entry to resourceIDs
+    _ = [update_module_record_with_dates(m) for m in modules]
+    for mod in modules:
+        mod.url = URL('module_information', args=mod.id)
+        mod.resourceIds = mod.courses
+        mod.pop('courses')
+    
+    return modules
+
+# ---- Action for login/register/etc (required for auth) -----
+def user():
+    """
+    exposes:
+    http://..../[app]/default/user/login
+    http://..../[app]/default/user/logout
+    http://..../[app]/default/user/register
+    http://..../[app]/default/user/profile
+    http://..../[app]/default/user/retrieve_password
+    http://..../[app]/default/user/change_password
+    http://..../[app]/default/user/bulk_register
+    use @auth.requires_login()
+        @auth.requires_membership('group name')
+        @auth.requires_permission('read','table name',record_id)
+    to decorate functions that need access control
+    also notice there is http://..../[app]/appadmin/manage/auth to allow administrator to manage users
+    """
+    return dict(form=auth())
+
+# ---- action to server uploaded static content (required) ---
+@cache.action()
+def download():
+    """
+    allows downloading of uploaded files
+    http://..../[app]/default/download/[filename]
+    """
+    return response.download(request, db)

@@ -1,0 +1,70 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+
+				// grab the start of the year to get week numbers from that
+				var day_one = document.getElementById('year_data').getAttribute('day_one');
+				var day_one = new Date(day_one);
+				
+				var Calendar = FullCalendar.Calendar;
+				var calendarEl = document.getElementById('calendar');
+
+				// initialize the calendar
+				// -----------------------------------------------------------------
+
+				var calendar = new Calendar(calendarEl, {
+					headerToolbar: {
+						left: 'prev,next today',
+						center: 'title',
+						right: ''
+					},
+					views: {
+						resourceTimelineMonth: {
+							//duration: { days: 5 },
+							//slotDuration: {days: 7}
+							weekNumbers: true
+						}
+					},
+					weekNumberCalculation: function(date){
+						// Get week numbers relative to first day of academic year
+						var diff = Math.floor((date - day_one) / (60 * 60 * 24 * 7 * 1000)) + 1
+						return diff
+					},
+					firstDay: 1,
+					weekends: false,
+					editable: false,
+					droppable: false, // this allows things to be dropped onto the calendar
+					schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+					initialView: 'resourceTimelineMonth',
+					eventSources: [{
+						url: '/test_fc/default/call/json/get_modules', // use the `url` property
+						color: 'lightgrey', // an option!
+						textColor: 'black', // an option!
+						editable: true
+					}, {
+						url: '/test_fc/default/call/json/get_college_dates',
+						color: 'lightgrey',
+						textColor: 'black',
+						editable: false
+					}],
+					resources: '/test_fc/default/call/json/get_courses',
+				    resourceAreaHeaderContent: 'Course',
+					initialDate: day_one
+				});
+				calendar.render();
+			});
+		</script>
+{{end}}
+
+{{=year_data}}
+<div id='calendar'></div>
+

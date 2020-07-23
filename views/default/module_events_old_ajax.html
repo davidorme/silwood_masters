@@ -1,0 +1,310 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+
+<script>
+	// The examples for fullcalendar v5 all embed the mechaniscs of the calendar within
+	// a DOM loop. That means that the calendar instance isn't readily available to a 
+	// other javascript. The code is also allowing a bunch of other properties to be
+	// edited and set. 
+	// The other issue is that the event model for fullcalendar is tricky:
+	// - dragging in a new event fires eventReceive
+	// - dragging and dropping an existing event fires eventDrop
+	// - changing the duration fires eventResize.
+	// - All of those events then fire eventChange - which looks promising as 
+	//   a callback that could be used to run an AJAX update, except that it 
+	//   fires on _any_ change to an event (bg color etc.) and that makes it 
+	//   too indiscriminate and it is also really easy to get into loops of 
+	//   recursive changing.
+	// This solution uses fullcalendar to control dates and times and
+	// writes other properties of an edited event into the document so that they are 
+	// accessible. This feels immensely clunky. 
+	
+	$("#exampleModal").on("hide.bs.modal", function(){
+	   console.log("hiding");
+	});
+	
+	document.addEventListener('DOMContentLoaded', function() {
+		
+		var set_selected = function(selector, values){
+			
+			if(values != null){
+				for (let opt of selector.options){
+				
+					if(values.includes(opt.value)){
+						opt.selected = true
+					} else{
+						opt.selected = false
+					}
+				}
+			}
+			return false;
+		}
+		
+		var set_displayed_event = function(e) {
+			// This function takes a clicked, dropped, received (new) or resized
+			// event and updates the event info form with the current values. It 
+			// also stores the event id and start and end times in the form. 
+			
+			// Time in simple format
+			var eventtime = document.getElementById('event-time');
+			var start = FullCalendar.formatDate(e.start, {'weekday': 'short', 'month': 'numeric', 
+														'day': 'numeric', 'hour':'numeric', 
+														'minute':'2-digit', 'hour12': false, 
+														'omitCommas': true})
+			var end = FullCalendar.formatDate(e.end, {'hour':'numeric', 'minute':'2-digit', 
+													  'hour12': false, 'omitCommas': true})
+			eventtime.value = start + " - " + end
+			eventtime.event_id  = e.id
+			eventtime.start = e.start.toISOString()
+			eventtime.end = e.end.toISOString()
+			
+			// Title
+			var eventtitle = document.getElementById('module_events_title');
+			eventtitle.value = e.title
+			
+			// Display the event description
+			var description = e.extendedProps['description']
+			var eventdesc = document.getElementById('module_events_description');
+			if (description == null || description === ""){
+				eventdesc.value = ""
+				eventdesc.placeholder= "Enter description"
+			} else {
+				eventdesc.value = description
+			}
+			
+			// Set the teacher dropdown
+			var teacher_id = e.extendedProps['teacher_id']
+			if (teacher_id == null){
+				document.querySelector('#module_events_teacher_id [value="0"]').selected = true;
+			} else {
+				document.querySelector('#module_events_teacher_id [value="' + teacher_id + '"]').selected = true;
+			}
+		
+			// Set the locations
+			let locations = e.getResources().map(item => item.id)
+			var location_selector = document.getElementById('module_events_location_id')
+			set_selected(location_selector, locations)
+
+			// Set the courses
+			let courses = e.extendedProps['courses']
+			var course_selector = document.getElementById('module_events_courses')
+			set_selected(course_selector, courses)
+
+			// Recolour events to show the selected events
+			var all_events = calendar.getEvents();
+			for (each_event of all_events) {
+				each_event.setProp('color', '#3788d8')
+				each_event.setProp('editable', false)
+			}
+			e.setProp('color', 'salmon')
+			e.setProp('editable', true)
+		}
+		
+		// would like to use this to enable reversion.
+		var current_event = null;
+		
+		// get the module id and start date
+		var module_id = document.getElementById('module_data').getAttribute('module_id');
+		var module_start = document.getElementById('module_data').getAttribute('module_start');
+
+		var Calendar = FullCalendar.Calendar;
+		var Draggable = FullCalendar.Draggable;
+
+		var containerEl = document.getElementById('external-events');
+		var calendarEl = document.getElementById('calendar');
+
+		// initialize the external events
+		// -----------------------------------------------------------------
+
+		new Draggable(containerEl, {
+			itemSelector: '.fc-event',
+			eventData: function(eventEl) {
+				return {
+					title: "New Event",
+					duration: "01:00"
+				};
+			}
+		});
+
+		// initialize the calendar
+		// -----------------------------------------------------------------
+
+		var calendar = new Calendar(calendarEl, {
+			headerToolbar: {
+				left: 'title',
+				right: 'timeGridWeek,listWeek'
+			},
+			views: {
+				timeGridWeek: {
+					type: 'timeGridWeek',
+					weekends: false,
+					slotDuration: "00:15:00",
+					slotMinTime: "06:00:00",
+					slotMaxTime: "18:00:00",
+					scrollTime: "09:00:00",
+					slotLabelFormat: {'hour':'numeric', 'minute': '2-digit', 'hour12': false},
+					allDaySlot: false
+				},
+				listWeek: {
+					type: 'listWeek',
+					weekends: false
+				}
+			},
+			initialView: 'timeGridWeek',
+			eventReceive: function(info) {
+				console.log(info )
+				info.event.setProp('publicId', 'bollocks')
+				set_displayed_event(info.event)
+			},
+			eventAdd: function(info) {
+				//console.log('eventAdded')
+			},
+			eventResize: function(info) {
+				set_displayed_event(info.event)
+				//console.log('eventResized')
+			},
+			eventDrop: function(info) {
+				current_event=info
+				set_displayed_event(info.event)
+				//console.log('eventDropped')
+			},
+			eventChange: function(info) {
+				console.log(info)
+				//console.log('eventChange')
+			},
+			eventClick: function(info) {
+				//console.log(current_event)
+				console.log(info)
+				$('#exampleModal').modal()
+				set_displayed_event(info.event)
+				return false;
+			},
+			eventTimeFormat: { // like '14:30'
+				hour: '2-digit',
+				minute: '2-digit',
+				hour12: false
+			},
+			businessHours: true,
+			editable: true,
+			droppable: true, // this allows things to be dropped onto the calendar
+			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+			eventSources: [{
+				url: '../call/json/get_module_events',
+				extraParams: {
+					'module_id': module_id
+				}
+			}, {
+				url: '../call/json/get_college_dates',
+				color: 'lightgrey',
+				textColor: 'black',
+				editable: false
+			}],
+			resources: '../call/json/get_locations',
+			initialDate: module_start
+		});
+		calendar.render();
+	});
+
+	// document.getElementById('event_post_update').addEventListener('onclick', function(){
+	// 	//console.log('ckidklsjfh')
+	// })
+	
+	var post_event_data = function(e) {
+		
+		// get the payload to post as JSON - this is stored in various locations in
+		// the form so pull it back together as 
+		var payload = {'extendedProps': {}};
+		
+		// event-time div and title
+		et = document.getElementById('event-time')
+		payload['id'] = et['event_id']
+		payload['start'] = et['start']
+		payload['end'] = et['end']
+		payload['title'] = document.getElementById('module_events_title').value
+		
+		// extended properties - although actually this structure is redundant if
+		// the event object model is not being used for return communications.
+		payload['extendedProps']['description'] = document.getElementById('module_events_description').value
+		payload['extendedProps']['teacher_id'] = document.getElementById('module_events_teacher_id').value
+		
+		var courses = document.getElementById('module_events_courses').selectedOptions
+		for (var course_ids=[], i=courses.length; i;) course_ids[--i] = courses[i].value;
+		payload['extendedProps']['courses'] = course_ids
+
+		var locations = document.getElementById('module_events_location_id').selectedOptions
+		for (var location_ids=[], i=locations.length; i;) location_ids[--i] = locations[i].value;
+		payload['extendedProps']['locations'] = location_ids
+		
+		payload['extendedProps']['module_id'] = document.getElementById('module_data').getAttribute('module_id');
+		
+		console.log(payload)
+		
+		// open an AJAX PUT request
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', '../call/json/post_event_data', true);
+		xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+
+		// function to handle success of PUT
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				var res = JSON.parse(xhr.response);
+				console.log(res)
+				if (res[0] === false) {
+					alert('Could not update the server, reverting change.' + res[1])
+				}
+			}
+		};
+		xhr.send(JSON.stringify(payload));
+		return false;
+	}
+	
+
+</script>
+{{end}}
+
+
+{{=module_data}}
+
+<HR>
+
+<div class='row'>
+	<div class='col-7'>
+		<div id='calendar'></div>
+	</div>
+	<div id='event-info' class='col-5'>
+		<div class="form-group row">
+			<label class='form-control-label col-sm-3' for="event-time">Time</label>
+			<div class='col-sm-9'>
+			<input class="form-control string" id="event-time" type='text' disabled value="Select event to view or edit">
+			</div>
+		</div>
+		{{=form}}
+	</div>
+</div>
+
+<button type="button" class="btn btn-primary" onclick='post_event_data()'>
+  Post data
+</button>
+
+
+<!-- 
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+  Launch demo modal
+</button>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        {{=form}}
+      </div>
+    </div>
+  </div>
+</div> -->

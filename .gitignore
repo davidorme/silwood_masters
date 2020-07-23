@@ -1,0 +1,38 @@
+# ignore error reports
+errors/
+
+# ignore session details
+sessions/
+
+# ignore database definitions
+databases/
+
+# ignore the uploads folder
+uploads/
+
+# ignore the languages folder
+languages/
+
+# mac folder junk
+.DS_Store
+
+# byte compliled python
+*.pyc
+
+# backup files
+*.bak
+
+# anonymous R files
+.Rdata
+.Rapp.history
+
+# Ignore private
+private/*
+
+# cache folders
+__pycache__/
+*/__pycache__/
+
+# dynamically generated module descriptions
+static/module_docx/*
+
