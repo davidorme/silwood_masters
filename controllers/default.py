@@ -14,47 +14,106 @@ def index():
 
     return dict()
 
-## TABLE VIEW CONTROLLERS - some of these should be locked down.
+## TABLE VIEW CONTROLLERS 
+## - These can all be viewed by anyone but you have to log in to edit
+##   and many are locked down to admin staff only
 
 def teaching_staff():
+    """Presents a view of teaching staff. Users can add and edit, admin delete
+    """
     
-    form = SQLFORM.grid(db.teaching_staff)
+    db.teaching_staff.uuid.writable = False
+    
+    form = SQLFORM.grid(db.teaching_staff,
+                        deletable=auth.has_membership('admin'))
     
     return dict(form=form)
+
 
 def locations():
+    """Presents a view of teaching staff. Only admins can edit, delete or add
+    """
     
-    form = SQLFORM.grid(db.locations)
+    db.locations.id.readable = False
+    
+    is_admin = auth.has_membership('admin')
+    
+    form = SQLFORM.grid(db.locations,
+                        editable=is_admin,
+                        deletable=is_admin,
+                        create=is_admin)
     
     return dict(form=form)
+
 
 def courses():
+    """Presents a view of courses. Only admins can edit, delete or add
+    """
     
-    form = SQLFORM.grid(db.courses)
+    db.courses.id.readable = False
+    
+    is_admin = auth.has_membership('admin')
+    
+    form = SQLFORM.grid(db.courses,
+                        editable=is_admin,
+                        deletable=is_admin,
+                        create=is_admin)
     
     return dict(form=form)
+
 
 def college_dates():
+    """Presents a view of college dates. Only admins can edit, delete or add
+    """
     
-    form = SQLFORM.grid(db.college_dates)
+    db.college_dates.id.readable = False
+    
+    is_admin = auth.has_membership('admin')
+    
+    form = SQLFORM.grid(db.college_dates,
+                        editable=is_admin,
+                        deletable=is_admin,
+                        create=is_admin)
     
     return dict(form=form)
 
+
 def events():
+    """Presents a view of module events. These should always be edited via module_events()
+    """
+    
+    db.module_events.uuid.readable = False
+    db.module_events.id.readable = False
     
     form = SQLFORM.grid(db.module_events,
                         fields=[db.module_events.module_id,
                                 db.module_events.title,
-                                db.module_events.teacher_id])
+                                db.module_events.teacher_id],
+                        editable=False,
+                        deletable=False,
+                        create=False)
     
     return dict(form=form)
 
+
 def modules():
+    """Presents a view of modules. These should be edited via module_information()
+    but admins can create, delete and edit them here. 
+    TODO - enable fullcalendar interface to changing time for admins
+    """
+    
+    db.modules.id.readable = False
+    db.modules.uuid.readable = False
+    
+    is_admin = auth.has_membership('admin')
     
     form = SQLFORM.grid(db.modules,
                         fields=[db.modules.title,
                                 db.modules.convenor_id,
-                                db.modules.courses])
+                                db.modules.courses],
+                        editable=is_admin,
+                        deletable=is_admin,
+                        create=is_admin)
     
     return dict(form=form)
 
@@ -92,6 +151,7 @@ def _module_page_header(module_id, current):
     
     return module_header
 
+
 def module_information():
     """Controller to return a SQLFORM for module level information"""
     module_id = request.args[0]
@@ -107,13 +167,14 @@ def module_information():
                              'other_notes'],
                    showid=False,
                    record=module_id, 
-                   readonly=False)
+                   readonly=not auth.is_logged_in())
     
     return dict(form=form, module_data=_module_page_header(module_id, 'Info'))
-    
+
 
 def module_events():
-    """Controller to deliver a module level calendar and handle event creation and update"""
+    """Controller to deliver a module level calendar and handle event creation and update.
+    Editing is only possible for logged in users, but anyone can view and click through."""
     
     if len(request.args) == 1:
         module_id = request.args[0]
@@ -130,10 +191,11 @@ def module_events():
     # included. This information is stored in hidden fields in the form and updated 
     # by using fullcalendar - the resulting information is copied back into the form
     # internally below
+    
     if event_id is not None:
         record = db(db.module_events.uuid == event_id).select().first()
         form=SQLFORM(db.module_events,
-                     deletable=True,
+                     deletable=auth.is_logged_in(),
                      record = record,
                      fields = ['title', 'description', 'teacher_id', 
                                'location_id', 'courses'],
@@ -141,8 +203,9 @@ def module_events():
                                    duration=record.duration,
                                    start_time=record.start_time),
                      #formstyle='bootstrap3_stacked',
-                     showid=False)
-    else:
+                     showid=False,
+                     readonly=not auth.is_logged_in())
+    elif auth.is_logged_in():
         form= DIV(H4('Options'),
                   UL(LI('Click on an existing event to unlock it for editing. '
                         'You can drag and resize the event to reschedule it and '
@@ -156,6 +219,12 @@ def module_events():
                                 _style='padding:10px;width:150px'),
                             _id='external-events'))),
                   _class='jumbotron')
+    else:
+        form= DIV(H4('Options'),
+                  UL(LI('Log in to edit events.'),
+                     LI('Click on an event to see event details.')),
+                  _class='jumbotron')
+        
     
     # Process the form if that is what comes back, first adding the hidden fields back in
     if isinstance(form, gluon.sqlhtml.SQLFORM):
@@ -173,7 +242,7 @@ def module_events():
 
 def module_view():
     """A controller to combine module and event email and then display, converting
-    markdown to HTML along the way.
+    markdown to HTML along the way. Anyone can view.
     """
     
     module_id = request.args[0] 
@@ -182,9 +251,10 @@ def module_view():
     
     return dict(content = MARKDOWN(content), module_data=_module_page_header(module_id, 'View'))
 
+
 def module_docx():
     """A controller to push out a DOCX version of the view, using pandoc to convert 
-    markdown into the docx.
+    markdown into the docx. Anyone can access.
     """
     
     module_id = request.args[0] 
@@ -213,6 +283,9 @@ def module_docx():
 ## Other views
 
 def module_grid():
+    """A controller to view the sequence of modules by course. Anyone can access.
+    TODO - add admin level edit to move modules on calendar.
+    """
     
     # Use a div to pass the year academic start data to the client for use by fullcalendar
     year_data = DIV(_id='year_data', _day_one=get_year_start_datetime())
@@ -221,7 +294,8 @@ def module_grid():
 
 
 def room_grid():
-    
+    """A controller to view the weekly use of rooms by module. Anyone can access.
+    """
     # Use a div to pass the year academic start data to the client for use by fullcalendar
     year_data = DIV(_id='year_data', _day_one=get_year_start_datetime())
     
@@ -254,6 +328,8 @@ def get_college_dates(start=None, end=None):
                                  datetime.timedelta(days=record.event_duration - 1)))
     
     return json
+
+
 @service.json
 def get_module_events(module_id, start=None, end=None, event_id=None):
     
@@ -279,12 +355,14 @@ def get_module_events(module_id, start=None, end=None, event_id=None):
                   url=URL('module_events',args=[module_id, ev.uuid]))
         
         ev['color'] = 'salmon' if ev['id'] == event_id else 'grey'
-        ev['editable'] = True if ev['id'] == event_id else False
+        ev['editable'] = True if ev['id'] == event_id and auth.is_logged_in() else False
         
         events_json.append(ev)
         
     return events_json
 
+
+@auth.requires_login()
 @service.json
 def post_new_event(module_id, event_day, start_time, duration):
     
@@ -293,6 +371,7 @@ def post_new_event(module_id, event_day, start_time, duration):
     record = db.module_events[recid]
     
     return record.uuid
+
 
 @service.json
 def get_events_by_week(start=None, end=None):
@@ -330,12 +409,14 @@ def get_events_by_week(start=None, end=None):
         
     return events_json
 
+
 @service.json
 def get_locations():
     
     locs = db(db.locations).select(db.locations.id, db.locations.title, db.locations.onsite)
-
+    
     return locs
+
 
 @service.json
 def get_courses():
@@ -348,6 +429,7 @@ def get_courses():
         crs.pop('abbrname')
     
     return courses
+
 
 @service.json
 def get_modules(start=None, end=None):
@@ -368,6 +450,7 @@ def get_modules(start=None, end=None):
         mod.pop('courses')
     
     return modules
+
 
 # ---- Action for login/register/etc (required for auth) -----
 def user():

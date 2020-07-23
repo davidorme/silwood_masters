@@ -3,6 +3,12 @@ import csv
 import re
 from timetable_functions import convert_date_to_weekdaytime
 
+if db(db.auth_group).count() == 0:
+    # Only one group to grant high level access
+    db.auth_group.insert(role='admin', 
+                         description='Module structure and sequences, courses, freezing')
+
+
 if db(db.teaching_staff).count() == 0:
     
     filepath = os.path.join(request.folder, 'static', 'data', 'teaching_staff.csv')

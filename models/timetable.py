@@ -40,8 +40,9 @@ db.define_table('modules',
                       widget=SQLFORM.widgets.checkboxes.widget),
                 format= lambda row: f"{row.title}")
 
+# TODO don't think we need a uuid here, now that ids are all generated server side
 db.define_table('module_events',
-                Field('uuid', default=web2py_uuid),
+                Field('uuid', default=web2py_uuid), 
                 Field('module_id', 'reference modules'),
                 Field('teacher_id', 'reference teaching_staff'),
                 Field('title', 'string'),
@@ -58,7 +59,6 @@ db.define_table('module_events',
                        ))
 
 db.define_table('college_dates',
-                Field('uuid', default=web2py_uuid),
                 Field('name', 'string'),
                 Field('event_startdate', 'date'),
                 Field('event_duration', 'integer'),
