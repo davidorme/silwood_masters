@@ -333,7 +333,7 @@ def get_events_by_week(start=None, end=None):
 @service.json
 def get_locations():
     
-    locs = db(db.locations).select(db.locations.id, db.locations.title)
+    locs = db(db.locations).select(db.locations.id, db.locations.title, db.locations.onsite)
 
     return locs
 
