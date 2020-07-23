@@ -5,7 +5,7 @@
 response.menu = [
     (T('Home'), False, URL('default', 'index'), []),
     (T('Module Grid'), False, URL('default', 'module_grid'), []),
-    (T('Room Grid'), False, URL('default', 'module_grid'), []),
+    (T('Room Grid'), False, URL('default', 'room_grid'), []),
     (T('Tables'), False, None, [
         (T('College Dates'), False, URL('default', 'college_dates'), []),
         (T('Locations'), False, URL('default', 'locations'), []),
