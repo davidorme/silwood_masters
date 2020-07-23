@@ -117,7 +117,7 @@
 				xhr.onreadystatechange = function() {
 					if (xhr.readyState === 4 && xhr.status === 200) {
 						var res = JSON.parse(xhr.response);
-						window.location.href = '/test_fc/default/module_events/' + module_id + '/' + res
+						window.location.href = "{{=URL('module_events/')}}" + module_id + '/' + res
 					}
 				};
 				xhr.send(JSON.stringify(info));
@@ -141,18 +141,18 @@
 			droppable: true, // this allows things to be dropped onto the calendar
 			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
 			eventSources: [{
-				url: '/test_fc/default/call/json/get_module_events',
+				url: "{{=URL('call/json/get_module_events')}}",
 				extraParams: {
 					'module_id': module_id,
 					'event_id': event_id
 				}
 			}, {
-				url: '/test_fc/default/call/json/get_college_dates',
+				url: "{{=URL('call/json/get_college_dates')}}",
 				color: 'lightgrey',
 				textColor: 'black',
 				editable: false
 			}],
-			resources: '/test_fc/default/call/json/get_locations',
+			resources: "{{=URL('call/json/get_locations')}}",
 			initialDate: module_start
 		});
 		calendar.render();

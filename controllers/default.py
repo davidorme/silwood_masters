@@ -363,7 +363,7 @@ def get_modules(start=None, end=None):
     # and convert courses entry to resourceIDs
     _ = [update_module_record_with_dates(m) for m in modules]
     for mod in modules:
-        mod.url = URL('module_information', args=mod.id)
+        mod.url = URL('module_view', args=mod.id)
         mod.resourceIds = mod.courses
         mod.pop('courses')
     

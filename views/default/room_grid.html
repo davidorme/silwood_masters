@@ -46,17 +46,17 @@
 					schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
 					initialView: 'resourceTimelineWeek',
 					eventSources: [{
-						url: '/test_fc/default/call/json/get_events_by_week',
+						url: "{{=URL('call/json/get_events_by_week')}}",
 						color: 'lightgrey', // an option!
 						textColor: 'black', // an option!
 						editable: true
 					}, {
-						url: '/test_fc/default/call/json/get_college_dates',
+						url: "{{=URL('call/json/get_college_dates')}}",
 						color: 'lightgrey',
 						textColor: 'black',
 						editable: false
 					}],
-					resources: '/test_fc/default/call/json/get_locations',
+					resources: "{{=URL('call/json/get_locations')}}",
 				    resourceAreaHeaderContent: 'Course',
 					resourceOrder: 'onsite,title',
 					initialDate: day_one
