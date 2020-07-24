@@ -5,7 +5,8 @@ errors/
 sessions/
 
 # ignore database definitions
-databases/
+databases/*
+!databases/.gitkeep
 
 # ignore the uploads folder
 uploads/
@@ -28,6 +29,7 @@ languages/
 
 # Ignore private
 private/*
+!private/.gitkeep
 
 # cache folders
 __pycache__/
@@ -35,4 +37,5 @@ __pycache__/
 
 # dynamically generated module descriptions
 static/module_docx/*
+!static/module_docx/.gitkeep
 
