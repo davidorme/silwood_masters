@@ -4,7 +4,6 @@ from timetable_functions import (module_markdown, update_module_record_with_date
 from gluon.contrib.markdown import WIKI as MARKDOWN
 import io
 import gluon
-import uuid
 import datetime
 from dateutil import parser
 import pypandoc
@@ -21,8 +20,6 @@ def index():
 def teaching_staff():
     """Presents a view of teaching staff. Users can add and edit, admin delete
     """
-    
-    db.teaching_staff.uuid.writable = False
     
     form = SQLFORM.grid(db.teaching_staff,
                         deletable=auth.has_membership('admin'))
@@ -79,16 +76,15 @@ def college_dates():
 
 
 def events():
-    """Presents a view of module events. These should always be edited via module_events()
+    """Presents a view of module events. These should always be edited via events()
     """
     
-    db.module_events.uuid.readable = False
-    db.module_events.id.readable = False
+    db.events.id.readable = False
     
-    form = SQLFORM.grid(db.module_events,
-                        fields=[db.module_events.module_id,
-                                db.module_events.title,
-                                db.module_events.teacher_id],
+    form = SQLFORM.grid(db.events,
+                        fields=[db.events.module_id,
+                                db.events.title,
+                                db.events.teacher_id],
                         editable=False,
                         deletable=False,
                         create=False)
@@ -103,7 +99,6 @@ def modules():
     """
     
     db.modules.id.readable = False
-    db.modules.uuid.readable = False
     
     is_admin = auth.has_membership('admin')
     
@@ -130,7 +125,7 @@ def _module_page_header(module_id, current):
     """
     
     # Set of links to create - keep the current link as plain text
-    links = [{'title': 'Events', 'url': URL('module_events', args=[module_id])},
+    links = [{'title': 'Events', 'url': URL('events', args=[module_id])},
              {'title': 'Info', 'url': URL('module_information', args=[module_id])},
              {'title': 'View', 'url': URL('module_view', args=[module_id])},
              {'title': 'Docx', 'url': URL('module_docx', args=[module_id])}]
@@ -193,8 +188,8 @@ def module_events():
     # internally below
     
     if event_id is not None:
-        record = db(db.module_events.uuid == event_id).select().first()
-        form=SQLFORM(db.module_events,
+        record = db(db.events.id == event_id).select().first()
+        form=SQLFORM(db.events,
                      deletable=auth.is_logged_in(),
                      record = record,
                      fields = ['title', 'description', 'teacher_id', 
@@ -217,7 +212,7 @@ def module_events():
                                     **{'data-event': '{ "title": "my event", "duration": "02:00" }'}),
                                 _class='fc-event fc-h-event fc-daygrid-event fc-daygrid-block-event',
                                 _style='padding:10px;width:150px'),
-                            _id='external-events'))),
+                            _id='is_external-events'))),
                   _class='jumbotron')
     else:
         form= DIV(H4('Options'),
@@ -334,7 +329,7 @@ def get_college_dates(start=None, end=None):
     
     for record in college_dates:
         if record.event_startdate is not None:
-            json.append(dict(id=record.uuid,
+            json.append(dict(id=record.id,
                              title=record.name,
                              start=record.event_startdate,
                              end=record.event_startdate + 
@@ -344,28 +339,28 @@ def get_college_dates(start=None, end=None):
 
 
 @service.json
-def get_module_events(module_id, start=None, end=None, event_id=None):
+def get_events(module_id, start=None, end=None, event_id=None):
     
     
-    # Use the module_events set from the module to get the 
+    # Use the events set from the module to get the 
     # module details and the events 
     module = db.modules[module_id]
     update_module_record_with_dates(module)
-    events = module.module_events.select()
+    events = module.events.select()
     
     events_json = []
     
     for ev in events:
         update_event_record_with_dates(ev, module.start)
         
-        ev = dict(id=ev.uuid,
+        ev = dict(id=ev.id,
                   title=ev.title,
                   start=ev.start,
                   end=ev.end,
                   resourceIds=ev.location_id,
                   extendedProps=dict(description=ev.description,
                                      teacher_id=ev.teacher_id),
-                  url=URL('module_events',args=[module_id, ev.uuid]))
+                  url=URL('events',args=[module_id, ev.id]))
         
         ev['color'] = 'salmon' if ev['id'] == event_id else 'grey'
         ev['editable'] = True if ev['id'] == event_id and auth.is_logged_in() else False
@@ -379,11 +374,11 @@ def get_module_events(module_id, start=None, end=None, event_id=None):
 @service.json
 def post_new_event(module_id, event_day, start_time, duration):
     
-    recid = db.module_events.insert(title='New event',
+    recid = db.events.insert(title='New event',
                                     **request.vars)
-    record = db.module_events[recid]
+    record = db.events[recid]
     
-    return record.uuid
+    return record.id
 
 
 @service.json
@@ -400,21 +395,21 @@ def get_events_by_week(start=None, end=None):
         return []
     
     module_start_date = these_modules[0].start
-    events = db(db.module_events.module_id.belongs([mod.id for mod in modules])).select()
+    events = db(db.events.module_id.belongs([mod.id for mod in modules])).select()
     
     events_json = []
     
     for ev in events:
         update_event_record_with_dates(ev, module_start_date)
         
-        ev = dict(id=ev.uuid,
+        ev = dict(id=ev.id,
                   title=ev.title,
                   start=ev.start,
                   end=ev.end,
                   resourceIds=ev.location_id,
                   extendedProps=dict(description=ev.description,
                                      teacher_id=ev.teacher_id),
-                  url=URL('module_events',args=[ev.module_id, ev.uuid]))
+                  url=URL('events',args=[ev.module_id, ev.id]))
         
         ev['color'] = 'grey'
         
@@ -426,7 +421,7 @@ def get_events_by_week(start=None, end=None):
 @service.json
 def get_locations():
     
-    locs = db(db.locations).select(db.locations.id, db.locations.title, db.locations.onsite)
+    locs = db(db.locations).select(db.locations.id, db.locations.title, db.locations.is_external)
     
     return locs
 

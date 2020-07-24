@@ -14,8 +14,12 @@ def get_year_start_datetime():
     
     db = current.db
     start_of_year = db(db.college_dates.name == 'First Monday of Autumn Term').select().first()
-    start_of_year = datetime.datetime.combine(start_of_year.event_startdate, datetime.time.min)
-    return start_of_year
+    if start_of_year is not None:
+        start_of_year = datetime.datetime.combine(start_of_year.event_startdate, datetime.time.min)
+        return start_of_year
+    else:
+        return None
+    
 
 
 def convert_date_to_weekdaytime(value):
@@ -44,35 +48,32 @@ def convert_date_to_weekdaytime(value):
 
 
 def update_module_record_with_dates(module):
-    """Calculates the start and end date of a module from the row 
+    """Calculates the start and end date of a module from the module events 
     and inserts it into the record object in place."""
     
-    db = current.db
-    start_of_year = db(db.college_dates.name == 'First Monday of Autumn Term').select().first()
-    start_of_year = start_of_year.event_startdate
+    events = module.events.select()
+    [update_event_record_with_dates(ev) for ev in events]
     
-    if module.module_week is None:
-        module.module_week = 1
-    
-    if module.module_ndays is None:
-        module.module_ndays = 5
-    
-    module.start = start_of_year + datetime.timedelta(weeks=module.module_week - 1)
-    module.end = module.start + datetime.timedelta(days=module.module_ndays)
+    module.start = min([ev.start for ev in events]).date()
+    module.end = max([ev.end for ev in events]).date()
 
 
-def update_event_record_with_dates(event, module_startdate, 
-                                   duration=1, event_day=0, start_time=datetime.time(9,0)):
+def update_event_record_with_dates(event, week=1, duration=1, event_day=0, 
+                                   start_time=datetime.time(9,0)):
     """Calculates the start and end date of an event from the event row 
     and module start date and inserts them into the record object in place."""
-
+    
+    #TODO are these virtual fields?
+    
+    week = week if event.academic_week is None else event.academic_week
     duration = duration if event.duration is None else event.duration
-    event_day = event_day if event.event_day is None else event.event_day
+    event_day = event_day if event.day_of_week is None else event.day_of_week
     start_time = start_time if event.start_time is None else event.start_time
     
-    event.start = datetime.datetime.combine(module_startdate + 
-                                            datetime.timedelta(days=event_day),
-                                            start_time)
+    event_date = FIRST_DAY + datetime.timedelta(weeks=week - 1,
+                                                 days=event_day)
+    
+    event.start = datetime.datetime.combine(event_date, start_time)
     event.end = event.start + datetime.timedelta(hours=duration)
 
 
@@ -104,9 +105,9 @@ def module_markdown(module_id, title=False):
         if module[fld] is not None and module[fld] != "":
             content += f'{title}\n\n{module[fld]}\n\n'
     
-    events = db(db.module_events.module_id == module_id
-                ).select(orderby=[db.module_events.event_day,
-                                  db.module_events.start_time])
+    events = db(db.events.module_id == module_id
+                ).select(orderby=[db.events.event_day,
+                                  db.events.start_time])
     events = list(events.render())
     [update_event_record_with_dates(ev, module.start) for ev in events]
     

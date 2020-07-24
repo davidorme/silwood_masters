@@ -66,12 +66,12 @@
 			eventtime.end = e.end.toISOString()
 			
 			// Title
-			var eventtitle = document.getElementById('module_events_title');
+			var eventtitle = document.getElementById('events_title');
 			eventtitle.value = e.title
 			
 			// Display the event description
 			var description = e.extendedProps['description']
-			var eventdesc = document.getElementById('module_events_description');
+			var eventdesc = document.getElementById('events_description');
 			if (description == null || description === ""){
 				eventdesc.value = ""
 				eventdesc.placeholder= "Enter description"
@@ -82,19 +82,19 @@
 			// Set the teacher dropdown
 			var teacher_id = e.extendedProps['teacher_id']
 			if (teacher_id == null){
-				document.querySelector('#module_events_teacher_id [value="0"]').selected = true;
+				document.querySelector('#events_teacher_id [value="0"]').selected = true;
 			} else {
-				document.querySelector('#module_events_teacher_id [value="' + teacher_id + '"]').selected = true;
+				document.querySelector('#events_teacher_id [value="' + teacher_id + '"]').selected = true;
 			}
 		
 			// Set the locations
 			let locations = e.getResources().map(item => item.id)
-			var location_selector = document.getElementById('module_events_location_id')
+			var location_selector = document.getElementById('events_location_id')
 			set_selected(location_selector, locations)
 
 			// Set the courses
 			let courses = e.extendedProps['courses']
-			var course_selector = document.getElementById('module_events_courses')
+			var course_selector = document.getElementById('events_courses')
 			set_selected(course_selector, courses)
 
 			// Recolour events to show the selected events
@@ -196,7 +196,7 @@
 			droppable: true, // this allows things to be dropped onto the calendar
 			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
 			eventSources: [{
-				url: '../call/json/get_module_events',
+				url: '../call/json/get_events',
 				extraParams: {
 					'module_id': module_id
 				}
@@ -227,18 +227,18 @@
 		payload['id'] = et['event_id']
 		payload['start'] = et['start']
 		payload['end'] = et['end']
-		payload['title'] = document.getElementById('module_events_title').value
+		payload['title'] = document.getElementById('events_title').value
 		
 		// extended properties - although actually this structure is redundant if
 		// the event object model is not being used for return communications.
-		payload['extendedProps']['description'] = document.getElementById('module_events_description').value
-		payload['extendedProps']['teacher_id'] = document.getElementById('module_events_teacher_id').value
+		payload['extendedProps']['description'] = document.getElementById('events_description').value
+		payload['extendedProps']['teacher_id'] = document.getElementById('events_teacher_id').value
 		
-		var courses = document.getElementById('module_events_courses').selectedOptions
+		var courses = document.getElementById('events_courses').selectedOptions
 		for (var course_ids=[], i=courses.length; i;) course_ids[--i] = courses[i].value;
 		payload['extendedProps']['courses'] = course_ids
 
-		var locations = document.getElementById('module_events_location_id').selectedOptions
+		var locations = document.getElementById('events_location_id').selectedOptions
 		for (var location_ids=[], i=locations.length; i;) location_ids[--i] = locations[i].value;
 		payload['extendedProps']['locations'] = location_ids
 		

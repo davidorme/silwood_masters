@@ -60,7 +60,7 @@
 					}],
 					resources: "{{=URL('call/json/get_locations')}}",
 					resourceAreaHeaderContent: 'Course',
-					resourceOrder: 'external,title', //group on site locations (0) first
+					resourceOrder: 'is_external,title', //group on site locations (0) first
 					initialDate: day_one
 				});
 				calendar.render();

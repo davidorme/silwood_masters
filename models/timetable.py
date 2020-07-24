@@ -1,4 +1,4 @@
-from gluon.utils import web2py_uuid
+from timetable_functions import get_year_start_datetime
 
 ##
 ## Tables are all signed, but the app isn't currently using record
@@ -9,14 +9,14 @@ from gluon.utils import web2py_uuid
 
 ## TODO we shouldn't need to delete events - conceal instead
 
-# add edit details to each table
-db._common_fields.append(auth.signature)
+# add edit details to each table _ NOT UNTIL THE import_from_csv_file issue is fixed
+# db._common_fields.append(auth.signature)
 
 db.define_table('locations',
                 Field('title', 'string'),
                 Field('capacity', 'integer'),
                 Field('celcat_code', 'string'),
-                Field('external', 'boolean', default=False),
+                Field('is_external', 'boolean', default=False),
                 format = lambda row: f"{row.title}")
 
 db.define_table('teaching_staff',
@@ -26,24 +26,22 @@ db.define_table('teaching_staff',
                 Field('email', 'string'),
                 Field('phone', 'string'),
                 Field('specialisation', 'text'),
-                Field('external', 'boolean', default=False),
+                Field('is_external', 'boolean', default=False),
                 format = lambda row: f"{row.title} {row.firstname} {row.lastname}")
 
 db.define_table('courses',
                 Field('fullname', 'string'),
                 Field('abbrname', 'string'),
-                Field('convenor', 'reference teaching_staff'),
-                Field('coconvenor', 'reference teaching_staff'),
-                ondelete='SET NULL',
+                Field('convenor', 'reference teaching_staff', 
+                      ondelete='SET NULL'),
+                Field('coconvenor', 'reference teaching_staff', 
+                      ondelete='SET NULL'),
                 format = lambda row: f"{row.abbrname}")
 
 db.define_table('modules',
-                Field('uuid', default=web2py_uuid),
                 Field('title', 'string'),
-                Field('module_week', 'integer'),
-                Field('module_dayofweek', 'integer'),
-                Field('module_ndays', 'integer'),
-                Field('convenor_id', 'reference teaching_staff'),
+                Field('convenor_id', 'reference teaching_staff',
+                      ondelete='SET NULL'),
                 Field('description', 'text'),
                 Field('aims', 'text'),
                 Field('reading', 'text'),
@@ -51,31 +49,34 @@ db.define_table('modules',
                 Field('examstyle', 'string', 
                       requires=IS_EMPTY_OR(IS_IN_SET(['Essay','Computer']))),
                 Field('courses', 'list:reference courses', 
-                      widget=SQLFORM.widgets.checkboxes.widget),
-                ondelete='SET NULL',
+                      widget=SQLFORM.widgets.checkboxes.widget,
+                      ondelete='SET NULL'),
                 format= lambda row: f"{row.title}")
 
 # TODO don't think we need a uuid here, now that ids are all generated server side
-db.define_table('module_events',
-                Field('uuid', default=web2py_uuid), 
+db.define_table('events',
                 Field('module_id', 'reference modules'),
-                Field('teacher_id', 'reference teaching_staff'),
-                Field('title', 'string'),
-                Field('event_type', 'string'),
-                Field('description', 'text'),
-                Field('event_day', 'integer'),
+                Field('teacher_id', 'reference teaching_staff',
+                      ondelete='SET NULL'),
+                Field('academic_week', 'integer'),
+                Field('day_of_week', 'integer'),
                 Field('start_time', 'time'),
                 Field('duration', 'double'),
+                Field('title', 'string'),
+                Field('event_type', 'string'), # TODO constrain this
+                Field('description', 'text'),
                 Field('courses', 'list:reference courses', 
                       #widget=SQLFORM.widgets.checkboxes.widget
-                      ),
+                      ondelete='SET NULL'),
                 Field('location_id', 'list:reference locations',
                        #widget=SQLFORM.widgets.checkboxes.widget
-                       ),
-                ondelete='SET NULL')
+                       ondelete='SET NULL'))
 
 # TODO blocking events and repeating events (Weds pm and Seminars)
 db.define_table('college_dates',
                 Field('name', 'string'),
                 Field('event_startdate', 'date'),
                 Field('event_duration', 'integer'))
+
+# Cache the academic year
+FIRST_DAY = cache.ram('first_day', lambda : get_year_start_datetime(), None)
