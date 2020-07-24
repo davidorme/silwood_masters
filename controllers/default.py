@@ -60,7 +60,7 @@ def courses():
 
 
 def college_dates():
-    """Presents a view of college dates. Only admins can edit, delete or add
+    """Presents a view of college dates. Only admins can edit, delete or add.
     """
     
     db.college_dates.id.readable = False
@@ -338,7 +338,9 @@ def call():
 
 @service.json
 def get_college_dates(start=None, end=None):
-    """Service to provide college dates as events"""
+    """Service to provide college dates as events, merging college dates and 
+    recurring events into a single feed
+    """
     
     college_dates = db(db.college_dates).select()
     
@@ -346,11 +348,36 @@ def get_college_dates(start=None, end=None):
     
     for record in college_dates:
         if record.event_startdate is not None:
-            json.append(dict(id=record.id,
-                             title=record.name,
-                             start=record.event_startdate,
-                             end=record.event_startdate + 
-                                 datetime.timedelta(days=record.event_duration - 1)))
+            
+            entry = dict(id=record.id,
+                         title=record.name)
+            if record.event_enddate is not None:
+                entry['start'] = record.event_startdate
+                entry['end'] = record.event_enddate
+                entry['allDay'] = True
+            elif record.event_duration is not None:
+                start_time = datetime.time(9,0) if record.event_starttime is None else record.event_starttime
+                entry['start'] = datetime.datetime.combine(record.event_startdate, start_time)
+                entry['end'] = entry['start'] + datetime.timedelta(hours=record.event_duration)
+                entry['allDay'] = False
+            
+            json.append(entry)
+    
+    recurring = db(db.recurring_events).select()
+    
+    for record in recurring:
+        entry = dict({'daysOfWeek':[record.day_of_week],
+                      'title':record.title,
+                      'id':record.id, 
+                      'startRecur': record.recur_startdate,
+                      'endRecur': record.recur_enddate})
+        if record.all_day:
+            entry['allDay'] = True
+        else:
+            entry['startTime'] = record.start_time
+            entry['endTime'] = record.end_time
+        
+        json.append(entry)
     
     return json
 

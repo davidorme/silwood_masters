@@ -73,7 +73,22 @@ db.define_table('events',
 db.define_table('college_dates',
                 Field('name', 'string'),
                 Field('event_startdate', 'date'),
-                Field('event_duration', 'integer'))
+                Field('event_enddate', 'date'),
+                Field('event_starttime', 'time'),
+                Field('event_duration', 'float'),
+                Field('all_day', 'boolean', default=False),
+                Field('recurring', 'boolean', default=False),
+                Field('recur_end', 'date'))
+
+db.define_table('recurring_events',
+                Field('title', 'string'),
+                Field('recur_startdate', 'date'),
+                Field('recur_enddate', 'date'),
+                Field('day_of_week', 'integer'),
+                Field('all_day', 'boolean', default=True),
+                Field('start_time', 'time'),
+                Field('end_time', 'time'))
+
 
 db.define_table('freezer',
                 Field('is_frozen', 'boolean', default=False))

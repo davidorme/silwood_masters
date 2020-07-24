@@ -40,6 +40,14 @@ if db(db.college_dates).count() == 0:
     current.FIRST_DAY = FIRST_DAY
 
 
+if db(db.recurring_events).count() == 0:
+
+    filepath = os.path.join(request.folder, 'static', 'data', 'recurring_events.csv')
+
+    with open(filepath, encoding="utf8") as csvfile:
+        db.recurring_events.import_from_csv_file(csvfile)
+
+
 if db(db.teaching_staff).count() == 0:
 
     filepath = os.path.join(request.folder, 'static', 'data', 'teaching_staff.csv')
