@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from timetable_functions import (module_markdown, update_module_record_with_dates,
-                                 update_event_record_with_dates, get_year_start_datetime)
+                                 update_event_record_with_dates, convert_date_to_weekdaytime)
 from gluon.contrib.markdown import WIKI as MARKDOWN
 import io
 import gluon
@@ -125,7 +125,7 @@ def _module_page_header(module_id, current):
     """
     
     # Set of links to create - keep the current link as plain text
-    links = [{'title': 'Events', 'url': URL('events', args=[module_id])},
+    links = [{'title': 'Events', 'url': URL('module_events', args=[module_id])},
              {'title': 'Info', 'url': URL('module_information', args=[module_id])},
              {'title': 'View', 'url': URL('module_view', args=[module_id])},
              {'title': 'Docx', 'url': URL('module_docx', args=[module_id])}]
@@ -194,7 +194,8 @@ def module_events():
                      record = record,
                      fields = ['title', 'description', 'teacher_id', 
                                'location_id', 'courses'],
-                     hidden = dict(event_day= record.event_day,
+                     hidden = dict(academic_week=record.academic_week,
+                                   event_day=record.day_of_week,
                                    duration=record.duration,
                                    start_time=record.start_time),
                      #formstyle='bootstrap3_stacked',
@@ -209,10 +210,10 @@ def module_events():
                      LI(P('Drag and drop the event below to create a new event:'),
                         DIV(DIV(DIV('Drag new event',
                                     _class='fc-event-main', 
-                                    **{'data-event': '{ "title": "my event", "duration": "02:00" }'}),
+                                    **{'data-event': '{ "title": "newevent", "duration": "01:00" }'}),
                                 _class='fc-event fc-h-event fc-daygrid-event fc-daygrid-block-event',
                                 _style='padding:10px;width:150px'),
-                            _id='is_external-events'))),
+                            _id='external-events'))),
                   _class='jumbotron')
     else:
         form= DIV(H4('Options'),
@@ -283,7 +284,7 @@ def module_grid():
     """
     
     # Use a div to pass the year academic start data to the client for use by fullcalendar
-    year_data = DIV(_id='year_data', _day_one=get_year_start_datetime())
+    year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
     
     return dict(year_data=year_data)
 
@@ -292,7 +293,7 @@ def room_grid():
     """A controller to view the weekly use of rooms by module. Anyone can access.
     """
     # Use a div to pass the year academic start data to the client for use by fullcalendar
-    year_data = DIV(_id='year_data', _day_one=get_year_start_datetime())
+    year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
     
     return dict(year_data=year_data)
 
@@ -322,6 +323,7 @@ def call():
 
 @service.json
 def get_college_dates(start=None, end=None):
+    """Service to provide college dates as events"""
     
     college_dates = db(db.college_dates).select()
     
@@ -340,30 +342,36 @@ def get_college_dates(start=None, end=None):
 
 @service.json
 def get_events(module_id, start=None, end=None, event_id=None):
-    
+    """Service to provide the events within a module with locations as resources"""
     
     # Use the events set from the module to get the 
     # module details and the events 
     module = db.modules[module_id]
-    update_module_record_with_dates(module)
     events = module.events.select()
     
     events_json = []
     
     for ev in events:
-        update_event_record_with_dates(ev, module.start)
+        update_event_record_with_dates(ev)
         
         ev = dict(id=ev.id,
                   title=ev.title,
                   start=ev.start,
                   end=ev.end,
+                  color='grey',
+                  editable=False,
                   resourceIds=ev.location_id,
                   extendedProps=dict(description=ev.description,
                                      teacher_id=ev.teacher_id),
-                  url=URL('events',args=[module_id, ev.id]))
+                  url=URL('module_events',args=[module_id, ev.id]))
         
-        ev['color'] = 'salmon' if ev['id'] == event_id else 'grey'
-        ev['editable'] = True if ev['id'] == event_id and auth.is_logged_in() else False
+        event_id = int(event_id)
+        
+        if ev['id'] == event_id:
+            ev['color'] = 'salmon'
+        
+        if ev['id'] == event_id and auth.is_logged_in():
+            ev['editable'] = True
         
         events_json.append(ev)
         
@@ -372,17 +380,29 @@ def get_events(module_id, start=None, end=None, event_id=None):
 
 @auth.requires_login()
 @service.json
-def post_new_event(module_id, event_day, start_time, duration):
+def post_new_event(module_id, datetime, duration):
+    """Used to create a new event when fullcalendar fires eventReceive"""
+    
+    success, *data = convert_date_to_weekdaytime(datetime)
+    
+    if not success:
+        return None
     
     recid = db.events.insert(title='New event',
-                                    **request.vars)
-    record = db.events[recid]
+                             academic_week=data[0],
+                             day_of_week=data[1],
+                             start_time=data[2],
+                             duration=duration,
+                             module_id=module_id)
     
+    record = db.events[recid]
+
     return record.id
 
 
 @service.json
 def get_events_by_week(start=None, end=None):
+    """Service to provide a week of events with locations as resources"""
     
     # Get modules that intersect the start date
     start = parser.isoparse(start).date()
@@ -420,6 +440,7 @@ def get_events_by_week(start=None, end=None):
 
 @service.json
 def get_locations():
+    """Service to provide locations as fullcalendar resource data"""
     
     locs = db(db.locations).select(db.locations.id, db.locations.title, db.locations.is_external)
     
@@ -429,7 +450,7 @@ def get_locations():
 @service.json
 def get_courses():
     """Service to provide courses as fullcalendar resource data"""
-    ""
+    
     courses = db(db.courses).select(db.courses.id, db.courses.abbrname)
     
     for crs in courses:
@@ -441,12 +462,10 @@ def get_courses():
 
 @service.json
 def get_modules(start=None, end=None):
-    
+    """Service to provides module level events for the module grid"""
     
     modules = db(db.modules).select(db.modules.id, 
                                     db.modules.title,
-                                    db.modules.module_week,
-                                    db.modules.module_ndays,
                                     db.modules.courses)
     
     # This is a bit clumsy - need to add start, end and url

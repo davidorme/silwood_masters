@@ -79,8 +79,9 @@
 
 		var calendar = new Calendar(calendarEl, {
 			headerToolbar: {
-				left: 'title',
-				right: 'timeGridWeek,listWeek'
+				left: 'prev,next',
+				center: 'title',
+				right: 'timeGridWeek,listYear'
 				
 			},
 			views: {
@@ -95,16 +96,14 @@
 					allDaySlot: false
 				},
 				listWeek: {
-					type: 'listWeek',
+					type: 'listYear',
 					weekends: false
 				}
 			},
 			initialView: 'timeGridWeek',
 			eventReceive: function(info) {
 				// Compile information and send off to create the new event
-				
-				var info = {event_day: info.event.start.getDay(),
-							start_time: info.event.start.getHours() + ":" + info.event.start.getMinutes(),
+				var info = {datetime: info.event.start,
 							duration: (info.event.end - info.event.start) / 3600000,
 							module_id: module_id};
 				
@@ -117,7 +116,7 @@
 				xhr.onreadystatechange = function() {
 					if (xhr.readyState === 4 && xhr.status === 200) {
 						var res = JSON.parse(xhr.response);
-						window.location.href = "{{=URL('events/')}}" + module_id + '/' + res
+						window.location.href = "{{=URL('module_events')}}" + '/' + module_id + '/' + res
 					}
 				};
 				xhr.send(JSON.stringify(info));

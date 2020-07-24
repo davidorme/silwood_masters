@@ -10,20 +10,20 @@ from itertools import groupby
 
 from gluon import current
 
-def get_year_start_datetime():
+def get_year_start_date():
     
     db = current.db
     start_of_year = db(db.college_dates.name == 'First Monday of Autumn Term').select().first()
+    print(start_of_year)
     if start_of_year is not None:
-        start_of_year = datetime.datetime.combine(start_of_year.event_startdate, datetime.time.min)
-        return start_of_year
+        return start_of_year.event_startdate
     else:
         return None
-    
 
 
-def convert_date_to_weekdaytime(value):
-    """Takes a datetime string coming in from client POST data and converts
+
+def convert_date_to_weekdaytime(value, start_of_year=None):
+    """Takes a datetime string cominget_year_start_dateand converts
     it into the academic week, day and time.
     """
     
@@ -38,8 +38,10 @@ def convert_date_to_weekdaytime(value):
     except ValueError as e:
         return 0, str(e)
     
-    start_of_year = get_year_start_datetime()
-    diff = value - start_of_year
+    if start_of_year is None:
+        start_of_year = current.FIRST_DAY
+    
+    diff = value - datetime.datetime.combine(start_of_year, datetime.time.min)
     
     weeks = (diff.days // 7) + 1 # Week 1 is week 1 not week 0
     days = diff.days % 7
@@ -54,8 +56,12 @@ def update_module_record_with_dates(module):
     events = module.events.select()
     [update_event_record_with_dates(ev) for ev in events]
     
-    module.start = min([ev.start for ev in events]).date()
-    module.end = max([ev.end for ev in events]).date()
+    if len(events):
+        module.start = min([ev.start for ev in events]).date()
+        module.end = max([ev.end for ev in events]).date()
+    else:
+        module.start = current.FIRST_DAY
+        module.start = current.FIRST_DAY
 
 
 def update_event_record_with_dates(event, week=1, duration=1, event_day=0, 
@@ -70,8 +76,8 @@ def update_event_record_with_dates(event, week=1, duration=1, event_day=0,
     event_day = event_day if event.day_of_week is None else event.day_of_week
     start_time = start_time if event.start_time is None else event.start_time
     
-    event_date = FIRST_DAY + datetime.timedelta(weeks=week - 1,
-                                                 days=event_day)
+    event_date = current.FIRST_DAY + datetime.timedelta(weeks=week - 1,
+                                                        days=event_day)
     
     event.start = datetime.datetime.combine(event_date, start_time)
     event.end = event.start + datetime.timedelta(hours=duration)
@@ -106,12 +112,13 @@ def module_markdown(module_id, title=False):
             content += f'{title}\n\n{module[fld]}\n\n'
     
     events = db(db.events.module_id == module_id
-                ).select(orderby=[db.events.event_day,
+                ).select(orderby=[db.events.academic_week,
+                                  db.events.day_of_week,
                                   db.events.start_time])
     events = list(events.render())
-    [update_event_record_with_dates(ev, module.start) for ev in events]
+    [update_event_record_with_dates(ev) for ev in events]
     
-    events_by_day = groupby(events, lambda x: x.event_day)
+    events_by_day = groupby(events, lambda x: x.start.date())
     
     content += '### Events:\n\n'
     
