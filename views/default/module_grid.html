@@ -36,7 +36,7 @@
 					},
 					weekNumberCalculation: function(date){
 						// Get week numbers relative to first day of academic year
-						var diff = Math.floor((date - day_one) / (60 * 60 * 24 * 7 * 1000)) + 1
+						var diff = Math.floor((((date - day_one) / (60 * 60 * 24 * 1000)) + 1) / 7 ) + 1
 						return diff
 					},
 					firstDay: 1,
