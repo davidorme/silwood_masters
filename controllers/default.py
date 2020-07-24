@@ -393,8 +393,6 @@ def get_events(module_id, start=None, end=None, event_id=None):
     
     events_json = []
     
-    print(request.vars)
-    
     for ev in events:
         update_event_record_with_dates(ev)
         

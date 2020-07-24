@@ -61,7 +61,7 @@ def update_module_record_with_dates(module):
         module.end = max([ev.end for ev in events]).date()
     else:
         module.start = current.FIRST_DAY
-        module.start = current.FIRST_DAY
+        module.end = current.FIRST_DAY
 
 
 def update_event_record_with_dates(event, week=1, duration=1, event_day=0, 
