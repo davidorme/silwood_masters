@@ -8,8 +8,7 @@ from timetable_functions import get_year_start_date
 
 ## TODO we shouldn't need to delete events - conceal instead
 
-# add edit details to each table _ NOT UNTIL THE import_from_csv_file issue is fixed
-# db._common_fields.append(auth.signature)
+db._common_fields.append(auth.signature)
 
 db.define_table('locations',
                 Field('title', 'string'),
@@ -52,7 +51,6 @@ db.define_table('modules',
                       ondelete='SET NULL'),
                 format= lambda row: f"{row.title}")
 
-# TODO don't think we need a uuid here, now that ids are all generated server side
 db.define_table('events',
                 Field('module_id', 'reference modules'),
                 Field('teacher_id', 'reference teaching_staff',
@@ -76,6 +74,10 @@ db.define_table('college_dates',
                 Field('name', 'string'),
                 Field('event_startdate', 'date'),
                 Field('event_duration', 'integer'))
+
+db.define_table('freezer',
+                Field('is_frozen', 'boolean', default=False))
+
 
 # Cache the academic year
 FIRST_DAY = cache.ram('first_day', lambda : get_year_start_date(), None)

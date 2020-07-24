@@ -89,6 +89,12 @@
     </nav>
 
     <!-- Masthead ===================================== -->
+	{{freezer = db(db.freezer).select().first()}}
+	{{if freezer is not None and freezer.is_frozen:}}
+	<div class='row' style='background-color:teal'><div class='col-12'>
+		<H4 style='text-align:center;color:white'>The database is frozen</H4>
+	</div></div>
+	{{pass}}
     {{block header}}
     {{end}}
     <!-- Main ========================================= -->

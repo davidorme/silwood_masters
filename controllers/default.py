@@ -310,6 +310,21 @@ def user_requests():
     
     return dict(form = form)
 
+
+@auth.requires_membership('admin')
+def freezer():
+    
+    # By default, the registration key is not visible or editable
+    rec = db(db.freezer).select().first()
+    form = SQLFORM(db.freezer,
+                   record=rec.id)
+    
+    if form.process().accepted:
+        redirect(URL('index'))
+    
+    return dict(form = form)
+
+
 ##
 ## Data services
 ##
@@ -351,6 +366,8 @@ def get_events(module_id, start=None, end=None, event_id=None):
     
     events_json = []
     
+    print(request.vars)
+    
     for ev in events:
         update_event_record_with_dates(ev)
         
@@ -365,13 +382,14 @@ def get_events(module_id, start=None, end=None, event_id=None):
                                      teacher_id=ev.teacher_id),
                   url=URL('module_events',args=[module_id, ev.id]))
         
-        event_id = int(event_id)
-        
-        if ev['id'] == event_id:
-            ev['color'] = 'salmon'
-        
-        if ev['id'] == event_id and auth.is_logged_in():
-            ev['editable'] = True
+        if event_id != 'null':
+            event_id = int(event_id)
+            
+            if ev['id'] == event_id:
+                ev['color'] = 'salmon'
+            
+            if ev['id'] == event_id and auth.is_logged_in():
+                ev['editable'] = True
         
         events_json.append(ev)
         

@@ -14,7 +14,7 @@ def get_year_start_date():
     
     db = current.db
     start_of_year = db(db.college_dates.name == 'First Monday of Autumn Term').select().first()
-    print(start_of_year)
+    
     if start_of_year is not None:
         return start_of_year.event_startdate
     else:

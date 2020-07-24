@@ -1,14 +1,43 @@
 import os
 import csv
 import re
-from timetable_functions import convert_date_to_weekdaytime
+from timetable_functions import get_year_start_date, convert_date_to_weekdaytime
+from gluon import current # to store FIRST_DAY
 
+# Auth and User setup to sign initial records
 
-# Admin user setup to sign initial records
+if db(db.auth_group).count() == 0:
+    db.auth_group.insert(role='admin', description='Power users')
 
 if db(db.auth_user).count() == 0:
     #Bulk load account
-    admin_user_id = db.auth_user.insert(first_name='Initial Dataloader')
+    admin_user_id = db.auth_user.insert(first_name='Bulk uploader')
+else:
+    admin_user_id = db(db.auth_user.first_name == 'Bulk uploader').select().first().id
+
+for table in ['freezer', 'teaching_staff', 'locations', 'courses', 
+              'college_dates', 'modules', 'events']:
+
+    table_object = db[table]
+    table_object.created_by.default = admin_user_id
+    table_object.modified_by.default = admin_user_id
+
+# Create a record in freeze
+if db(db.freezer).count() == 0:
+    db.freezer.insert(is_frozen=False)
+
+# Populate dates first and then refresh the ram cache of the first day
+
+if db(db.college_dates).count() == 0:
+
+    filepath = os.path.join(request.folder, 'static', 'data', 'college_dates.csv')
+
+    with open(filepath, encoding="utf8") as csvfile:
+        db.college_dates.import_from_csv_file(csvfile)
+    
+    cache.ram('first_day', None)
+    FIRST_DAY = cache.ram('first_day', lambda : get_year_start_date(), None)
+    current.FIRST_DAY = FIRST_DAY
 
 
 if db(db.teaching_staff).count() == 0:
@@ -211,7 +240,7 @@ if db(db.events).count() == 0:
             else:
                 location_id = location_parse[event['Location']]
 
-            # Load the module 
+            # Load the module
 
             module = db.modules[module_id]
 

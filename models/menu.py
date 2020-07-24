@@ -17,4 +17,6 @@ response.menu = [
 ]
 
 if auth.has_membership('admin'):
-    response.menu.append((T('User requests'), False, URL('default', 'user_requests'), []))
+    response.menu.append((T('Admin'), False, None, [
+                            (T('User requests'), False, URL('default', 'user_requests'), []),
+                            (T('Freezer'), False, URL('default', 'freezer'), [])]))
