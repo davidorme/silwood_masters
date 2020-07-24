@@ -38,7 +38,7 @@ if db(db.college_dates).count() == 0:
         db.college_dates.import_from_csv_file(csvfile)
 
 
-if db(db.modules).count() == 0:
+if db(db.modules).count() ==  0:
     
     # More complex as this needs to resolve the referencing of teaching
     # staff and the course ids from the original input. This file has a BOM

@@ -49,8 +49,8 @@
 					initialView: 'resourceTimelineWeek',
 					eventSources: [{
 						url: "{{=URL('call/json/get_events_by_week')}}",
-						color: 'lightgrey', // an option!
-						textColor: 'black', // an option!
+						color: 'lightgrey',
+						textColor: 'black',
 						editable: true
 					}, {
 						url: "{{=URL('call/json/get_college_dates')}}",
@@ -60,7 +60,7 @@
 					}],
 					resources: "{{=URL('call/json/get_locations')}}",
 					resourceAreaHeaderContent: 'Course',
-					resourceOrder: '-onsite,title',
+					resourceOrder: 'external,title', //group on site locations (0) first
 					initialDate: day_one
 				});
 				calendar.render();
