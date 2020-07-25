@@ -17,7 +17,7 @@ def index():
 ## - These can all be viewed by anyone but you have to log in to edit
 ##   and many are locked down to admin staff only
 
-def teaching_staff():
+def teaching_staff_table():
     """Presents a view of teaching staff. Users can add and edit, admin delete
     """
     
@@ -27,7 +27,7 @@ def teaching_staff():
     return dict(form=form)
 
 
-def locations():
+def locations_table():
     """Presents a view of teaching staff. Only admins can edit, delete or add
     """
     
@@ -43,7 +43,7 @@ def locations():
     return dict(form=form)
 
 
-def courses():
+def courses_table():
     """Presents a view of courses. Only admins can edit, delete or add
     """
     
@@ -59,7 +59,7 @@ def courses():
     return dict(form=form)
 
 
-def college_dates():
+def college_dates_table():
     """Presents a view of college dates. Only admins can edit, delete or add.
     """
     
@@ -75,7 +75,23 @@ def college_dates():
     return dict(form=form)
 
 
-def events():
+def recurring_events_table():
+    """Presents a view of recurring events. Only admins can edit, delete or add.
+    """
+    
+    db.college_dates.id.readable = False
+    
+    is_admin = auth.has_membership('admin')
+    
+    form = SQLFORM.grid(db.college_dates,
+                        editable=is_admin,
+                        deletable=is_admin,
+                        create=is_admin)
+    
+    return dict(form=form)
+
+
+def events_table():
     """Presents a view of module events. These should always be edited via events()
     """
     
@@ -92,7 +108,7 @@ def events():
     return dict(form=form)
 
 
-def modules():
+def modules_table():
     """Presents a view of modules. These should be edited via module_information()
     but admins can create, delete and edit them here. 
     TODO - enable fullcalendar interface to changing time for admins

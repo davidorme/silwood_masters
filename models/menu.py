@@ -7,12 +7,13 @@ response.menu = [
     (T('Module Grid'), False, URL('default', 'module_grid'), []),
     (T('Room Grid'), False, URL('default', 'room_grid'), []),
     (T('Tables'), False, None, [
-        (T('College Dates'), False, URL('default', 'college_dates'), []),
-        (T('Locations'), False, URL('default', 'locations'), []),
-        (T('Courses'), False, URL('default', 'courses'), []),
-        (T('Teaching Staff'), False, URL('default', 'teaching_staff'), []),
-        (T('Modules'), False, URL('default', 'modules'), []),
-        (T('Events'), False, URL('default', 'events'), [])
+        (T('College Dates'), False, URL('default', 'college_dates_table'), []),
+        (T('Recurring Events'), False, URL('default', 'recurring_events_table'), []),
+        (T('Locations'), False, URL('default', 'locations_table'), []),
+        (T('Courses'), False, URL('default', 'courses_table'), []),
+        (T('Teaching Staff'), False, URL('default', 'teaching_staff_table'), []),
+        (T('Modules'), False, URL('default', 'modules_table'), []),
+        (T('Events'), False, URL('default', 'events_table'), [])
     ]),
 ]
 
