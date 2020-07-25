@@ -1,0 +1,13 @@
+{{extend 'layout.html'}}
+
+<H2>{{=course.fullname}}</H2>
+
+<p><b>Course Convenor:</b> {{=course.convenor}}</p>
+<p><b>Course Co-convenor:</b> {{=course.coconvenor}}</p>
+<p><A href={{=URL('course_docx', args=course.id)}}>Download course timetable</A></p>
+
+
+<H3>Module list</H3>
+
+{{=table}}
+

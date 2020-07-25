@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from timetable_functions import (module_markdown, update_module_record_with_dates,
                                  update_event_record_with_dates, convert_date_to_weekdaytime)
-from gluon.contrib.markdown import WIKI as MARKDOWN
 import io
 import gluon
 import datetime
 from dateutil import parser
 import pypandoc
-
+import markdown # gluon provides MARKDOWN but lacks extensions.
 
 def index():
 
@@ -141,21 +140,22 @@ def _module_page_header(module_id, current):
     """
     
     # Set of links to create - keep the current link as plain text
-    links = [{'title': 'Events', 'url': URL('module_events', args=[module_id])},
-             {'title': 'Info', 'url': URL('module_information', args=[module_id])},
-             {'title': 'View', 'url': URL('module_view', args=[module_id])},
-             {'title': 'Docx', 'url': URL('module_docx', args=[module_id])}]
+    links = [{'title': 'Info', 'url': URL('module_information', args=[module_id])},
+             {'title': 'Events', 'url': URL('module_events', args=[module_id])},
+             {'title': 'HTML', 'url': URL('module_view', args=[module_id])},
+             {'title': 'Word', 'url': URL('module_docx', args=[module_id])}]
 
-    links = [B(lnk['title'], _style="margin:5px")
+    links = [SPAN(lnk['title'], _style="margin:5px")
                 if lnk['title'] == current 
-                else B(A(lnk['title'], _href=lnk['url']), _style="margin:5px")
+                else SPAN(A(lnk['title'], _href=lnk['url']), _style="margin:5px")
                 for lnk in links]
     
     module_record = db.modules[module_id]
     update_module_record_with_dates(module_record)
     module_header = DIV(DIV(H2(module_record.title),
                             _class='col-8'),
-                        DIV(CAT(links, _class='pull-right'),
+                        DIV(B(CAT(links[0], ' + ', links[1], ' = ', links[2] ,
+                                XML('&or;'), links[3], _class='pull-right')),
                             _class='col-4'),
                         _class='row', _id='module_data', 
                         _module_id = module_id, _module_start = module_record.start) + HR()
@@ -222,14 +222,27 @@ def module_events():
                   UL(LI('Click on an existing event to unlock it for editing. '
                         'You can drag and resize the event to reschedule it and '
                         'edit the event details in the form that will appear. '
-                        'Remember to press the Submit button after making changes!'),
-                     LI(P('Drag and drop the event below to create a new event:'),
-                        DIV(DIV(DIV('Drag new event',
+                        'Remember to press the Submit button after making changes!',
+                        #_style='padding:2px'
+                        ),
+                     LI('Drag and drop the event below to create a new event:',
+                        CENTER(DIV(DIV(DIV(CENTER('New event!'),
                                     _class='fc-event-main', 
                                     **{'data-event': '{ "title": "newevent", "duration": "01:00" }'}),
                                 _class='fc-event fc-h-event fc-daygrid-event fc-daygrid-block-event',
                                 _style='padding:10px;width:150px'),
-                            _id='external-events'))),
+                            _id='external-events')),
+                        _style='padding:2px'),
+                     LI('You can use ', 
+                        A('Markdown', _href='https://guides.github.com/features/mastering-markdown/'),
+                        ' to easily add formatting to your content.',
+                        _style='padding:2px'),
+                     LI('Follow these links to add new ', 
+                        A('teaching staff', _href=URL('teaching_staff')),
+                        ' or ',
+                        A('locations', _href=URL('locations')),
+                        ' if needed.',
+                        _style='padding:2px')),
                   _class='jumbotron')
     else:
         form= DIV(H4('Options'),
@@ -261,7 +274,8 @@ def module_view():
     
     content= module_markdown(module_id)
     
-    return dict(content = MARKDOWN(content), module_data=_module_page_header(module_id, 'View'))
+    return dict(content = XML(markdown.markdown(content, extensions=['def_list'])), 
+                module_data=_module_page_header(module_id, 'HTML'))
 
 
 def module_docx():
@@ -276,7 +290,9 @@ def module_docx():
     filename = f'Module_{module_id}_{datetime.date.today()}.docx'
     url = os.path.join('static', 'module_docx',  filename)
     filepath = os.path.join(request.folder, url)
-    pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath)
+    template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
+    pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
+                          extra_args=[f"--reference-doc={template}"])
     
     # This is really odd - if I use a reference to the open file directly in HTTP below
     # then I get wierd stalling behaviour and failure, but if I load it and provide the
@@ -291,6 +307,41 @@ def module_docx():
                **{'Content-Type': ctype,
                'Content-Disposition': disposition})
 
+def course_docx():
+    """A controller to push out a DOCX version of a course, using pandoc to convert 
+    markdown into the docx. Anyone can access.
+    """
+    
+    course_id = request.args[0] 
+    
+    content = ""
+    
+    course = db.courses[course_id]
+    modules = db(db.modules.courses.contains(course_id)
+                 ).select(db.modules.id)
+    
+    for mod in modules:
+        content += module_markdown(mod.id, title=True)
+    
+    filename = f'{course.abbrname}_{datetime.date.today()}.docx'
+    url = os.path.join('static', 'module_docx',  filename)
+    filepath = os.path.join(request.folder, url)
+    template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
+    pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
+                          extra_args=[f"--reference-doc={template}"])
+    
+    # This is really odd - if I use a reference to the open file directly in HTTP below
+    # then I get wierd stalling behaviour and failure, but if I load it and provide the
+    # data directly, it works flawlessly. <shrugs>
+    
+    with open(filepath, 'rb') as fin:
+        data = io.BytesIO(fin.read())
+
+    disposition = f'attachment; filename={filename}'
+    ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    raise HTTP(200, data,
+               **{'Content-Type': ctype,
+               'Content-Disposition': disposition})
 
 ## Other views
 
@@ -312,6 +363,67 @@ def room_grid():
     year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
     
     return dict(year_data=year_data)
+
+
+def courses():
+    """A controller to view the modules in a course
+    """
+    
+    # if the URL has no arguments, present a list of courses with URLs
+    if len(request.args) == 0:
+        
+        courses = db(db.courses).select()
+        courses = list(courses.render())
+        
+        table_rows = []
+        for crs in courses:
+            row = TR(TD(B(crs.fullname), DIV(_style='flex:1'), 
+                        A('View', _href=URL('course_modules', args=crs.id)),
+                     _style='display:flex'))
+            table_rows.append(row)
+            row = TR(TD(DIV(_style='flex:1'), crs.convenor,
+                     _style='display:flex'))
+            table_rows.append(row)
+            
+            table = TABLE(table_rows, _class='table-striped')
+        
+        return dict(table=table, course=DIV())
+    
+    # Otherwise get the requested course module list
+    course_id = int(request.args[0])
+    
+    course = db.courses[course_id]
+    modules = db(db.modules.courses.contains(course_id)
+                 ).select(db.modules.id, 
+                          db.modules.title,
+                          db.modules.convenor_id)
+    
+    # Convert ids to representation
+    modules = list(modules.render())
+    
+    # Add dates and sort in time order
+    _ = [update_module_record_with_dates(row) for row in modules]
+    modules.sort(key=lambda row: row.start)
+    
+    # Process into a table - would be nice to still use fullCalendar but
+    # it doesn't provide a week slot only day and time
+    table_rows = []
+    for mod in modules:
+        week = ((mod.start - FIRST_DAY).days // 7) + 1
+        row = TR(TD(f'Week {week}', _style='width:20%'),
+                 TD(B(mod.title), DIV(_style='flex:1'), 
+                    A('View', _href=URL('module_view', args=mod.id)),
+                 _style='display:flex'))
+        table_rows.append(row)
+        row = TR(TD(),
+                 TD(mod.start, DIV(_style='flex:1'), mod.convenor_id,
+                 _style='display:flex'))
+        table_rows.append(row)
+    
+    table = TABLE(table_rows, _class='table-striped')
+    
+    
+    return dict(course=course, table=table)
 
 ## Admin
 
@@ -520,12 +632,19 @@ def get_courses():
 
 
 @service.json
-def get_modules(start=None, end=None):
-    """Service to provides module level events for the module grid"""
+def get_modules(start=None, end=None, course_id=None):
+    """Service to provides module level events for the module grid. At the moment
+    the course_id option isn't used -  full calendar can't do a week level slot,
+    and a day by day list is ugly."""
     
-    modules = db(db.modules).select(db.modules.id, 
-                                    db.modules.title,
-                                    db.modules.courses)
+    if course_id is None:
+        query = db.modules
+    else:
+        query = db.modules.courses.contains(course_id)
+    
+    modules = db(query).select(db.modules.id, 
+                               db.modules.title,
+                               db.modules.courses)
     
     # This is a bit clumsy - need to add start, end and url
     # and convert courses entry to resourceIDs

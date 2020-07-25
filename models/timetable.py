@@ -1,4 +1,4 @@
-from timetable_functions import get_year_start_date
+from timetable_functions import get_year_start_date, update_event_record_with_dates
 ##
 ## Tables are all signed, but the app isn't currently using record
 ## versioning. That seems like overkill and much of the damage done in the
@@ -93,7 +93,24 @@ db.define_table('recurring_events',
 db.define_table('freezer',
                 Field('is_frozen', 'boolean', default=False))
 
-
 # Cache the academic year
 FIRST_DAY = cache.ram('first_day', lambda : get_year_start_date(), None)
 current.FIRST_DAY = FIRST_DAY
+
+
+## Virtual field - can't get this to work
+
+# def module_start(row):
+#     """Calculates the start and end date of a module from the module events
+#     and inserts it into the record object in place."""
+#
+#     events = row.events.select()
+#     [update_event_record_with_dates(ev) for ev in events]
+#
+#     if len(events):
+#         return min([ev.start for ev in events]).date()
+#     else:
+#         return current.FIRST_DAY
+
+
+# db.modules.test = Field.Virtual(lambda row: module_start(row))

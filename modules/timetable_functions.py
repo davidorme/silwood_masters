@@ -2,7 +2,6 @@ import datetime
 from dateutil import parser
 from itertools import groupby
 
-
 # The web2py HTML helpers are provided by gluon. This also provides the 'current' object, which
 # provides the web2py 'request' API (note the single letter difference from the requests package!).
 # The 'current' object is also extended by models/db.py to include the current 'db' DAL object
@@ -122,14 +121,22 @@ def module_markdown(module_id, title=False):
     
     content += '### Events:\n\n'
     
+    # It would be neater to do this using tables but pandoc tables are seriously
+    # limited at present - the core functions are now there but the reader and 
+    # writers are not yet updated. Definition lists provide a reasonable solution:
+    # <dd> tags can be styled with an indent in html and the docx output has a 
+    # 'definition' style that can also have an indent applied. 
+    
     for key, gp in events_by_day:
         gp = list(gp)
         
-        content += f'**{gp[0].start.strftime("%A %B %d")}**  \n'
+        content += f'**{gp[0].start.strftime("%A %B %d")}**  \n\n'
         
         for ev in gp:
-            content += f'{ev.start.strftime("%H:%M")} - {ev.end.strftime("%H:%M")}'
-            content += f' **{ev.title}** ({ev.teacher_id}, {ev.location_id})  \n'
-            content += f'{ev.description}  \n'
-        
+            content += f'{ev.start.strftime("%H:%M")} - {ev.end.strftime("%H:%M")} {ev.title}  \n'
+            content += f':   ({ev.teacher_id}, {ev.location_id})  \n'
+            content += f'    {ev.description}  \n\n'
+    
+    content += '\n\n\n\n'
+    
     return content
