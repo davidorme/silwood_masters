@@ -378,7 +378,7 @@ def courses():
         table_rows = []
         for crs in courses:
             row = TR(TD(B(crs.fullname), DIV(_style='flex:1'), 
-                        A('View', _href=URL('course_modules', args=crs.id)),
+                        A('View', _href=URL('courses', args=crs.id)),
                      _style='display:flex'))
             table_rows.append(row)
             row = TR(TD(DIV(_style='flex:1'), crs.convenor,
@@ -387,7 +387,7 @@ def courses():
             
             table = TABLE(table_rows, _class='table-striped')
         
-        return dict(table=table, course=DIV())
+        return dict(table=table, header=H2('Course list'))
     
     # Otherwise get the requested course module list
     course_id = int(request.args[0])
@@ -397,6 +397,12 @@ def courses():
                  ).select(db.modules.id, 
                           db.modules.title,
                           db.modules.convenor_id)
+    
+    header = CAT(H2(course.fullname),
+                 P(B('Course Convenor: '), course.convenor),
+                 P(B('Course Co-convenor: '), course.coconvenor),
+                 P(A('Download course timetable', 
+                     _href=URL('course_docx', args=course.id))))
     
     # Convert ids to representation
     modules = list(modules.render())
@@ -423,7 +429,7 @@ def courses():
     table = TABLE(table_rows, _class='table-striped')
     
     
-    return dict(course=course, table=table)
+    return dict(header=header, table=CAT(H3('Module list'), table))
 
 ## Admin
 
