@@ -37,5 +37,4 @@ __pycache__/
 
 # dynamically generated module descriptions
 static/module_docx/*
-!static/module_docx/.gitkeep
-
+!static/module_docx/docx_template.docx
