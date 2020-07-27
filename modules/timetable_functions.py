@@ -103,6 +103,7 @@ def module_markdown(module_id, title=False):
     sections = [('description', '#### Description'), 
                 ('aims', '#### Aims'),
                 ('reading', '#### Reading'),
+                ('delivery', '#### Module delivery'),
                 ('other_notes', '#### Additional information')]
     
     # Load and format events
