@@ -187,6 +187,7 @@ def module_information():
                              'description',
                              'aims',
                              'reading',
+                             'delivery',
                              'other_notes'],
                    showid=False,
                    record=module_id, 
