@@ -6,7 +6,12 @@ from timetable_functions import get_year_start_date, update_event_record_with_da
 ## off cascade delete - we don't want details to disappear if a course
 ## module or events is removed - but...
 
-## TODO we shouldn't need to delete events - conceal instead
+## The auth.signature includes an is_active field but this is only visible
+## and editable by appadmin and not to any normal user. The course, module
+## and events tables include a 'conceal' field and common filters to allow
+## user level retirement of details from public view. Courses and modules
+## can only be concealed by an admin user, but events can be concealed by 
+## registered users, to retain details for following years.
 
 db._common_fields.append(auth.signature)
 
@@ -25,7 +30,7 @@ db.define_table('teaching_staff',
                 Field('phone', 'string'),
                 Field('specialisation', 'text'),
                 Field('is_external', 'boolean', default=False),
-                format = lambda row: f"{row.title} {row.firstname} {row.lastname}")
+                format = lambda row: f" {row.lastname}, {row.firstname}")
 
 db.define_table('courses',
                 Field('fullname', 'string'),
@@ -34,6 +39,8 @@ db.define_table('courses',
                       ondelete='SET NULL'),
                 Field('coconvenor', 'reference teaching_staff', 
                       ondelete='SET NULL'),
+                Field('conceal', 'boolean', default=False),
+                common_filter = lambda query: db.courses.conceal == False,
                 format = lambda row: f"{row.abbrname}")
 
 db.define_table('modules',
@@ -49,6 +56,8 @@ db.define_table('modules',
                 Field('courses', 'list:reference courses', 
                       widget=SQLFORM.widgets.checkboxes.widget,
                       ondelete='SET NULL'),
+                Field('conceal', 'boolean', default=False),
+                common_filter = lambda query: db.modules.conceal == False,
                 format= lambda row: f"{row.title}")
 
 db.define_table('events',
@@ -67,7 +76,9 @@ db.define_table('events',
                       ondelete='SET NULL'),
                 Field('location_id', 'list:reference locations',
                        #widget=SQLFORM.widgets.checkboxes.widget
-                       ondelete='SET NULL'))
+                       ondelete='SET NULL'),
+                Field('conceal', 'boolean', default=False),
+                common_filter = lambda query: db.events.conceal == False)
 
 # TODO blocking events and repeating events (Weds pm and Seminars)
 db.define_table('college_dates',

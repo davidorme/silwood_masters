@@ -21,7 +21,8 @@ def teaching_staff_table():
     """
     
     form = SQLFORM.grid(db.teaching_staff,
-                        deletable=auth.has_membership('admin'))
+                        deletable=auth.has_membership('admin'), 
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -37,7 +38,8 @@ def locations_table():
     form = SQLFORM.grid(db.locations,
                         editable=is_admin,
                         deletable=is_admin,
-                        create=is_admin)
+                        create=is_admin, 
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -51,9 +53,11 @@ def courses_table():
     is_admin = auth.has_membership('admin')
     
     form = SQLFORM.grid(db.courses,
+                        ignore_common_filters=is_admin,
                         editable=is_admin,
                         deletable=is_admin,
-                        create=is_admin)
+                        create=is_admin, 
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -69,7 +73,8 @@ def college_dates_table():
     form = SQLFORM.grid(db.college_dates,
                         editable=is_admin,
                         deletable=is_admin,
-                        create=is_admin)
+                        create=is_admin, 
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -85,7 +90,8 @@ def recurring_events_table():
     form = SQLFORM.grid(db.recurring_events,
                         editable=is_admin,
                         deletable=is_admin,
-                        create=is_admin)
+                        create=is_admin, 
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -95,14 +101,17 @@ def events_table():
     """
     
     db.events.id.readable = False
+    is_admin = auth.has_membership('admin')
     
     form = SQLFORM.grid(db.events,
                         fields=[db.events.module_id,
                                 db.events.title,
                                 db.events.teacher_id],
-                        editable=False,
+                        editable=is_admin,
                         deletable=False,
-                        create=False)
+                        create=False,
+                        ignore_common_filters=is_admin,
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -123,7 +132,9 @@ def modules_table():
                                 db.modules.courses],
                         editable=is_admin,
                         deletable=is_admin,
-                        create=is_admin)
+                        create=is_admin,
+                        ignore_common_filters=is_admin,
+                        csv=is_admin)
     
     return dict(form=form)
 
@@ -194,7 +205,10 @@ def module_events():
     else:
         module_id = request.args[0]
         event_id = request.args[1]
-        
+    
+    if auth.is_logged_in():
+        db.events._common_filter = None
+    
     module_record = db.modules[module_id]
     update_module_record_with_dates(module_record)
     
@@ -210,7 +224,7 @@ def module_events():
                      deletable=auth.is_logged_in(),
                      record = record,
                      fields = ['title', 'description', 'teacher_id', 
-                               'location_id', 'courses'],
+                               'location_id', 'courses', 'conceal'],
                      hidden = dict(academic_week=record.academic_week,
                                    event_day=record.day_of_week,
                                    duration=record.duration,
@@ -243,7 +257,10 @@ def module_events():
                         ' or ',
                         A('locations', _href=URL('locations')),
                         ' if needed.',
-                        _style='padding:2px')),
+                        _style='padding:2px'),
+                     LI('Events can be deleted or concealed - a concealed event will stay '
+                        'in the database and can be seen by registered users and unconcealed, '
+                        'but a deleted event is gone')),
                   _class='jumbotron')
     else:
         form= DIV(H4('Options'),
@@ -564,8 +581,11 @@ def get_college_dates(start=None, end=None):
 def get_events(module_id, start=None, end=None, event_id=None):
     """Service to provide the events within a module with locations as resources"""
     
-    # Use the events set from the module to get the 
-    # module details and the events 
+    # Use the events set from the module to get the module details
+    # and the events. Logged in users get to see concealed events
+    if auth.is_logged_in():
+        db.events._common_filter = None
+    
     module = db.modules[module_id]
     events = module.events.select()
     
@@ -573,28 +593,30 @@ def get_events(module_id, start=None, end=None, event_id=None):
     
     for ev in events:
         update_event_record_with_dates(ev)
-        
-        ev = dict(id=ev.id,
-                  title=ev.title,
-                  start=ev.start,
-                  end=ev.end,
-                  color='grey',
-                  editable=False,
-                  resourceIds=ev.location_id,
-                  extendedProps=dict(description=ev.description,
-                                     teacher_id=ev.teacher_id),
-                  url=URL('module_events',args=[module_id, ev.id]))
+        ev_dict = dict(id=ev.id,
+                       title=ev.title,
+                       start=ev.start,
+                       end=ev.end,
+                       color='cornflowerblue',
+                       editable=False,
+                       resourceIds=ev.location_id,
+                       extendedProps=dict(description=ev.description,
+                                          teacher_id=ev.teacher_id),
+                       url=URL('module_events',args=[module_id, ev.id]))
         
         if event_id != 'null':
             event_id = int(event_id)
             
-            if ev['id'] == event_id:
-                ev['color'] = 'salmon'
+            if ev.conceal == True:
+                ev_dict['color'] = 'grey'
             
-            if ev['id'] == event_id and auth.is_logged_in():
-                ev['editable'] = True
+            if ev.id == event_id:
+                ev_dict['color'] = 'salmon'
+            
+            if ev.id == event_id and auth.is_logged_in():
+                ev_dict['editable'] = True
         
-        events_json.append(ev)
+        events_json.append(ev_dict)
         
     return events_json
 
