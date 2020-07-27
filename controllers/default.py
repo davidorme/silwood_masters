@@ -82,7 +82,7 @@ def recurring_events_table():
     
     is_admin = auth.has_membership('admin')
     
-    form = SQLFORM.grid(db.college_dates,
+    form = SQLFORM.grid(db.recurring_events,
                         editable=is_admin,
                         deletable=is_admin,
                         create=is_admin)
