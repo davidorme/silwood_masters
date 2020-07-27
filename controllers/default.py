@@ -143,8 +143,8 @@ def _module_page_header(module_id, current):
     links = [{'title': 'Info', 'url': URL('module_information', args=[module_id])},
              {'title': 'Events', 'url': URL('module_events', args=[module_id])},
              {'title': 'HTML', 'url': URL('module_view', args=[module_id])},
-             {'title': 'Word', 'url': URL('module_docx', args=[module_id])}]
-
+             {'title': 'Word', 'url': URL('module_doc', args=[module_id, 'docx'])},
+             {'title': 'LaTeX', 'url': URL('module_doc', args=[module_id, 'latex'])}]
     links = [SPAN(lnk['title'], _style="margin:5px")
                 if lnk['title'] == current 
                 else SPAN(A(lnk['title'], _href=lnk['url']), _style="margin:5px")
@@ -155,7 +155,8 @@ def _module_page_header(module_id, current):
     module_header = DIV(DIV(H2(module_record.title),
                             _class='col-8'),
                         DIV(B(CAT(links[0], ' + ', links[1], ' = ', links[2] ,
-                                XML('&or;'), links[3], _class='pull-right')),
+                                  XML('&or;'), links[3], XML('&or;'), links[4], 
+                                  _class='pull-right')),
                             _class='col-4'),
                         _class='row', _id='module_data', 
                         _module_id = module_id, _module_start = module_record.start) + HR()
@@ -278,67 +279,105 @@ def module_view():
                 module_data=_module_page_header(module_id, 'HTML'))
 
 
-def module_docx():
-    """A controller to push out a DOCX version of the view, using pandoc to convert 
-    markdown into the docx. Anyone can access.
+def module_doc():
+    """A controller to push out a document version of the view, using pandoc to convert 
+    markdown into docx or latex. Anyone can access.
     """
     
     module_id = request.args[0] 
+    output_format = request.args[1] 
     
     content= module_markdown(module_id, title=True)
     
-    filename = f'Module_{module_id}_{datetime.date.today()}.docx'
-    url = os.path.join('static', 'module_docx',  filename)
-    filepath = os.path.join(request.folder, url)
-    template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
-    pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
-                          extra_args=[f"--reference-doc={template}"])
+    if output_format == 'docx':
+        # With docx, the output _has_ to be written to a file, not just handled internally
+        # as a string. Also, oddly, streaming the response from an open file directly 
+        # reuslt in weird stalling behaviour and failure, but loading it to bytes and 
+        # streaming the content of that works flawlessly. <shrug>
+        
+        filename = f'Module_{module_id}_{datetime.date.today()}.docx'
+        url = os.path.join('static', 'module_docx',  filename)
+        filepath = os.path.join(request.folder, url)
+        template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
+        pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
+                              extra_args=[f"--reference-doc={template}"])
     
-    # This is really odd - if I use a reference to the open file directly in HTTP below
-    # then I get wierd stalling behaviour and failure, but if I load it and provide the
-    # data directly, it works flawlessly. <shrugs>
+        with open(filepath, 'rb') as fin:
+            data = io.BytesIO(fin.read())
+        ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     
-    with open(filepath, 'rb') as fin:
-        data = io.BytesIO(fin.read())
-
+    elif output_format == 'latex':
+        # With latex, can just directly pass the string
+        filename = f'Module_{module_id}_{datetime.date.today()}.tex'
+        data = pypandoc.convert_text(content, 'latex', format='md')
+        ctype = 'application/x-tex'
+    
     disposition = f'attachment; filename={filename}'
-    ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     raise HTTP(200, data,
                **{'Content-Type': ctype,
                'Content-Disposition': disposition})
 
-def course_docx():
+def course_doc():
     """A controller to push out a DOCX version of a course, using pandoc to convert 
     markdown into the docx. Anyone can access.
     """
     
     course_id = request.args[0] 
+    output_format = request.args[1]
     
     content = ""
     
     course = db.courses[course_id]
     modules = db(db.modules.courses.contains(course_id)
-                 ).select(db.modules.id)
+                 ).select(db.modules.id,
+                          db.modules.title,
+                          db.modules.convenor_id)
+    
+    # Convert ids to representation
+    modules = list(modules.render())
+    
+    # Add dates and sort in time order
+    _ = [update_module_record_with_dates(row) for row in modules]
+    modules.sort(key=lambda row: row.start)
+    
+    # Process into a definition list (tables and pandoc again)
+    content += '## Weekly module summary\n\n\n'
+    for mod in modules:
+        week = ((mod.start - FIRST_DAY).days // 7) + 1
+        content += f'Week {week} - {mod.title}\n'
+        content += f':   Convenor: {mod.convenor_id}  \n'
+        content += f'    Dates: {mod.start} - {mod.end}\n\n'
+
+    content += '## Module details\n\n'
     
     for mod in modules:
         content += module_markdown(mod.id, title=True)
     
-    filename = f'{course.abbrname}_{datetime.date.today()}.docx'
-    url = os.path.join('static', 'module_docx',  filename)
-    filepath = os.path.join(request.folder, url)
-    template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
-    pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
-                          extra_args=[f"--reference-doc={template}"])
+    if output_format == 'docx':
+        # With docx, the output _has_ to be written to a file, not just handled internally
+        # as a string. Also, oddly, streaming the response from an open file directly 
+        # reuslt in weird stalling behaviour and failure, but loading it to bytes and 
+        # streaming the content of that works flawlessly. <shrug>
+        
+        filename = f'{course.abbrname}_{datetime.date.today()}.docx'
+        url = os.path.join('static', 'module_docx',  filename)
+        filepath = os.path.join(request.folder, url)
+        template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
+        pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
+                              extra_args=[f"--reference-doc={template}"])
     
-    # This is really odd - if I use a reference to the open file directly in HTTP below
-    # then I get wierd stalling behaviour and failure, but if I load it and provide the
-    # data directly, it works flawlessly. <shrugs>
     
-    with open(filepath, 'rb') as fin:
-        data = io.BytesIO(fin.read())
-
+        with open(filepath, 'rb') as fin:
+            data = io.BytesIO(fin.read())
+        ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    
+    elif output_format == 'latex':
+        # With latex, can just directly pass the string
+        filename = f'{course.abbrname}_{datetime.date.today()}.tex'
+        data = pypandoc.convert_text(content, 'latex', format='md')
+        ctype = 'application/x-tex'
+        
     disposition = f'attachment; filename={filename}'
-    ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     raise HTTP(200, data,
                **{'Content-Type': ctype,
                'Content-Disposition': disposition})
@@ -401,8 +440,13 @@ def courses():
     header = CAT(H2(course.fullname),
                  P(B('Course Convenor: '), course.convenor),
                  P(B('Course Co-convenor: '), course.coconvenor),
-                 P(A('Download course timetable', 
-                     _href=URL('course_docx', args=course.id))))
+                 P(B('Download course timetable: '), 
+                     SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx'])),
+                          _style="margin:5px"),
+                     XML('&or;'),
+                     SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex'])),
+                          _style="margin:5px"),
+                     ))
     
     # Convert ids to representation
     modules = list(modules.render())

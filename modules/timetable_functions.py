@@ -92,7 +92,7 @@ def module_markdown(module_id, title=False):
     update_module_record_with_dates(module)
     
     if title:
-        content = f'# {module.title}\n'
+        content = f'### {module.title}\n'
     else:
         content =""
     
@@ -100,10 +100,10 @@ def module_markdown(module_id, title=False):
     content += f'**Dates**: {module.start} to {module.end}  \n'
     content += f'**Courses**: {module.courses}\n\n'
     
-    sections = [('description', '### Description'), 
-                ('aims', '### Aims'),
-                ('reading', '### Reading'),
-                ('other_notes', '### Additional information')]
+    sections = [('description', '#### Description'), 
+                ('aims', '#### Aims'),
+                ('reading', '#### Reading'),
+                ('other_notes', '#### Additional information')]
     
     # Load and format events
     for fld, title in sections:
@@ -119,7 +119,7 @@ def module_markdown(module_id, title=False):
     
     events_by_day = groupby(events, lambda x: x.start.date())
     
-    content += '### Events:\n\n'
+    content += '#### Events:\n\n'
     
     # It would be neater to do this using tables but pandoc tables are seriously
     # limited at present - the core functions are now there but the reader and 
