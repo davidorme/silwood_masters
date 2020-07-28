@@ -82,7 +82,7 @@ def update_event_record_with_dates(event, week=1, duration=1, event_day=0,
     event.end = event.start + datetime.timedelta(hours=duration)
 
 
-def module_markdown(module_id, title=False):
+def module_markdown(module_id, title=False, show_events=True):
     """Gets a markdown version of the module information and events
     """
     
@@ -111,32 +111,36 @@ def module_markdown(module_id, title=False):
         if module[fld] is not None and module[fld] != "":
             content += f'{title}\n\n{module[fld]}\n\n'
     
-    events = db(db.events.module_id == module_id
-                ).select(orderby=[db.events.academic_week,
-                                  db.events.day_of_week,
-                                  db.events.start_time])
-    events = list(events.render())
-    [update_event_record_with_dates(ev) for ev in events]
+    print(show_events)
     
-    events_by_day = groupby(events, lambda x: x.start.date())
-    
-    content += '#### Events:\n\n'
-    
-    # It would be neater to do this using tables but pandoc tables are seriously
-    # limited at present - the core functions are now there but the reader and 
-    # writers are not yet updated. Definition lists provide a reasonable solution:
-    # <dd> tags can be styled with an indent in html and the docx output has a 
-    # 'definition' style that can also have an indent applied. 
-    
-    for key, gp in events_by_day:
-        gp = list(gp)
+    if show_events:
         
-        content += f'**{gp[0].start.strftime("%A %B %d")}**  \n\n'
+        events = db(db.events.module_id == module_id
+                    ).select(orderby=[db.events.academic_week,
+                                      db.events.day_of_week,
+                                      db.events.start_time])
+        events = list(events.render())
+        [update_event_record_with_dates(ev) for ev in events]
+    
+        events_by_day = groupby(events, lambda x: x.start.date())
+    
+        content += '#### Events:\n\n'
+    
+        # It would be neater to do this using tables but pandoc tables are seriously
+        # limited at present - the core functions are now there but the reader and 
+        # writers are not yet updated. Definition lists provide a reasonable solution:
+        # <dd> tags can be styled with an indent in html and the docx output has a 
+        # 'definition' style that can also have an indent applied. 
+    
+        for key, gp in events_by_day:
+            gp = list(gp)
         
-        for ev in gp:
-            content += f'{ev.start.strftime("%H:%M")} - {ev.end.strftime("%H:%M")} {ev.title}  \n'
-            content += f':   ({ev.teacher_id}, {ev.location_id})  \n'
-            content += f'    {ev.description}  \n\n'
+            content += f'**{gp[0].start.strftime("%A %B %d")}**  \n\n'
+        
+            for ev in gp:
+                content += f'{ev.start.strftime("%H:%M")} - {ev.end.strftime("%H:%M")} {ev.title}  \n'
+                content += f':   ({ev.teacher_id}, {ev.location_id})  \n'
+                content += f'    {ev.description}  \n\n'
     
     content += '\n\n\n\n'
     

@@ -345,6 +345,7 @@ def course_doc():
     
     course_id = request.args[0] 
     output_format = request.args[1]
+    show_events = bool(int(request.args[2]))
     
     content = ""
     
@@ -372,7 +373,7 @@ def course_doc():
     content += '## Module details\n\n'
     
     for mod in modules:
-        content += module_markdown(mod.id, title=True)
+        content += module_markdown(mod.id, title=True, show_events=show_events)
     
     if output_format == 'docx':
         # With docx, the output _has_ to be written to a file, not just handled internally
@@ -461,13 +462,21 @@ def courses():
     header = CAT(H2(course.fullname),
                  P(B('Course Convenor: '), course.convenor),
                  P(B('Course Co-convenor: '), course.coconvenor),
-                 P(B('Download course timetable: '), 
-                     SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx'])),
+                 P(B('Download full timetable with events: '), 
+                     SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx', 1])),
                           _style="margin:5px"),
                      XML('&or;'),
-                     SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex'])),
+                     SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex', 1])),
                           _style="margin:5px"),
-                     ))
+                     ),
+                P(B('Download module level timetable: '), 
+                    SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx', 0])),
+                         _style="margin:5px"),
+                    XML('&or;'),
+                    SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex', 0])),
+                         _style="margin:5px"),
+                    ))
+                
     
     # Convert ids to representation
     modules = list(modules.render())
