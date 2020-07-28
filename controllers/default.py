@@ -194,7 +194,7 @@ def module_information():
                    readonly=not auth.is_logged_in())
     
     if form.process().accepted:
-        redirect(URL(args=[module_id]))
+        redirect(URL('module_view', args=[module_id]))
     
     return dict(form=form, module_data=_module_page_header(module_id, 'Info'))
 
