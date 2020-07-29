@@ -435,6 +435,9 @@ def courses():
     """A controller to view the modules in a course
     """
     
+    # update the format of teaching_staff rows for either response
+    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    
     # if the URL has no arguments, present a list of courses with URLs
     if len(request.args) == 0:
         
@@ -447,7 +450,12 @@ def courses():
                         A('View', _href=URL('courses', args=crs.id)),
                      _style='display:flex'))
             table_rows.append(row)
-            row = TR(TD(DIV(_style='flex:1'), crs.convenor,
+            
+            if crs.coconvenor is None:
+                conv_string = crs.convenor
+            else:
+                conv_string = f"{crs.convenor} & {crs.coconvenor}"
+            row = TR(TD(DIV(_style='flex:1'), conv_string,
                      _style='display:flex'))
             table_rows.append(row)
             
@@ -457,9 +465,6 @@ def courses():
     
     # Otherwise get the requested course module list
     course_id = int(request.args[0])
-    
-    # update the format of teaching_staff rows
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
     
     course = db.courses[course_id]
     modules = db(db.modules.courses.contains(course_id)
