@@ -116,6 +116,9 @@ if db(db.modules).count() ==  0:
 
             db.modules.insert(title=module['ModuleName'],
                               convenor_id=convenor_id,
+                              placeholder_week=module['Week'],
+                              placeholder_n_weeks=module['Duration'],
+                              is_series=module['Is_Series'],
                               description=module['Description'],
                               aims=module['Aims'],
                               reading=module['ReadingList'],
@@ -143,37 +146,37 @@ if db(db.events).count() == 0:
         module_map = db(db.modules).select()
         module_map = {c.title: c.id for c in module_map}
 
-        # lots of typos in modules, so use a mapping to correct
-        module_filter = {
-            "Actions": None,
-            "Advanced Statistics": "Advanced statistics",
-            "Behavioural Ecology": "Behavioural ecology",
-            "Case Studies: Exploitation": None,
-            "Case Studies: Invasive Species": None,
-            "Case Studies: Protected Areas": None,
-            "CMEE Miniproject: Intro, project selection and preliminary work    ": "CMEE Miniproject: Intro, project selection and preliminary work",
-            "Conservation Decision Making": "Conservation Decision-making",
-            "Course Induction": None,
-            "Durrell - Species declines and zoos": "Durrell",
-            "Ecology and Global Change": "Ecology and global change",
-            "Economics in Conservation": None,
-            "Environmental impact assessment": "Ecological Impact Assessment",
-            "GIS/Stats/R": "Spatial Analyses and Geographic Information Systems (GIS)",
-            "Graduate School Workshops": "Graduate School Workshop",
-            "Introductio to Ecosystems and Environmental Change": None,
-            "Introduction to Conservation Sciecne": None,
-            "Introduction to EEC A": None,
-            "Introduction to EEC B": None,
-            "Introduction to EEC C": None,
-            "Introduction to MRes EEC and EA": None,
-            "Introduction to Tropical Forest Ecology": None,
-            "Population ecology and quantiative genetics": "Population ecology and quantitative genetics",
-            "Pro-network assessment": None,
-            "Project preparation": None,
-            "Science Communication": "Science communication",
-            "Social Research Methods ": "Social Research Methods",
-            "Social-ecological systems": "Social-Ecological Systems",
-        }
+        # # lots of typos in modules, so use a mapping to correct
+        # module_filter = {
+        #     "Actions": None,
+        #     "Advanced Statistics": "Advanced statistics",
+        #     "Behavioural Ecology": "Behavioural ecology",
+        #     "Case Studies: Exploitation": None,
+        #     "Case Studies: Invasive Species": None,
+        #     "Case Studies: Protected Areas": None,
+        #     "CMEE Miniproject: Intro, project selection and preliminary work    ": "CMEE Miniproject: Intro, project selection and preliminary work",
+        #     "Conservation Decision Making": "Conservation Decision-making",
+        #     "Course Induction": None,
+        #     "Durrell - Species declines and zoos": "Durrell",
+        #     "Ecology and Global Change": "Ecology and global change",
+        #     "Economics in Conservation": None,
+        #     "Environmental impact assessment": "Ecological Impact Assessment",
+        #     "GIS/Stats/R": "Spatial Analyses and Geographic Information Systems (GIS)",
+        #     "Graduate School Workshops": "Graduate School Workshop",
+        #     "Introductio to Ecosystems and Environmental Change": None,
+        #     "Introduction to Conservation Sciecne": None,
+        #     "Introduction to EEC A": None,
+        #     "Introduction to EEC B": None,
+        #     "Introduction to EEC C": None,
+        #     "Introduction to MRes EEC and EA": None,
+        #     "Introduction to Tropical Forest Ecology": None,
+        #     "Population ecology and quantiative genetics": "Population ecology and quantitative genetics",
+        #     "Pro-network assessment": None,
+        #     "Project preparation": None,
+        #     "Science Communication": "Science communication",
+        #     "Social Research Methods ": "Social Research Methods",
+        #     "Social-ecological systems": "Social-Ecological Systems",
+        # }
 
         # Locations are a mess, so this mapping uses the original data values to
         # map to a reconciled set and uses lists to combine location resources
@@ -185,32 +188,36 @@ if db(db.events).count() == 0:
             "Haldane": ["Haldane"],
             "Fisher": ["Fisher"],
             "Hamilton Computer Lab": ["Hamilton Computer Lab"],
+            "Hamilton Computer Room": ["Hamilton Computer Lab"],
             "Hamilton Field Lab": ["Hamilton Field Lab"],
             "Field lab": ["Hamilton Field Lab"],
-            "Chobham Commons": ["Chobham Commons"],
+            #"Chobham Commons": ["Chobham Commons"],
             "Computer Room": ["Hamilton Computer Lab"],
             "CPB for CMEE and EEC (MRes) and Computer lab for all other courses": ["Hamilton Computer Lab", "CPB Seminar Room"],
-            "Durrell Wildlife Conservation Trust": ["Durrell Wildlife Conservation Trust"],
+            #"Durrell Wildlife Conservation Trust": ["Durrell Wildlife Conservation Trust"],
             "Fisher/Haldane": ["Haldane","Fisher"],
+            "Fisher+Haldane": ["Haldane","Fisher"],
             "Fisher/Haldane/Field lab": ["Haldane","Fisher", "Hamilton Field Lab"],
             "Fisher/Haldane/Wallace/CPB Seminar Room": ["Haldane","Fisher","Wallace","CPB Seminar Room"],
             "Hamilton Foyer": ["Hamilton Foyer"],
-            "Kew": ["Kew Gardens"],
-            "Kew Gardens": ["Kew Gardens"],
+            #"Kew": ["Kew Gardens"],
+            #"Kew Gardens": ["Kew Gardens"],
             "Lundy": ["Lundy"],
             "Malaysia": ["Malaysia"],
             "NHM": ["NHM"],
-            "Offsite": ["Offsite"],
+            #"Offsite": ["Offsite"],
             "Seminar Room 1": ["Seminar Room 1"],
             "Seminar Room 2": ["Seminar Room 2"],
+            "Silwood Field": ["Silwood Grounds"],
             "Silwood field and Hamilton Field Lab": ["Silwood Grounds", "Hamilton Field Lab"],
             "Silwood Grounds": ["Silwood Grounds"],
             "South Kensington": ["South Kensington"],
             "Tavern": ["Lundy Tavern"],
-            "Wakehurst Place": ["Wakehurst Place"],
-            "WTC": ["WTC"],
-            "Zoological Society of London": ["Zoological Society of London"],
-            "ZSL": ["Zoological Society of London"]}
+            #"Wakehurst Place": ["Wakehurst Place"],
+            #"WTC": ["WTC"],
+            #"Zoological Society of London": ["Zoological Society of London"],
+            #"ZSL": ["Zoological Society of London"]
+            }
 
         # Convert location map to db ids and hence to list format (|1|2|3|) for insertion
         for ky, vl in location_parse.items():
@@ -231,8 +238,8 @@ if db(db.events).count() == 0:
                 continue
 
             # Find the module - correct using the filter first
-            if event['WeekName'] in module_filter and module_filter[event['WeekName']] is not None:
-                event['WeekName'] =  module_filter[event['WeekName']]
+            #if event['WeekName'] in module_filter and module_filter[event['WeekName']] is not None:
+            #    event['WeekName'] =  module_filter[event['WeekName']]
 
             # Now look in the official list
             if event['WeekName'] in module_map:
@@ -254,10 +261,10 @@ if db(db.events).count() == 0:
 
             if module is not None:
 
-                success, *event_data = convert_date_to_weekdaytime(event['StartDate'])
+                success, *event_data = convert_date_to_weekdaytime(event['StartDate2020'])
 
                 if not success:
-                    print(f"Failed to convert start date: {event['StartDate']}")
+                    print(f"Failed to convert start date: {event['StartDate2020']}")
                     break
 
                 evweek, evday, evtime = event_data
@@ -278,4 +285,4 @@ if db(db.events).count() == 0:
                                      start_time=event['StartTime'],
                                      duration=event['Length'])
                 except:
-                    print(db._last_sql)
+                    print(db._lastsql)

@@ -50,18 +50,28 @@ def convert_date_to_weekdaytime(value, start_of_year=None):
 
 def update_module_record_with_dates(module):
     """Calculates the start and end date of a module from the module events 
-    and inserts it into the record object in place."""
+    and inserts it into the record object in place. If there are no events 
+    yet then the placeholder week and duration are used."""
     
     events = module.events.select()
     [update_event_record_with_dates(ev) for ev in events]
     
     if len(events):
         module.start = min([ev.start for ev in events]).date()
-        module.end = max([ev.end for ev in events]).date()
+        # These are dates and fullcalendar end is exclusive, so need to add one
+        module.end = max([ev.end for ev in events]).date() + datetime.timedelta(days=1)
     else:
-        module.start = current.FIRST_DAY
-        module.end = current.FIRST_DAY
-
+        try:
+            # academic placeholder weeks are base-1 not base-0
+            module.start = current.FIRST_DAY + datetime.timedelta(weeks=module.placeholder_week - 1)
+            # placeholders cover monday to friday and fullcalendar end dates are exclusive,
+            # so don't need to account for the extra day at the start
+            placeholder_length = (module.placeholder_n_weeks * 5 + 
+                                  (module.placeholder_n_weeks - 1) * 2)
+            module.end = module.start + datetime.timedelta(days=placeholder_length)
+        except TypeError:
+            module.start = current.FIRST_DAY
+            module.end = current.FIRST_DAY
 
 def update_event_record_with_dates(event, week=1, duration=1, event_day=0, 
                                    start_time=datetime.time(9,0)):
@@ -110,8 +120,6 @@ def module_markdown(module_id, title=False, show_events=True):
     for fld, title in sections:
         if module[fld] is not None and module[fld] != "":
             content += f'{title}\n\n{module[fld]}\n\n'
-    
-    print(show_events)
     
     if show_events:
         

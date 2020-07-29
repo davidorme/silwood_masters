@@ -45,6 +45,9 @@ db.define_table('courses',
 
 db.define_table('modules',
                 Field('title', 'string'),
+                Field('is_series', 'boolean'), # Workshop series, reading groups etc.
+                Field('placeholder_week', 'integer'), # If no events, use these two
+                Field('placeholder_n_weeks', 'integer', default=1),
                 Field('convenor_id', 'reference teaching_staff',
                       ondelete='SET NULL'),
                 Field('description', 'text'),
@@ -65,7 +68,7 @@ db.define_table('events',
                 Field('module_id', 'reference modules'),
                 Field('teacher_id', 'reference teaching_staff',
                       ondelete='SET NULL'),
-                Field('academic_week', 'integer'),
+                Field('academic_week', 'integer'), 
                 Field('day_of_week', 'integer'),
                 Field('start_time', 'time'),
                 Field('duration', 'double'),

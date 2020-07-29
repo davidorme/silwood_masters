@@ -723,13 +723,16 @@ def get_modules(start=None, end=None, course_id=None):
     and a day by day list is ugly."""
     
     if course_id is None:
-        query = db.modules
+        query = (db.modules.is_series == False)
     else:
-        query = db.modules.courses.contains(course_id)
+        query = ((db.modules.courses.contains(course_id)) & (db.modules.is_series == 0))
     
     modules = db(query).select(db.modules.id, 
                                db.modules.title,
-                               db.modules.courses)
+                               db.modules.courses,
+                               db.modules.is_series,
+                               db.modules.placeholder_week,
+                               db.modules.placeholder_n_weeks)
     
     # This is a bit clumsy - need to add start, end and url
     # and convert courses entry to resourceIDs

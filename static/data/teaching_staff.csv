@@ -1,112 +1,59 @@
-﻿teaching_staff.title,teaching_staff.firstname,teaching_staff.lastname,teaching_staff.phone,teaching_staff.email,teaching_staff.specialisation
-Dr,Wouter,Buytaert,41329,w.buytaert,Impacts of land use and climate change on hydrological processes and water supply
-Prof,Rob,Ewers,42223,r.ewers,Tropical forest ecology
-Prof,Jon,Lloyd,07539 525 215,jonathan.lloyd,Underlying controls on ecosystem carbon fluxes
-Dr,David,Orme,42352,d.orme,Global biodiversity patterns; GIS; conservation and climate change biology
-Dr,Samraat,Pawar,42213,s.pawar,Scaling of indvidual metabolism through interactions to community- and ecosystem-level dynamics
-Dr,Marion,Pfeifer,42263,m.pfeifer,Ecological responses to anthropogenic and climatic stressors
-Dr,Isabel,Rosa,42263,i.rosa09,Tropical deforestation and land use change
-Dr,Robert,Sternberg,45619,r.sternberg,Science media production
-Dr,Joe,Tobias,41059,j.tobias,"Processes generating,sustaining and structuring biodiversity"
-Dr,Stephen,Webster,48760,stephen.webster,"Science communication,art-science collaborations and how scientific research incorporates cultural and personal values"
-Dr,Zed,Zulkafli,46115,z.zulkafli10,"Climatology,hydrology and remote sensing"
-Dr,Catalina,Estrada,42217,c.estrada,Silwood park field studies; chemical signals and defenses; plant-insect-fungal ecological interactions
-Prof,Colin,Prentice,42354,c.prentice,"Global carbon cycle and models,biosphere-atmosphere exchanges,environmental change impacts"
-Dr,Emma,Cavan,,e.cavan,Spatial Analyses and Geographic Information Systems (GIS)
-Dr,Cristina,Banks-Leite,42289,c.banks,Landscape and community ecology
-Dr,Josh,Hodge,,j.hodge@imperial.ac.uk,
-Dr,Matteo,Fumagalli,,m.fumagalli@imperial.ac.uk,
-Dr,James,Rosindell,,j.rosindell@imperial.ac.uk,
-Dr,Julia,Schroeder,,julia.schroeder@imperial.ac.uk,
-Dr,Martin,Brazeau,,m.brazeau@imperial.ac.uk,
-Prof,Vincent,Jansen,,Vincent.Jansen@rhul.ac.uk,
-Dr,Alberto,Pascual-Garcia,,a.pascual-garcia@imperial.ac.uk,
-Dr,Tin-Yu,Hui,,tin-yu.hui11@imperial.ac.uk,
-Prof,Tim,Barraclough,,t.barraclough@imperial.ac.uk,
-Dr,Richard,Gill,,r.gill@imperial.ac.uk,
-Dr,Terhi,Riutta,,,
-Prof,Mark,Burgman,,m.burgman@imperial.ac.uk,
-Prof,Guy,Woodward,,guy.woodward@imperial.ac.uk,
-Prof,Tom,Bell,,thomas.bell@imperial.ac.uk,
-Prof,Alfried,Vogler,,,
-Prof,Austin,Burt,,,
-Prof,Arkhat,Abzhanov,,,
-Dr,Ian,Kitching,,,
-Dr,Andrew,Knight,,andrew.knight1@imperial.ac.uk,
-Dr,Morena,Mills,,m.mills@imperial.ac.uk,
-Dr,Tim,Wright,,Tim.Wright@durrell.org,
-Dr,Marcus,Rowcliffe,,marcus.rowcliffe@ioz.ac.uk,
-Dr,Colin,Clubbe,,c.clubbe@kew.org,
-Dr,Stephen,Webster,,,
-Dr,Janet,De Wilde,,,
-,Alexandra,Fitzsimmons,,,
-,Andrew, Routh,,,
-,Andrew, Routh,,,
-,Andrew,Knight,,,
-,Andrew,Terry,,,
-,Andy,Purvis,,,
-,Ans,Vercammen,,,
-,Belinda,Luke,,,
-,Cathy,Dean,,,
-,Charlie,Burrell,,,
-,Chris, Adams,,,
-,Chris,Clark,,,
-,Clare,Crawford,,,
-,David,Williams,,,
-,Debbie, Phillips,,,
-,Denis,Wright,,,
-,Dick,Shaw,,,
-,Diogo,Verissimo,,,
-,EJ,Milner-Gulland,,,
-,Ellie,Mackay,,,
-,Eluned,Price,,,
-,Emma,Ransome,,,
-,Felicity,Mellor,,,
-,Gareth,Mitchell,,,
-,Graham,Matthews,,,
-,Hannah,Gilchrist,,,
-,Helal,Ahmed,,,
-,Helen,Newing,,,
-,Ian,Walmsley,,,
-,Jenna,Lawson,,,
-,Joanna,House,,,
-,Joe,Huddart,,,
-,John,Mumford,,,
-,Jonathan,Reeves,,,
-,Jones,Helen,,,
-,Karen,Varnham,,,
-,Kat,Bunce,,,
-,Katrina,Davis,,,
-,Keith,Walters,,,
-,Kris,Murray,,,
-,Kris,Murray,,,
-,Lauren,Cator,,,
-,Lizzie,Duthie,,,
-,M,H,,,
-,M,N,,,
-,Malcom,Nicoll,,,
-,Mark,Burgman,,,
-,Mark,Carine,,,
-,Martin,Fisher,,,
-,Martin,Reynolds,,,
-,Matthew,Agarwala,,,
-,Nigel,Dudley,,,
-,Oliver,Windram,,,
-,Olivia,Judson,,,
-,Poppy,Fraser,,,
-,R,C,,,
-,Richard,Young,,,
-,Rob,Arthur,,,
-,Ruth,Cromie,,,
-,S,B,,,
-,S,C,,,
-,Samantha,O'Loughlin,,,
-,Sean,Murphy,,,
-,Stefan,Hoyle,,,
-,Stephen, Webster,,,
-,Steve,Fry,,,
-,TBD,TBD,,,
-,Thomson,Ecology,,,
-,Trent,Garner,,,
-,Various,,,,
-,Various,staff,,,
+﻿teaching_staff.firstname,teaching_staff.lastname,teaching_staff.email
+Alfried,Vogler,a.vogler@imperial.ac.uk
+Samraat,Pawar,s.pawar@imperial.ac.uk
+Amanda,Ellis,amanda.ellis@imperial.ac.uk
+Richard,Gill,r.gill@imperial.ac.uk
+Julia,Schroeder,julia.schroeder@imperial.ac.uk
+Tom,Bell,thomas.bell@imperial.ac.uk
+Cristina,Banks-Leite,c.banks@imperial.ac.uk
+Catalina,Estrada,c.estrada@imperial.ac.uk
+Josh,Hodge,j.hodge@imperial.ac.uk
+David,Orme,d.orme@imperial.ac.uk
+Matteo,Fumagalli,m.fumagalli@imperial.ac.uk
+Rob,Ewers,r.ewers@imperial.ac.uk
+Colin,Prentice,c.prentice@imperial.ac.uk
+Ian,Kitching,i.kitching@nhm.ac.uk
+James,Rosindell,j.rosindell@imperial.ac.uk
+Martin,Brazeau,m.brazeau@imperial.ac.uk
+,TBC,
+Lauren,Cator,l.cator@imperial.ac.uk
+Bonnie,Waring,b.waring@imperial.ac.uk
+Alberto,Pascual-Garcia,a.pascual-garcia@imperial.ac.uk
+Max,Barclay,m.barclay@nhm.ac.uk
+Vincent,Jansen,Vincent.Jansen@rhul.ac.uk
+Joe,Tobias,j.tobias@imperial.ac.uk
+Zoe,Hughes,z.hughes@nhm.ac.uk
+Austin,Burt,a.burt@imperial.ac.uk
+Stephen,Fry,stevefry@stephenfry.consulting
+Arkhat,Abzhanov,a.abzhanov@imperial.ac.uk
+Tin-Yu,Hui,tin-yu.hui11@imperial.ac.uk
+Rich,Twitchett,r.twitchett@nhm.ac.uk
+Guy,Woodward,guy.woodward@imperial.ac.uk
+Natalie,Cooper,natalie.cooper@nhm.ac.uk
+Oliver,Windram,
+Keith,Walters,
+Olivia,Judson,
+Dick,Shaw,
+Samantha,O'Loughlin,
+Graham,Matthews,
+Denis,Wright,
+Sean,Murphy,
+Belinda,Luke,
+Terhi,Riutta,
+Tim,Barraclough,
+Debbie,Phillips,
+Janet,De Wilde,
+,Various,
+Ian,Walmsley,
+Stefan,Hoyle,
+Wouter,Buytaert,
+Emma,Ransome,
+Chris,Adams,
+Jenna,Lawson,
+Mark,Carine,
+David,Williams,
+Jones,Helen,
+Andy,Purvis,
+Kris,Murray,
+Joanna,House,
+Emma,Cavan,
