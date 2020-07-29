@@ -367,15 +367,17 @@ def course_doc():
     _ = [update_module_record_with_dates(row) for row in modules]
     modules.sort(key=lambda row: row.start)
     
-    # Process into a definition list (tables and pandoc again)
+    # Process into a simple pipe table
     content += '## Weekly module summary\n\n\n'
+    
+    table = '\n\nWeek|Starting|Module|Convenors\n'
+    table += '-----|-----|-----|-----\n'
     for mod in modules:
         week = ((mod.start - FIRST_DAY).days // 7) + 1
-        content += f'Week {week} - {mod.title}\n'
-        content += f':   Convenor: {mod.convenors}  \n'
-        content += f'    Dates: {mod.start} - {mod.end}\n\n'
-
-    content += '## Module details\n\n'
+        table += f'{week}|{mod.start.strftime("%-d %b %Y")}|{mod.title}|{mod.convenors}\n'
+    
+    content += table
+    content += '\n\n## Module details\n\n'
     
     for mod in modules:
         content += module_markdown(mod.id, title=True, show_events=show_events)
@@ -390,9 +392,9 @@ def course_doc():
         url = os.path.join('static', 'module_docx',  filename)
         filepath = os.path.join(request.folder, url)
         template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
-        pypandoc.convert_text(content, 'docx', format='md',  outputfile=filepath,
+        pypandoc.convert_text(content, 'docx', format='markdown+pipe_tables', 
+                              outputfile=filepath,
                               extra_args=[f"--reference-doc={template}"])
-    
     
         with open(filepath, 'rb') as fin:
             data = io.BytesIO(fin.read())
@@ -401,7 +403,7 @@ def course_doc():
     elif output_format == 'latex':
         # With latex, can just directly pass the string
         filename = f'{course.abbrname}_{datetime.date.today()}.tex'
-        data = pypandoc.convert_text(content, 'latex', format='md')
+        data = pypandoc.convert_text(content, 'latex', format='markdown+pipe_tables')
         ctype = 'application/x-tex'
         
     disposition = f'attachment; filename={filename}'
