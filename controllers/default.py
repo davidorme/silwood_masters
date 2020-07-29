@@ -478,7 +478,9 @@ def courses():
     # Otherwise get the requested course module list
     course_id = int(request.args[0])
     
-    course = db.courses[course_id]
+    course = db(db.courses.id == course_id).select()
+    course = list(course.render())[0]
+
     modules = db(db.modules.courses.contains(course_id)
                  ).select(db.modules.id, 
                           db.modules.title,
