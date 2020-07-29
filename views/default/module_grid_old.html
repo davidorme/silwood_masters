@@ -10,6 +10,10 @@
 
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
+
+				// grab the start of the year to get week numbers from that
+				var day_one = document.getElementById('year_data').getAttribute('day_one');
+				var day_one = new Date(day_one);
 				
 				var Calendar = FullCalendar.Calendar;
 				var calendarEl = document.getElementById('calendar');
@@ -19,55 +23,48 @@
 
 				var calendar = new Calendar(calendarEl, {
 					headerToolbar: {
-						left: false,
-						center: false,
-						right:false
+						left: 'prev,next today',
+						center: 'title',
+						right: ''
 					},
 					views: {
-						resourceTimeGridDay: {
-							scrollTime: "01:00:00",
-							slotMinTime: "01:00:00",
-							slotMaxTime: "17:00:00",
-							slotDuration: {minutes: 5},
-							slotLabelInterval: {minutes: 20},
-							allDaySlot: false,
-							slotLabelFormat: {
-								hour: 'numeric',
-								minute: '2-digit',
-								hour12: false
-							},
+						resourceTimelineMonth: {
+							//duration: { days: 5 },
+							//slotDuration: {days: 7}
+							weekNumbers: true
 						}
 					},
-					displayEventTime: false,
+					weekNumberCalculation: function(date){
+						// Get week numbers relative to first day of academic year
+						var diff = Math.floor((((date - day_one) / (60 * 60 * 24 * 1000)) + 1) / 7 ) + 1
+						return diff
+					},
+					firstDay: 1,
+					weekends: false,
 					editable: false,
 					droppable: false, // this allows things to be dropped onto the calendar
 					schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-					initialView: 'resourceTimeGridDay',
+					initialView: 'resourceTimelineMonth',
 					eventSources: [{
-						url: "{{=URL('call/json/get_modules')}}", // use the `url` property
+						url: "{{=URL('call/json/get_modules_old')}}", // use the `url` property
 						color: 'lightgrey', // an option!
 						textColor: 'black', // an option!
 						editable: true
+					}, {
+						url: "{{=URL('call/json/get_college_dates')}}",
+						color: 'lightgrey',
+						textColor: 'black',
+						editable: false
 					}],
 					resources: "{{=URL('call/json/get_courses')}}",
+				    resourceAreaHeaderContent: 'Course',
+					initialDate: day_one
 				});
 				calendar.render();
-				
-				// Relabel the slots 
-				slots = document.getElementsByClassName('fc-timegrid-slot-label-cushion')
-				for (each_slot of slots){
-					var slot_time = each_slot.innerText
-					slot_time = slot_time.split(':')
-					slot_hour = parseInt(slot_time[0])
-					slot_min = parseInt(slot_time[1])
-					week = (slot_hour - 1) * 3 + (slot_min / 20) + 1
-					each_slot.innerText = 'Week ' + week
-				}
 			});
 		</script>
 {{end}}
 
-<H2>Course Module Grid</H2>
-
+{{=year_data}}
 <div id='calendar'></div>
 

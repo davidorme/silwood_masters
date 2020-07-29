@@ -414,6 +414,16 @@ def course_doc():
 ## Other views
 
 def module_grid():
+    """A controller to expose the sequence of modules by course. Anyone can access.
+    All of the actual work is done using clientside JS and JSON feeds.
+    
+    TODO - add admin level edit to move modules on calendar.
+    """
+    
+    return dict()
+
+
+def module_grid_old():
     """A controller to view the sequence of modules by course. Anyone can access.
     TODO - add admin level edit to move modules on calendar.
     """
@@ -734,10 +744,14 @@ def get_courses():
 
 
 @service.json
-def get_modules(start=None, end=None, course_id=None):
-    """Service to provides module level events for the module grid. At the moment
-    the course_id option isn't used -  full calendar can't do a week level slot,
-    and a day by day list is ugly."""
+def get_modules_old(start=None, end=None, course_id=None):
+    """Service to provides module level events for the module grid. 
+    
+    This mechanism provides a sideways scrolling grid - it uses the resourceTimelineMonth
+    view out of the box as intended, but having to click through months and splitting
+    across month boundaries is clumsy and unpleasant to use. The new mechanism hacks a
+    dayGrid to present a vertical scrolling view.
+    """
     
     if course_id is None:
         query = (db.modules.is_series == False)
@@ -757,6 +771,41 @@ def get_modules(start=None, end=None, course_id=None):
     for mod in modules:
         mod.url = URL('module_view', args=mod.id)
         mod.resourceIds = mod.courses
+        mod.pop('courses')
+    
+    return modules
+
+@service.json
+def get_modules(start=None, end=None, course_id=None):
+    """Service to provides module level events for the module grid. 
+    
+    Fullcalendar does a great job of laying out events and providing structures
+    but has some odd limitations in the default views. This mechanism is a horrible
+    hack to get a vertical resource view with weekly slots. The modules are converted
+    into 20 minute slots from 01:00 to 17:00 (48 slots) and passed out to a dayGrid,
+    which then uses JS to relabel the hour slots as academic calendar weeks"""
+    
+    if course_id is None:
+        query = (db.modules.is_series == False)
+    else:
+        query = ((db.modules.courses.contains(course_id)) & (db.modules.is_series == 0))
+    
+    modules = db(query).select(db.modules.id, 
+                               db.modules.title,
+                               db.modules.courses,
+                               db.modules.is_series,
+                               db.modules.placeholder_week,
+                               db.modules.placeholder_n_weeks)
+    
+    # This is a bit clumsy - need to add start, end and url
+    # and convert courses entry to resourceIDs
+    _ = [update_module_record_with_dates(m) for m in modules]
+    for mod in modules:
+        mod.url = URL('module_view', args=mod.id)
+        mod.resourceIds = mod.courses
+        midnight = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+        mod.start = midnight + datetime.timedelta(minutes=(mod.placeholder_week - 1) * 20)
+        mod.end = mod.start + datetime.timedelta(minutes= 20) * mod.placeholder_n_weeks
         mod.pop('courses')
     
     return modules
