@@ -48,8 +48,6 @@ db.define_table('modules',
                 Field('is_series', 'boolean'), # Workshop series, reading groups etc.
                 Field('placeholder_week', 'integer'), # If no events, use these two
                 Field('placeholder_n_weeks', 'integer', default=1),
-                Field('convenor_id', 'reference teaching_staff',
-                      ondelete='SET NULL'),
                 Field('convenors', 'list:reference teaching_staff',
                       ondelete='SET NULL'),
                 Field('description', 'text'),

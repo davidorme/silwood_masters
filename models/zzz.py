@@ -105,17 +105,17 @@ if db(db.modules).count() ==  0:
         for module in reader:
             # Find the convenor
             if module['Convenor'] in convenors:
-                convenor_id = convenors[module['Convenor']]
+                convenors = convenors[module['Convenor']]
             else:
                 print(f"Unknown convenor: {module['Convenor']}")
-                convenor_id = None
+                convenors = None
 
             # Package the courses
             courses = [ky for ky, vl in module.items() if course_regex.match(ky) and vl == '1']
             courses = [course_map[ky] for ky in courses]
 
             db.modules.insert(title=module['ModuleName'],
-                              convenor_id=convenor_id,
+                              convenors=convenors,
                               placeholder_week=module['Week'],
                               placeholder_n_weeks=module['Duration'],
                               is_series=module['Is_Series'],
