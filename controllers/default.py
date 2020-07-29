@@ -19,9 +19,9 @@ def index():
 def teaching_staff_table():
     """Presents a view of teaching staff. Users can add and edit, admin delete
     """
-    
+    is_admin = auth.has_membership('admin')
     form = SQLFORM.grid(db.teaching_staff,
-                        deletable=auth.has_membership('admin'), 
+                        deletable=is_admin, 
                         csv=is_admin)
     
     return dict(form=form)
