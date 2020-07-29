@@ -97,6 +97,10 @@ def module_markdown(module_id, title=False, show_events=True):
     """
     
     db = current.db
+    
+    # update the format of teaching_staff rows
+    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    
     module = db(db.modules.id == module_id).select()
     module = list(module.render())[0]
     update_module_record_with_dates(module)
@@ -106,7 +110,7 @@ def module_markdown(module_id, title=False, show_events=True):
     else:
         content =""
     
-    content += f'**Convenor**: {module.convenor_id}  \n'
+    content += f'**Convenors**: {module.convenors}  \n'
     content += f'**Dates**: {module.start} to {module.end}  \n'
     content += f'**Courses**: {module.courses}\n\n'
     

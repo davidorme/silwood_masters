@@ -128,7 +128,7 @@ def modules_table():
     
     form = SQLFORM.grid(db.modules,
                         fields=[db.modules.title,
-                                db.modules.convenor_id,
+                                db.modules.convenors,
                                 db.modules.courses],
                         editable=is_admin,
                         deletable=is_admin,
@@ -182,7 +182,7 @@ def module_information():
     
     form = SQLFORM(db.modules, 
                    fields = ['title',
-                             'convenor_id',
+                             'convenors',
                              'courses',
                              'description',
                              'aims',
@@ -349,11 +349,16 @@ def course_doc():
     
     content = ""
     
+    # update the format of teaching_staff rows
+    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    
     course = db.courses[course_id]
     modules = db(db.modules.courses.contains(course_id)
                  ).select(db.modules.id,
                           db.modules.title,
-                          db.modules.convenor_id)
+                          db.modules.convenors,
+                          db.modules.placeholder_week,
+                          db.modules.placeholder_n_weeks)
     
     # Convert ids to representation
     modules = list(modules.render())
@@ -367,7 +372,7 @@ def course_doc():
     for mod in modules:
         week = ((mod.start - FIRST_DAY).days // 7) + 1
         content += f'Week {week} - {mod.title}\n'
-        content += f':   Convenor: {mod.convenor_id}  \n'
+        content += f':   Convenor: {mod.convenors}  \n'
         content += f'    Dates: {mod.start} - {mod.end}\n\n'
 
     content += '## Module details\n\n'
@@ -453,11 +458,16 @@ def courses():
     # Otherwise get the requested course module list
     course_id = int(request.args[0])
     
+    # update the format of teaching_staff rows
+    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    
     course = db.courses[course_id]
     modules = db(db.modules.courses.contains(course_id)
                  ).select(db.modules.id, 
                           db.modules.title,
-                          db.modules.convenor_id)
+                          db.modules.convenors,
+                          db.modules.placeholder_week,
+                          db.modules.placeholder_n_weeks,)
     
     header = CAT(H2(course.fullname),
                  P(B('Course Convenor: '), course.convenor),
@@ -496,7 +506,7 @@ def courses():
                  _style='display:flex'))
         table_rows.append(row)
         row = TR(TD(),
-                 TD(mod.start, DIV(_style='flex:1'), mod.convenor_id,
+                 TD(mod.start, DIV(_style='flex:1'), mod.convenors,
                  _style='display:flex'))
         table_rows.append(row)
     
