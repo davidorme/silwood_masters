@@ -196,6 +196,8 @@ def module_information():
                    fields = ['title',
                              'convenors',
                              'courses',
+                             'placeholder_week',
+                             'placeholder_n_weeks',
                              'description',
                              'aims',
                              'reading',
