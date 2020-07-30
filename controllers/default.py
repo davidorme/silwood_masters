@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from timetable_functions import (module_markdown, update_module_record_with_dates,
                                  update_event_record_with_dates, convert_date_to_weekdaytime)
+import itertools
 import io
 import gluon
 import datetime
@@ -810,15 +811,22 @@ def get_modules(start=None, end=None, course_id=None):
                                db.modules.placeholder_week,
                                db.modules.placeholder_n_weeks)
     
+    # A repeating set containing a color brewer palette for giving each event different colours
+    colours = itertools.cycle(['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3',
+                               '#fdb462','#b3de69','#fccde5','#d9d9d9'])
+    
     # This is a bit clumsy - need to add start, end and url
     # and convert courses entry to resourceIDs
     _ = [update_module_record_with_dates(m) for m in modules]
+    modules.sort(lambda x: x.start)
+    
     for mod in modules:
         mod.url = URL('module_view', args=mod.id)
         mod.resourceIds = mod.courses
         midnight = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
         mod.start = midnight + datetime.timedelta(minutes=(mod.placeholder_week - 1) * 20)
         mod.end = mod.start + datetime.timedelta(minutes= 20) * mod.placeholder_n_weeks
+        mod['backgroundColor'] = next(colours)
         mod.pop('courses')
     
     return modules
