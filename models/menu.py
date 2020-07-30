@@ -4,10 +4,11 @@
 
 response.menu = [
     (T('Home'), False, URL('default', 'index'), []),
-    (T('Module Grid'), False, URL('default', 'module_grid'), []),
-    (T('Courses'), False, URL('default', 'courses'), []),
-    (T('Help'), False, URL('default', 'help'), []),
-    (T('Room Grid'), False, URL('default', 'room_grid'), []),
+    (T('Views'), False, None, [
+        (T('Module Grid'), False, URL('default', 'module_grid'), []),
+        (T('Course List'), False, URL('default', 'courses'), []),
+        (T('Room Grid'), False, URL('default', 'room_grid'), [])
+    ]),
     (T('Tables'), False, None, [
         (T('College Dates'), False, URL('default', 'college_dates_table'), []),
         (T('Recurring Events'), False, URL('default', 'recurring_events_table'), []),
@@ -17,6 +18,7 @@ response.menu = [
         (T('Modules'), False, URL('default', 'modules_table'), []),
         (T('Events'), False, URL('default', 'events_table'), [])
     ]),
+    (T('Help'), False, URL('default', 'help'), [])
 ]
 
 if auth.has_membership('admin'):
