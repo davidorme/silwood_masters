@@ -824,7 +824,7 @@ def get_modules(start=None, end=None, course_id=None):
         mod.url = URL('module_view', args=mod.id)
         mod.resourceIds = mod.courses
         midnight = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
-        mod.start = midnight + datetime.timedelta(minutes=(mod.placeholder_week - 1) * 20)
+        mod.start = midnight + datetime.timedelta(minutes=(mod.placeholder_week) * 20 + 40)
         mod.end = mod.start + datetime.timedelta(minutes= 20) * mod.placeholder_n_weeks
         mod['backgroundColor'] = next(colours)
         mod.pop('courses')
