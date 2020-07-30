@@ -609,7 +609,11 @@ def module_grid():
     TODO - add admin level edit to move modules on calendar.
     """
     
-    return dict()
+    # Use a div to pass the year academic start data to the client for use by fullcalendar
+    year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
+    
+    return dict(year_data=year_data)
+
 
 
 def module_grid_old():

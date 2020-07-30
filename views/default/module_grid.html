@@ -10,6 +10,10 @@
 
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
+
+				// grab the start of the year to get week numbers from that
+				var day_one = document.getElementById('year_data').getAttribute('day_one');
+				var day_one = new Date(day_one);
 				
 				var Calendar = FullCalendar.Calendar;
 				var calendarEl = document.getElementById('calendar');
@@ -53,7 +57,16 @@
 				});
 				calendar.render();
 				
+				Date.prototype.addDays = function(days) {
+				    var date = new Date(this.valueOf());
+				    date.setDate(date.getDate() + days);
+				    return date;
+				}
+				
 				// Relabel the slots 
+				const dateTimeFormat = new Intl.DateTimeFormat('en', { year: 'numeric', 
+													month: 'short', day: '2-digit' }) 
+				
 				slots = document.getElementsByClassName('fc-timegrid-slot-label-cushion')
 				for (each_slot of slots){
 					var slot_time = each_slot.innerText
@@ -61,15 +74,17 @@
 					slot_hour = parseInt(slot_time[0])
 					slot_min = parseInt(slot_time[1])
 					week = (slot_hour - 1) * 3 + (slot_min / 20) + 1
-					each_slot.innerText = 'Week ' + week
+					week_monday_date = day_one.addDays((week - 1) * 7)
+					const [{ value: month },,{ value: day },,{ value: year }] = dateTimeFormat.formatToParts(week_monday_date) 
+					each_slot.innerText = 'Week ' + week + '\n' + `${day}-${month}-${year }`
 				}
 			});
 		</script>
 {{end}}
+{{=year_data}}
 
 <H2>Course Module Grid</H2>
 
 <p>Module colours are arbitrary and are simply to make it easier to pick out shared modules across the grid.</p>
-
 <div id='calendar'></div>
 
