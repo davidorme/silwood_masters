@@ -1,99 +1,132 @@
 {{extend 'layout.html'}}
 
 {{block head}}
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
 
-		<script>
-			document.addEventListener('DOMContentLoaded', function() {
+<style>
+div.monday {
+	font-size: 9pt;
+	text-align: center;
+	color: gray;
+}
+.fc-direction-ltr .fc-timegrid-slot-label-frame {
+    text-align: center;
+}
+.fc-timegrid-slot .fc-timegrid-axis {width:1000px !important;}
+</style>
 
-				// grab the start of the year to get week numbers from that
-				var day_one = document.getElementById('year_data').getAttribute('day_one');
-				var day_one = new Date(day_one);
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
 
-				var Calendar = FullCalendar.Calendar;
-				var calendarEl = document.getElementById('calendar');
+		// grab the start of the year to get week numbers from that
+		var day_one = document.getElementById('year_data').getAttribute('day_one');
+		var day_one = new Date(day_one);
 
-				// initialize the calendar
-				// -----------------------------------------------------------------
+		var Calendar = FullCalendar.Calendar;
+		var calendarEl = document.getElementById('calendar');
 
-				var calendar = new Calendar(calendarEl, {
-					headerToolbar: {
-						left: false,
-						center: false,
-						right: false
+		// initialize the calendar
+		// -----------------------------------------------------------------
+
+		var calendar = new Calendar(calendarEl, {
+			headerToolbar: {
+				left: false,
+				center: false,
+				right: false
+			},
+			views: {
+				resourceTimeGridDay: {
+					scrollTime: "01:00:00",
+					slotMinTime: "01:00:00",
+					slotMaxTime: "18:00:00",
+					slotDuration: {
+						minutes: 5
 					},
-					views: {
-						resourceTimeGridDay: {
-							scrollTime: "01:00:00",
-							slotMinTime: "01:00:00",
-							slotMaxTime: "18:00:00",
-							slotDuration: {
-								minutes: 5
-							},
-							slotLabelInterval: {
-								minutes: 20
-							},
-							allDaySlot: false,
-							slotLabelFormat: {
-								hour: 'numeric',
-								minute: '2-digit',
-								hour12: false
-							},
-						}
+					slotLabelInterval: {
+						minutes: 20
 					},
-					displayEventTime: false,
-					editable: false,
-					droppable: false, // this allows things to be dropped onto the calendar
-					schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-					initialView: 'resourceTimeGridDay',
-					eventSources: [{
-						url: "{{=URL('call/json/get_modules')}}", // use the `url` property
-						color: 'lightgrey', // an option!
-						textColor: 'black', // an option!
-						editable: true
-					}],
-					resources: "{{=URL('call/json/get_courses')}}",
-				});
-				calendar.render();
-
-				Date.prototype.addDays = function(days) {
-					var date = new Date(this.valueOf());
-					date.setDate(date.getDate() + days);
-					return date;
+					allDaySlot: false,
+					slotLabelFormat: {
+						hour: 'numeric',
+						minute: '2-digit',
+						hour12: false
+					},
 				}
+			},
+			//slotLabelContent: (arg) => {
+			//	console.log(arg)
+			//	const html = `<div class="flex flex-column" style='width:100px'>HTML goes here</div>`;
+			//
+			//	return {
+			//		html,
+			//	};
+			//},
+			displayEventTime: false,
+			editable: false,
+			droppable: false, // this allows things to be dropped onto the calendar
+			schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+			initialView: 'resourceTimeGridDay',
+			eventSources: [{
+				url: "{{=URL('call/json/get_modules')}}", // use the `url` property
+				color: 'lightgrey', // an option!
+				textColor: 'black', // an option!
+				editable: true
+			}],
+			resources: "{{=URL('call/json/get_courses')}}",
+		});
+		calendar.render();
 
-				// Relabel the slots 
-				const dateTimeFormat = new Intl.DateTimeFormat('en', {
-					year: 'numeric',
-					month: 'short',
-					day: '2-digit'
-				})
+		// Extend Date with an add days methods
+		Date.prototype.addDays = function(days) {
+			var date = new Date(this.valueOf());
+			date.setDate(date.getDate() + days);
+			return date;
+		}
 
-				slots = document.getElementsByClassName('fc-timegrid-slot-label-cushion')
-				for (each_slot of slots) {
-					var slot_time = each_slot.innerText
-					slot_time = slot_time.split(':')
-					slot_hour = parseInt(slot_time[0])
-					slot_min = parseInt(slot_time[1])
-					week = (slot_hour - 1) * 3 + (slot_min / 20) + 1
-					week_monday_date = day_one.addDays((week - 1) * 7)
-					const [{
-						value: month
-					}, , {
-						value: day
-					}, , {
-						value: year
-					}] = dateTimeFormat.formatToParts(week_monday_date)
-					each_slot.innerText = 'Week ' + week + '\n' + `${day}-${month}-${year }`
-				}
-			});
+		// A date time format to use when adding row labels
+		const dateTimeFormat = new Intl.DateTimeFormat('en', {
+			year: 'numeric',
+			month: 'short',
+			day: '2-digit'
+		})
+		
+		// This is hacky - basically trying to get to the TR elements within
+		// the full calendar grid main body
+		var timegrid = document.getElementsByClassName('fc-timegrid-slots')[0]
+		var rows = timegrid.lastChild.lastChild.rows
 
-		</script>
+		// Go by fours (20 minute slots with 5 minute minor slot grid)
+		for (var i = 0; i < rows.length; i += 4) {
+			// For a row, dive down to find the div containing the label
+			el = rows[i].querySelector('.fc-timegrid-slot-label-cushion')
+			// Extract the default 24h time from the first slot in a block
+			// of four, split it up and convert to a week
+			var slot_time = el.innerText
+			slot_time = slot_time.split(':')
+			slot_hour = parseInt(slot_time[0])
+			slot_min = parseInt(slot_time[1])
+			week = (slot_hour - 1) * 3 + (slot_min / 20) + 1
+			el.innerHTML = `<div class="flex flex-column" style="width:100px;text-align:center">Week ${week}</div>`
+			// Now use the first day of the academic year to get week dates
+			week_monday_date = day_one.addDays((week - 1) * 7)
+			const [{
+				value: month
+			}, , {
+				value: day
+			}, , {
+				value: year
+			}] = dateTimeFormat.formatToParts(week_monday_date)
+
+			rows[i + 1].firstChild.innerHTML = `<div class='monday'>${day} ${month} ${year}</div>`
+		}
+	});
+
+</script>
 {{end}}
 {{=year_data}}
 
