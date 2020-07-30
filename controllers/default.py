@@ -7,10 +7,21 @@ import datetime
 from dateutil import parser
 import pypandoc
 import markdown # gluon provides MARKDOWN but lacks extensions.
+import os
 
 def index():
 
     return dict()
+
+
+def help():
+    
+    filepath = os.path.join(request.folder, 'static', 'docs', 'help.md')
+    
+    with open(filepath, encoding="utf-8-sig") as help_file:
+        help_doc = XML(markdown.markdown(help_file.read()))
+    
+    return dict(help_doc=help_doc)
 
 ## TABLE VIEW CONTROLLERS 
 ## - These can all be viewed by anyone but you have to log in to edit
