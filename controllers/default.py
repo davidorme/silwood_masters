@@ -154,7 +154,7 @@ def modules_table():
 ## - information shows a form for the module level data
 ## - events provides a week calendar for event editing
 ## - view renders the existing information as html
-## - docx downloads the existing information as docx
+## - doc downloads the existing information as docx or latex
 
 def _module_page_header(module_id, current):
     """A helper function to generate the common header for module controllers.
@@ -350,12 +350,151 @@ def module_doc():
                **{'Content-Type': ctype,
                'Content-Disposition': disposition})
 
+
+## COURSE INFORMATION CONTROLLERS
+## - courses/ shows a list of courses
+## - courses/id shows a course level summary and links to modules
+## - doc downloads the existing information as docx or latex
+
+
+def courses():
+    """A controller to view the modules in a course
+    """
+    
+    # update the format of teaching_staff rows for either response
+    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    
+    # if the URL has no arguments, present a list of courses with URLs
+    if len(request.args) == 0:
+        
+        courses = db(db.courses).select()
+        courses = list(courses.render())
+        
+        table_rows = []
+        for crs in courses:
+            row = TR(TD(B(crs.fullname), DIV(_style='flex:1'), 
+                        A('View', _href=URL('courses', args=crs.id)),
+                     _style='display:flex'))
+            table_rows.append(row)
+            
+            if crs.coconvenor is None:
+                conv_string = crs.convenor
+            else:
+                conv_string = f"{crs.convenor} & {crs.coconvenor}"
+            row = TR(TD(DIV(_style='flex:1'), conv_string,
+                     _style='display:flex'))
+            table_rows.append(row)
+            
+            table = TABLE(table_rows, _class='table-striped')
+        
+        return dict(mod_table=table, series_table=DIV(), header=H2('Course list'))
+    
+    # Otherwise get the requested course module list
+    course_id = int(request.args[0])
+    
+    course = db(db.courses.id == course_id).select()
+    course = list(course.render())[0]
+
+    modules = db((db.modules.courses.contains(course_id)) &
+                 (db.modules.is_series != True)
+                 ).select(db.modules.id, 
+                          db.modules.title,
+                          db.modules.convenors,
+                          db.modules.placeholder_week,
+                          db.modules.placeholder_n_weeks,)
+    
+    series = db((db.modules.courses.contains(course_id)) &
+                 (db.modules.is_series == True)
+                 ).select(db.modules.id, 
+                          db.modules.title,
+                          db.modules.convenors,
+                          db.modules.placeholder_week,
+                          db.modules.placeholder_n_weeks,)
+    
+    header = CAT(H2(course.fullname),
+                 P(B('Course Convenor: '), course.convenor),
+                 P(B('Course Co-convenor: '), course.coconvenor),
+                 P(B('Download full timetable with events: '), 
+                     SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx', 1])),
+                          _style="margin:5px"),
+                     XML('&or;'),
+                     SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex', 1])),
+                          _style="margin:5px"),
+                     ),
+                P(B('Download module level timetable: '), 
+                    SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx', 0])),
+                         _style="margin:5px"),
+                    XML('&or;'),
+                    SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex', 0])),
+                         _style="margin:5px"),
+                    ))
+    
+    # Process any series modules
+    if series:
+        series = list(series.render())
+        
+        # Add dates and sort in time order
+        _ = [update_module_record_with_dates(row) for row in series]
+        series.sort(key=lambda row: row.start)
+    
+        # Process into a table - would be nice to still use fullCalendar but
+        # it doesn't provide a week slot only day and time - could use the 
+        # same hack as for the module grid, but that doesn't seem worth it
+        
+        series_table_rows = []
+        for mod in series:
+            row = TR(TD(B(mod.title), 
+                        DIV(_style='flex:1'), 
+                        A('View', _href=URL('module_view', args=mod.id)),
+                        _style='display:flex'))
+            series_table_rows.append(row)
+            row = TR(TD(f'{mod.start} to {mod.end}',
+                        DIV(_style='flex:1'), 
+                        mod.convenors,
+                        _style='display:flex'))
+            series_table_rows.append(row)
+            
+        series_table = TABLE(series_table_rows, _class='table-striped', _style='width:100%')
+        series_table = CAT(H3('Series modules'), series_table)
+    else:
+        series_table = DIV()
+    
+    # Now process standard modules
+    # Convert ids to representation
+    modules = list(modules.render())
+    
+    # Add dates and sort in time order
+    _ = [update_module_record_with_dates(row) for row in modules]
+    modules.sort(key=lambda row: row.start)
+    
+    # Process into a table - would be nice to still use fullCalendar but
+    # it doesn't provide a week slot only day and time
+    mod_table_rows = []
+    for mod in modules:
+        week = ((mod.start - FIRST_DAY).days // 7) + 1
+        row = TR(TD(f'Week {week}', _style='width:20%'),
+                 TD(B(mod.title), DIV(_style='flex:1'), 
+                    A('View', _href=URL('module_view', args=mod.id)),
+                 _style='display:flex'))
+        mod_table_rows.append(row)
+        row = TR(TD(),
+                 TD(mod.start, DIV(_style='flex:1'), mod.convenors,
+                 _style='display:flex'))
+        mod_table_rows.append(row)
+    
+    mod_table = TABLE(mod_table_rows, _class='table-striped', _style='width:100%')
+    mod_table = CAT(H3('Module list'), mod_table)
+    
+    return dict(header=header, 
+                mod_table=mod_table,
+                series_table=series_table)
+
 def course_doc():
     """A controller to push out a DOCX version of a course, using pandoc to convert 
     markdown into the docx. Anyone can access.
     """
     
-    course_id = request.args[0] 
+    course_id = int(request.args[0])
     output_format = request.args[1]
     show_events = bool(int(request.args[2]))
     
@@ -365,7 +504,10 @@ def course_doc():
     db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
     
     course = db.courses[course_id]
-    modules = db(db.modules.courses.contains(course_id)
+    
+    ## STANDARD MODULE DATA AND SUMMARY TABLE
+    modules = db(db.modules.courses.contains(course_id) &
+                 (db.modules.is_series != True)
                  ).select(db.modules.id,
                           db.modules.title,
                           db.modules.convenors,
@@ -389,10 +531,45 @@ def course_doc():
         table += f'{week}|{mod.start.strftime("%-d %b %Y")}|{mod.title}|{mod.convenors}\n'
     
     content += table
+    
+    ## SERIES MODULE DATA AND SUMMARY TABLE
+    series = db(db.modules.courses.contains(course_id) &
+                 (db.modules.is_series == True)
+                 ).select(db.modules.id,
+                          db.modules.title,
+                          db.modules.convenors,
+                          db.modules.placeholder_week,
+                          db.modules.placeholder_n_weeks)
+    
+    if series:
+        # Convert ids to representation
+        series = list(series.render())
+    
+        # Add dates and sort in time order
+        _ = [update_module_record_with_dates(row) for row in series]
+        series.sort(key=lambda row: row.start)
+    
+        # Process into a simple pipe table
+        content += '## Series module summary\n\n\n'
+    
+        table = '\n\nStart|End|Module|Convenors\n'
+        table += '-----|-----|-----|-----\n'
+        for mod in series:
+            table += f'{mod.start.strftime("%-d %b %Y")}|{mod.end.strftime("%-d %b %Y")}|{mod.title}|{mod.convenors}\n'
+    
+        content += table
+    
+    ## STANDARD MODULE DETAILS
     content += '\n\n## Module details\n\n'
     
     for mod in modules:
         content += module_markdown(mod.id, title=True, show_events=show_events)
+    
+    if series:
+        content += '\n\n## Series module details\n\n'
+    
+        for mod in series:
+            content += module_markdown(mod.id, title=True, show_events=show_events)
     
     if output_format == 'docx':
         # With docx, the output _has_ to be written to a file, not just handled internally
@@ -453,98 +630,6 @@ def room_grid():
     year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
     
     return dict(year_data=year_data)
-
-
-def courses():
-    """A controller to view the modules in a course
-    """
-    
-    # update the format of teaching_staff rows for either response
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
-    
-    # if the URL has no arguments, present a list of courses with URLs
-    if len(request.args) == 0:
-        
-        courses = db(db.courses).select()
-        courses = list(courses.render())
-        
-        table_rows = []
-        for crs in courses:
-            row = TR(TD(B(crs.fullname), DIV(_style='flex:1'), 
-                        A('View', _href=URL('courses', args=crs.id)),
-                     _style='display:flex'))
-            table_rows.append(row)
-            
-            if crs.coconvenor is None:
-                conv_string = crs.convenor
-            else:
-                conv_string = f"{crs.convenor} & {crs.coconvenor}"
-            row = TR(TD(DIV(_style='flex:1'), conv_string,
-                     _style='display:flex'))
-            table_rows.append(row)
-            
-            table = TABLE(table_rows, _class='table-striped')
-        
-        return dict(table=table, header=H2('Course list'))
-    
-    # Otherwise get the requested course module list
-    course_id = int(request.args[0])
-    
-    course = db(db.courses.id == course_id).select()
-    course = list(course.render())[0]
-
-    modules = db(db.modules.courses.contains(course_id)
-                 ).select(db.modules.id, 
-                          db.modules.title,
-                          db.modules.convenors,
-                          db.modules.placeholder_week,
-                          db.modules.placeholder_n_weeks,)
-    
-    header = CAT(H2(course.fullname),
-                 P(B('Course Convenor: '), course.convenor),
-                 P(B('Course Co-convenor: '), course.coconvenor),
-                 P(B('Download full timetable with events: '), 
-                     SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx', 1])),
-                          _style="margin:5px"),
-                     XML('&or;'),
-                     SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex', 1])),
-                          _style="margin:5px"),
-                     ),
-                P(B('Download module level timetable: '), 
-                    SPAN(A('Word', _href=URL('course_doc', args=[course.id, 'docx', 0])),
-                         _style="margin:5px"),
-                    XML('&or;'),
-                    SPAN(A('LaTeX', _href=URL('course_doc', args=[course.id, 'latex', 0])),
-                         _style="margin:5px"),
-                    ))
-                
-    
-    # Convert ids to representation
-    modules = list(modules.render())
-    
-    # Add dates and sort in time order
-    _ = [update_module_record_with_dates(row) for row in modules]
-    modules.sort(key=lambda row: row.start)
-    
-    # Process into a table - would be nice to still use fullCalendar but
-    # it doesn't provide a week slot only day and time
-    table_rows = []
-    for mod in modules:
-        week = ((mod.start - FIRST_DAY).days // 7) + 1
-        row = TR(TD(f'Week {week}', _style='width:20%'),
-                 TD(B(mod.title), DIV(_style='flex:1'), 
-                    A('View', _href=URL('module_view', args=mod.id)),
-                 _style='display:flex'))
-        table_rows.append(row)
-        row = TR(TD(),
-                 TD(mod.start, DIV(_style='flex:1'), mod.convenors,
-                 _style='display:flex'))
-        table_rows.append(row)
-    
-    table = TABLE(table_rows, _class='table-striped')
-    
-    
-    return dict(header=header, table=CAT(H3('Module list'), table))
 
 ## Admin
 

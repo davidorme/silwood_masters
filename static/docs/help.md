@@ -33,6 +33,8 @@ The structure of the database is very like the old Excel workbook. It has seven 
 
     If a module has any associated events, then the start and end of the module will be taken from that set of events, but the module table can also hold a placeholder week and duration so that modules can be displayed in calendar views before events are added.
 
+    There is an option to represent a module as a **series module**. This is intended to separate out themed teaching that stretches out through the year, such as workshops or reading groups. Series modules are not shown in the module grid to keep the format clean and are shown separately in the course view pages and in course documents.  
+
 * **Events**: These are the actual individual teaching events. Each event is associated with a single module and the table also holds an event teacher, a title and description and a location. You can also set which courses attending the module should attend a specific event - this can be used to filter a module description down for a course.
 
 ## Hiding data

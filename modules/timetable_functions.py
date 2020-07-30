@@ -22,20 +22,25 @@ def get_year_start_date():
 
 
 def convert_date_to_weekdaytime(value, start_of_year=None):
-    """Takes a datetime string cominget_year_start_dateand converts
-    it into the academic week, day and time.
+    """Takes a string representation of a date or datetime objects and converts
+    it into the academic week, day and time. If the value is a date, the time will
+    be 00:00.
     """
-    
-    if not isinstance(value, str):
+
+    if isinstance(value, datetime.date):
+        value = datetime.datetime.combine(value, datetime.time.min)
+    elif isinstance(value, datetime.datetime):
+        pass
+    elif not isinstance(value, str):
         return 0, 'value not a string'
-    
-    try:
-        # values come in from JAVA with Z UTC indicator, so use a parser that 
-        # handles this and then strip the tzinfo for comparison to internal dates
-        value = parser.isoparse(value)
-        value = value.replace(tzinfo=None)
-    except ValueError as e:
-        return 0, str(e)
+    else:
+        try:
+            # values come in from JAVA with Z UTC indicator, so use a parser that 
+            # handles this and then strip the tzinfo for comparison to internal dates
+            value = parser.isoparse(value)
+            value = value.replace(tzinfo=None)
+        except ValueError as e:
+            return 0, str(e)
     
     if start_of_year is None:
         start_of_year = current.FIRST_DAY
@@ -111,6 +116,11 @@ def module_markdown(module_id, title=False, show_events=True):
         content =""
     
     content += f'**Convenors**: {module.convenors}  \n'
+    
+    if not module.is_series:
+        data = convert_date_to_weekdaytime(module.start)
+        content += f'**Week**: {data[1]}  \n'
+    
     content += f'**Dates**: {module.start} to {module.end}  \n'
     content += f'**Courses**: {module.courses}\n\n'
     
