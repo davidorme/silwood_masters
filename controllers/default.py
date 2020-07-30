@@ -872,7 +872,7 @@ def get_modules_old(start=None, end=None, course_id=None):
     
     # This is a bit clumsy - need to add start, end and url
     # and convert courses entry to resourceIDs
-    _ = [update_module_record_with_dates(m) for m in modules]
+    _ = [update_module_record_with_dates(m, for_fullcalendar=True) for m in modules]
     for mod in modules:
         mod.url = URL('module_view', args=mod.id)
         mod.resourceIds = mod.courses
@@ -908,7 +908,7 @@ def get_modules(start=None, end=None, course_id=None):
     
     # This is a bit clumsy - need to add start, end and url
     # and convert courses entry to resourceIDs
-    _ = [update_module_record_with_dates(m) for m in modules]
+    _ = [update_module_record_with_dates(m, for_fullcalendar=True) for m in modules]
     modules.sort(lambda x: x.start)
     
     for mod in modules:

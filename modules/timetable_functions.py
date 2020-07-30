@@ -53,7 +53,7 @@ def convert_date_to_weekdaytime(value, start_of_year=None):
     return 1, weeks, days, value.time()
 
 
-def update_module_record_with_dates(module):
+def update_module_record_with_dates(module, for_fullcalendar=False):
     """Calculates the start and end date of a module from the module events 
     and inserts it into the record object in place. If there are no events 
     yet then the placeholder week and duration are used."""
@@ -63,8 +63,11 @@ def update_module_record_with_dates(module):
     
     if len(events):
         module.start = min([ev.start for ev in events]).date()
-        # These are dates and fullcalendar end is exclusive, so need to add one
-        module.end = max([ev.end for ev in events]).date() + datetime.timedelta(days=1)
+        module.end = max([ev.end for ev in events]).date()
+        # fullcalendar end is exclusive, so need to add one if these dates
+        # are being used to populate events in fullcalendar
+        if for_fullcalendar:
+            module.end =  module.end + datetime.timedelta(days=1)
     else:
         try:
             # academic placeholder weeks are base-1 not base-0
