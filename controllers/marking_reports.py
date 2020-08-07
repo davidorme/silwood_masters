@@ -25,7 +25,7 @@ def index():
 ## MARKERS DATABASE
 ## --------------------------------------------------------------------------------
 
-@auth.requires_login()
+@auth.requires_membership('admin')
 def markers():
     
     # don't allow deleting as the referencing to project marks will 
@@ -40,7 +40,7 @@ def markers():
 ## EMAIL LOG
 ## --------------------------------------------------------------------------------
 
-@auth.requires_login()
+@auth.requires_membership('admin')
 def email_log():
     
     # Just shows a searchable log of emails sent
@@ -60,13 +60,13 @@ def email_log():
 ## MARKING ASSIGNMENTS
 ## --------------------------------------------------------------------------------
 
-@auth.requires_login()
+@auth.requires_membership('admin')
 def new_assignment():
     
     db.assignments.status.readable = False
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
-
+    
     form = SQLFORM(db.assignments)
     if form.process().accepted:
         response.flash = 'Assignment created'
@@ -75,7 +75,7 @@ def new_assignment():
     return dict(form=form)
 
 
-@auth.requires_login()
+@auth.requires_membership('admin')
 def assignments():
     
     # reduce the set of fields shown in the grid
@@ -90,8 +90,14 @@ def assignments():
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
     
     # link to a non-default new edit page
-    links = [dict(header = '', body = lambda row: A('View',_class='button btn btn-default',
-                 _href=URL("write_report", vars={'record': row.id, 'staff_access_token':row.staff_access_token}), _style='padding:0px 10px'))]
+    links = [dict(header = 'Report', 
+                  body = lambda row: A('View',_class='button btn btn-secondary',
+                                       _href=URL("write_report", 
+                                                 vars={'record': row.id, 
+                                                       'staff_access_token':row.staff_access_token}))),
+             dict(header = 'Assignment', 
+                  body = lambda row: A('Edit',_class='button btn btn-secondary',
+                                       _href=URL("edit_assignment", args=row.id)))]
     
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
@@ -136,7 +142,24 @@ def assignments():
     return dict(form=grid, old_count=old_count)
 
 
-@auth.requires_login()
+@auth.requires_membership('admin')
+def edit_assignment():
+    
+    db.assignments.assignment_data.readable = False
+    db.assignments.assignment_data.writable = False
+    
+    record = db.assignments[request.args[0]]
+    
+    form = SQLFORM(db.assignments,
+                   record=record)
+    
+    if form.process(onvalidation=submit_validation).accepted:
+        redirect(URL('assignments'))
+    
+    return dict(form = form)
+
+
+@auth.requires_membership('admin')
 def load_assignments():
     
     form = FORM(DIV(DIV('Upload File:', _class='col-sm-2'),
@@ -432,7 +455,7 @@ def write_report():
         
         if 'save' in list(request.vars.keys()):
             session.flash = 'Changes to report saved'
-            record.update_record(data = data,
+            record.update_record(assignment_data = data,
                                  status='Started')
         elif 'submit' in list(request.vars.keys()):
             session.flash = 'Report submitted'
