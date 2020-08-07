@@ -318,7 +318,7 @@ def download_grades(ids):
         ws.cell(row = row, column=2, value=student_recs[0].student_last_name)
         ws.cell(row = row, column=3, value=student_recs[0].student_first_name)
         ws.cell(row = row, column=4, value=student_recs[0].course_presentation)
-        ws.cell(row = row, column=5, value=student_recs[0].year)
+        ws.cell(row = row, column=5, value=student_recs[0].academic_year)
         
         # now split records by role
         student_recs.sort(key=lambda rec: rec['marker_role'])
@@ -332,10 +332,10 @@ def download_grades(ids):
             
             for this_record in student_recs[this_role]:
                 ws.cell(row = row, column=this_col+1, value=this_record.marker.first_name + ' ' + this_record.marker.last_name)
-                if (this_record.data is not None and 'grade' in list(this_record.data.keys()) 
-                    and this_record.data['grade'] is not None):
+                if (this_record.form_data is not None and 'grade' in list(this_record.form_data.keys()) 
+                    and this_record.form_data['grade'] is not None):
                     # slice off the text part of the grade from the dropdown
-                    g = this_record.data['grade']
+                    g = this_record.form_data['grade']
                     g = int(g[0:g.index('%')])
                     ws.cell(row = row, column=this_col, value=g)
                 this_col += 2
@@ -580,7 +580,7 @@ def create_pdf(record, form_json, confidential):
             pdf.set_font("DejaVu", size=12, style='B')
             pdf.cell(60, 8, txt=c['label'], align="L")
             pdf.set_font("DejaVu", size=12)
-            contents = record.data[c['variable']]
+            contents = record.form_data[c['variable']]
             if contents is None:
                 contents = ""
             pdf.set_left_margin(70)

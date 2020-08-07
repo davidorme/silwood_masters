@@ -59,9 +59,6 @@ form_data_dict = {('EEC MSc', 'Supervisor'): {'form':'supervisor.json',
                   ('EA MSc', 'Marker'): {'form':'marker.json',
                                               'criteria':'Project_Marking_Criteria.pdf'}}
 
-# Store this in current for use in modules.
-from gluon import current
-current.form_data_dict = form_data_dict
 
 # An assignment is first created, then set to the marker (becoming Not started).
 # Once someone has saved a partial record it becomes Started and then once
@@ -115,10 +112,10 @@ db.define_table('assignments',
                 Field('student_email','string', notnull=True, requires=IS_EMAIL()),
                 Field('course_presentation','string', 
                       requires=IS_IN_SET(course_presentation_list)),
-                Field('year','integer', notnull=True),
+                Field('academic_year','integer', notnull=True),
                 Field('marker','reference markers'),
                 Field('marker_role','string', requires=IS_IN_SET(role_list)),
-                Field('data','json'),
+                Field('assignment_data','json'),
                 Field('due_date','date', notnull=True, requires=IS_DATE()),
                 # Access and record fields
                 Field('staff_access_token',length=64, default=uuid.uuid4,
@@ -131,7 +128,7 @@ db.define_table('assignments',
                       default='Created', writable=False),
                 migrate=False, fake_migrate=True,
                 # By default hide previous years,
-                common_filter = lambda query: db.assignments.year >= datetime.datetime.now().year)
+                common_filter = lambda query: db.assignments.academic_year >= datetime.datetime.now().year)
 
 ## -----------------------------------------------------------------------------
 ## Email log
@@ -144,8 +141,8 @@ db.define_table('email_log',
                 Field('subject', 'string'),
                 Field('email_to', 'text'),
                 Field('email_cc', 'text'),
-                Field('template','string'),
-                Field('template_dict','json'),
+                Field('email_template','string'),
+                Field('email_template_dict','json'),
                 Field('sent','boolean'),
                 Field('status', 'string'),
                 Field('message_date','datetime'))

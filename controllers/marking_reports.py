@@ -64,8 +64,8 @@ def email_log():
 def new_assignment():
     
     db.assignments.status.readable = False
-    db.assignments.data.readable = False
-    db.assignments.data.writable = False
+    db.assignments.form_data.readable = False
+    db.assignments.form_data.writable = False
 
     form = SQLFORM(db.assignments)
     if form.process().accepted:
@@ -83,7 +83,7 @@ def assignments():
     db.assignments.student_email.readable = False
     db.assignments.student_first_name.readable = False
     db.assignments.student_cid.readable = False
-    db.assignments.data.readable = False
+    db.assignments.form_data.readable = False
     
     # and edit representations
     db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
@@ -130,7 +130,7 @@ def assignments():
             table_start.insert(0, INPUT(_name=b[0], _type='submit', _value=b[1], _style='padding:5px 15px;margin:10px'))
     
     # old records, turning off the common filter
-    old_count = db(db.assignments.year < datetime.datetime.now().year,
+    old_count = db(db.assignments.academic_year < datetime.datetime.now().year,
                    ignore_common_filters=True).count()
     
     return dict(form=grid, old_count=old_count)
@@ -155,7 +155,7 @@ def load_assignments():
         # check the headers
         headers = data.fieldnames
         required = ['student_cid', 'student_first_name', 'student_last_name', 'student_email',
-                    'course_presentation', 'year', 'marker_email', 'due_date',
+                    'course_presentation', 'academic_year', 'marker_email', 'due_date',
                     'marker_last_name', 'marker_first_name', 'marker_role']
         
         missing_headers = set(required).difference(headers)
@@ -221,7 +221,7 @@ def load_assignments():
                        P(', '.join(set(bad_dates))))
         
         # non numeric years
-        years = set(fields['year'])
+        years = set(fields['academic_year'])
         bad_years = [ x for x in years if not x.isdigit() ]
         if len(bad_years) > 0:
             html = CAT(html,
@@ -411,10 +411,10 @@ def write_report():
     
     # - define the form for IO using the fields object,
     #   preloading any existing data
-    if record.data in [None, '']:
+    if record.form_data in [None, '']:
         data_json=None
     else:
-        data_json=record.data
+        data_json=record.form_data
     
     form = SQLFORM.factory(*fields,
                            readonly=readonly,
@@ -436,7 +436,7 @@ def write_report():
                                  status='Started')
         elif 'submit' in list(request.vars.keys()):
             session.flash = 'Report submitted'
-            record.update_record(data = data,
+            record.update_record(form_data = data,
                                  status='Submitted',
                                  submission_date = datetime.datetime.now(),
                                  submission_ip = request.client)
