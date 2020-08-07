@@ -65,19 +65,19 @@ form_data_dict = {('EEC MSc', 'Supervisor'): {'form':'supervisor.json',
 # Submitted it becomes readonly to all but admins. Once Released, students are
 # able to download it.
 
-status_dict =  {'Created': SPAN('',_class="glyphicon glyphicon-upload",
+status_dict =  {'Created': SPAN('',_class="fa fa-check-square-o",
                                   _style="color:grey;font-size: 1.3em;",
                                   _title='Created'),
-                'Not started': SPAN('',_class="glyphicon glyphicon-pencil",
+                'Not started': SPAN('',_class="fa fa-pencil-square-o",
                                   _style="color:red;font-size: 1.3em;",
                                   _title='Not started'),
-                'Started': SPAN('',_class="glyphicon glyphicon-edit",
+                'Started': SPAN('',_class="fa fa-pencil-square-o",
                                   _style="color:orange;font-size: 1.3em;",
                                   _title='Started'),
-                'Submitted': SPAN('',_class="glyphicon glyphicon-check",
+                'Submitted': SPAN('',_class="fa fa-pencil-square-o",
                                   _style="color:green;font-size: 1.3em;",
                                   _title='Submitted'),
-                'Released': SPAN('',_class="glyphicon glyphicon-ok-sign",
+                'Released': SPAN('',_class="fa fa-check-square-o",
                                   _style="color:green;font-size: 1.3em;",
                                   _title='Released')}
 
@@ -126,7 +126,7 @@ db.define_table('assignments',
                 Field('submission_ip','string', readable=False, writable=False),
                 Field('status', requires=IS_IN_SET(list(status_dict.keys())),
                       default='Created', writable=False),
-                migrate=False, fake_migrate=True,
+                #migrate=False, fake_migrate=True,
                 # By default hide previous years,
                 common_filter = lambda query: db.assignments.academic_year >= datetime.datetime.now().year)
 
