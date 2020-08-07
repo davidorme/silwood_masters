@@ -1,8 +1,3 @@
-def index():
-    
-    return dict()
-    
-    
 
 # ---- Action for login/register/etc (required for auth) -----
 def user():
