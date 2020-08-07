@@ -1,4 +1,4 @@
-from marking_report_functions import (div_radio_widget, 
+from marking_reports_functions import (div_radio_widget, 
                                       div_checkbox_widget, 
                                       div_checkbox_widget_wide)
 

@@ -1,7 +1,7 @@
 import os
 import csv
 import re
-from timetable_functions import get_year_start_date, convert_date_to_weekdaytime
+from timetabler_functions import get_year_start_date, convert_date_to_weekdaytime
 from gluon import current # to store FIRST_DAY
 
 # Auth and User setup to sign initial records

@@ -6,7 +6,7 @@ import os
 import csv
 import itertools
 import simplejson as json
-from marking_report_functions import (Mail, create_pdf, release, distribute,
+from marking_reports_functions import (Mail, create_pdf, release, distribute,
                                       zip_pdfs, download_grades)
 
 
