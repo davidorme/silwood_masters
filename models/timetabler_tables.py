@@ -1,4 +1,4 @@
-from timetable_functions import get_year_start_date, update_event_record_with_dates
+from timetabler_functions import get_year_start_date, update_event_record_with_dates
 ##
 ## Tables are all signed, but the app isn't currently using record
 ## versioning. That seems like overkill and much of the damage done in the
