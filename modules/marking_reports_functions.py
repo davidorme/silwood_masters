@@ -116,8 +116,8 @@ def release(ids):
                 for r in recs]
         
         success = mailer.sendmail(subject='Your Project Marking Reports', 
-                                  to=student, template='student_release.html',
-                                  template_dict={'name':recs[0].student_first_name + ' ' + recs[0].student_last_name,
+                                  to=student, email_template='student_release.html',
+                                  email_template_dict={'name':recs[0].student_first_name + ' ' + recs[0].student_last_name,
                                                  'links':CAT(links).xml()})
         
         if not success:
@@ -183,8 +183,8 @@ def distribute(ids):
                        B('; Due Date: '), r.due_date)) for r in recs]
         
         success = mailer.sendmail(subject='Silwood Park Masters Project Marking', 
-                                  to=marker, template='marker_distribute.html',
-                                  template_dict={'name':recs[0].marker.first_name,
+                                  to=marker, email_template='marker_distribute.html',
+                                  email_template_dict={'name':recs[0].marker.first_name,
                                                  'links':CAT(links).xml()})
         
         if not success:
@@ -419,7 +419,7 @@ class Mail:
         
         self.logged_in = None
 
-    def sendmail(self, to, subject, template=None, template_dict=None, text=None):
+    def sendmail(self, to, subject, email_template=None, email_template_dict=None, text=None):
         """
         This sends an html body text to a recipient, including a text representation.
         If the Mail instance hasn't already been logged in, then it will log in
@@ -434,8 +434,8 @@ class Mail:
         
         if not self.logged_in:
             self._logmail(False, 'mail send error - server logins failed',
-                          to=to, subject=subject, template=template, 
-                          template_dict=template_dict)
+                          to=to, subject=subject, email_template=email_template, 
+                          email_template_dict=email_template_dict)
             return False
         
         # Create message container - the correct MIME type is multipart/alternative.
@@ -448,19 +448,19 @@ class Mail:
         # as the content if provided
         if text is not None:
             message.attach(MIMEText(text, 'plain'))
-        elif template is not None and template_dict is not None:
-            html_body = current.response.render('email_templates/' + template, template_dict)
+        elif email_template is not None and email_template_dict is not None:
+            html_body = current.response.render('email_templates/' + email_template, email_template_dict)
             message.attach(MIMEText(html2text.html2text(html_body), 'plain'))
             message.attach(MIMEText(html_body, 'html'))
         else:
-            raise RuntimeError('text or template+template_dict required')
+            raise RuntimeError('text or email template and data required')
         
         try:
             self.smtp_server.sendmail(self.send_address, to, message.as_string())
         except smtplib.SMTPException:
             self._logmail(False, 'Message did not send (SMTP error)',
-                          to=to, subject=subject, template=template, 
-                          template_dict=template_dict)
+                          to=to, subject=subject, email_template=email_template, 
+                          email_template_dict=email_template_dict)
             return False
             
         try:
@@ -469,8 +469,8 @@ class Mail:
                                     message.as_bytes())
         except socket.error:
             self._logmail(False, 'Message did not store (IMAP error) - it _did_ send',
-                          to=to, subject=subject, template=template, 
-                          template_dict=template_dict)
+                          to=to, subject=subject, email_template=email_template, 
+                          email_template_dict=email_template_dict)
             
             return False
         
@@ -478,18 +478,18 @@ class Mail:
             self.logout()
         
         self._logmail(True, 'success',
-                      to=to, subject=subject, template=template, 
-                      template_dict=template_dict)
+                      to=to, subject=subject, email_template=email_template, 
+                      email_template_dict=email_template_dict)
         
         return True
 
-    def _logmail(self, sent, status, to, subject, template, template_dict):
+    def _logmail(self, sent, status, to, subject, email_template, email_template_dict):
         
         # log it in the database
         current.db.email_log.insert(email_to=to, 
                                     subject=subject, 
-                                    template=template,
-                                    template_dict=json.dumps(template_dict),
+                                    email_template=email_template,
+                                    email_template_dict=json.dumps(email_template_dict),
                                     email_cc=None,
                                     sent=sent,
                                     status = status,
