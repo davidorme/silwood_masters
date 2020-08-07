@@ -64,8 +64,8 @@ def email_log():
 def new_assignment():
     
     db.assignments.status.readable = False
-    db.assignments.form_data.readable = False
-    db.assignments.form_data.writable = False
+    db.assignments.assignment_data.readable = False
+    db.assignments.assignment_data.writable = False
 
     form = SQLFORM(db.assignments)
     if form.process().accepted:
@@ -83,7 +83,7 @@ def assignments():
     db.assignments.student_email.readable = False
     db.assignments.student_first_name.readable = False
     db.assignments.student_cid.readable = False
-    db.assignments.form_data.readable = False
+    db.assignments.assignment_data.readable = False
     
     # and edit representations
     db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
@@ -411,10 +411,10 @@ def write_report():
     
     # - define the form for IO using the fields object,
     #   preloading any existing data
-    if record.form_data in [None, '']:
+    if record.assignment_data in [None, '']:
         data_json=None
     else:
-        data_json=record.form_data
+        data_json=record.assignment_data
     
     form = SQLFORM.factory(*fields,
                            readonly=readonly,
@@ -436,7 +436,7 @@ def write_report():
                                  status='Started')
         elif 'submit' in list(request.vars.keys()):
             session.flash = 'Report submitted'
-            record.update_record(form_data = data,
+            record.update_record(assignment_data = data,
                                  status='Submitted',
                                  submission_date = datetime.datetime.now(),
                                  submission_ip = request.client)
