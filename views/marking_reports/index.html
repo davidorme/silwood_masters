@@ -7,18 +7,24 @@
 <p>We use this website to manage Masters projects, including the advertisement of projects, distribution of project marking assignments, providing online forms for marker and supervisors to complete, and to make marking feedback available to students at the end of project assessment.</p>
 
 
-<div class='well' style='background:white;border:1px solid #dfd7ca'>
+<!-- <div class='well' style='background:white;border:1px solid #dfd7ca'> -->
 
   <!-- Nav tabs -->
   <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="active"><a href="#markers" aria-controls="markers" role="tab" data-toggle="tab">For Markers and Supervisors</a></li>
-    <li role="presentation"><a href="#students" aria-controls="students" role="tab" data-toggle="tab">For Students</a></li>
-    <li role="presentation"><a href="#security" aria-controls="security" role="tab" data-toggle="tab">Security</a></li>
+    <li class="nav-item">
+		<a class='nav-link active' href="#markers" aria-controls="markers" role="tab" data-toggle="tab">For Markers and Supervisors</a>
+	</li>
+    <li class="nav-item">
+		<a class='nav-link' href="#students" aria-controls="students" role="tab" data-toggle="tab">For Students</a>
+	</li>
+    <li class="nav-item">
+		<a class='nav-link' href="#security" aria-controls="security" role="tab" data-toggle="tab">Security</a>
+	</li>
   </ul>
 
   <div class="tab-content">
     <div role="tabpanel" class="tab-pane active" id="markers">
-      <H4>Dear Markers and Supervisors</H4>
+      <BR><H4>Dear Markers and Supervisors</H4>
       <p>A huge thanks for the effort you've already put in to supervising students and are about to put in marking and grading their reports. These projects are a major part of the assessment of Masters students and an an equally major part of their learning experience during the course. The time you spend supporting this is hugely appreciated by both course coordinators and students (although it may not look like that during an actual viva!).</p>
       <p>We appreciate that you might prefer to hand write your report. However, this system allows us to:</p>
       <ol>
@@ -40,12 +46,12 @@
     </div>
 
     <div role="tabpanel" class="tab-pane" id="students">
-        <H4>Dear Students</H4>
+        <BR><H4>Dear Students</H4>
         <p>This online app provides you access to advertised projects - please have a look at the drop down menu items above.</p>
         <p>Your supervisors and examiners will also use this app to prepare their marking reports on your projects. Once the project examination process is completed, you will be emailed a link that will allow you to download their marking reports. These reports are a bit like a reviewer's comments on a scientific paper - they will give you information on what might be needed to improve your project and what skills you need to work on in the lab. They should be constructive and positive - they may sometimes also be a bit blunt at times, but that is common in the review process!</p>
     </div>
     <div role="tabpanel" class="tab-pane" id="security">
-      <H4>Security of this system</H4>
+      <BR><H4>Security of this system</H4>
       <p>In order to access a marking assignment, either to provide a report or to download a released report, a user needs a link that pairs an assignment record number with the correct UUID4 access token. </p>
       <ul>
           <li>These tokens have 122 random bits: there are a vast number of unique identifiers (2<sup>122</sup> &asymp; 5.3 x 10<sup>36</sup>).</li>
