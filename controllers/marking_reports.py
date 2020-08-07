@@ -44,7 +44,7 @@ def markers():
 def email_log():
     
     # Just shows a searchable log of emails sent
-    db.email_log.template_dict.readable=False
+    db.email_log.email_template_dict.readable=False
     db.email_log.email_cc.readable=False
     db.email_log.id.readable=False
     
@@ -770,8 +770,8 @@ def submit_proposal():
         mailer = Mail()
         success = mailer.sendmail(subject='Project proposal submission',
                                   to=row.contact_email,
-                                  template='proposal_submitted.html',
-                                  template_dict=email_dict)
+                                  email_template='proposal_submitted.html',
+                                  email_template_dict=email_dict)
         del mailer
         
     elif form.errors:
