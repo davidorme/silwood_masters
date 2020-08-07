@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from timetable_functions import (module_markdown, update_module_record_with_dates,
-                                 update_event_record_with_dates, convert_date_to_weekdaytime)
+from timetabler_functions import (module_markdown, update_module_record_with_dates,
+                                  update_event_record_with_dates, convert_date_to_weekdaytime)
 import itertools
 import io
 import gluon

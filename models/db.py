@@ -71,7 +71,7 @@ response.form_label_separator = ''
 # Create ane use an overloaded Auth class that uses our own Mail class
 # -------------------------------------------------------------------------
 
-from marking_report_functions import Mail
+from marking_reports_functions import Mail
 
 class Auth_Mail(Auth):
     

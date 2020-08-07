@@ -89,8 +89,10 @@
     </nav>
 
     <!-- Masthead ===================================== -->
-	{{freezer = db(db.freezer).select().first()}}
-	{{if freezer is not None and freezer.is_frozen:}}
+	<!-- Freezing banner is currently disabled during merge of marking reports and timetables -->
+	{{#freezer = db(db.freezer).select().first()}}
+	{{#if freezer is not None and freezer.is_frozen:}}
+	{{if False:}}
 	<div class='row' style='background-color:teal'><div class='col-12'>
 		<H4 style='text-align:center;color:white'>The database is frozen</H4>
 	</div></div>

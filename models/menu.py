@@ -10,5 +10,5 @@ response.subtitle = ''
 
 response.menu = [
     (T('Home'), False, URL('default', 'index'), []),
-    (T('Marking'), False, URL('marking', 'index'), []),
+    (T('Marking'), False, URL('marking_reports', 'index'), []),
     (T('Timetabler'), False, URL('timetabler', 'index'), [])]
