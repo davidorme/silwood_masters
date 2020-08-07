@@ -1,11 +1,10 @@
 marking_reports_menu = [
     (T('Project Proposals'), False, URL('marking_reports','project_proposals'), []),
-    (T('Dissertation Reports'), False, None, [
-        (T('2019-20'), False, 'https://drive.google.com/drive/folders/12vkP0t2D8WXr9tsiOxH5DL-jX6khIypY', []),
-        ]),
-    (T('Marking Criteria'), False, None, [
-            (T('Marker'), False, URL('static','marking_criteria/Project_Marking_Criteria.pdf'), []),
-            (T('Supervisor'), False, URL('static','marking_criteria/Supervisor_Marking_Criteria.pdf'), [])
+    (T('Reports and Criteria'), False, None, [
+        (T('Reports'), False, 'https://drive.google.com/drive/folders/12vkP0t2D8WXr9tsiOxH5DL-jX6khIypY', []),
+        (T('Marking Criteria'), False, 'javascript:;', []),
+        (T('- Markers'), False, URL('static','marking_criteria/Project_Marking_Criteria.pdf'), []),
+        (T('- Supervisors'), False, URL('static','marking_criteria/Supervisor_Marking_Criteria.pdf'), [])
         ])
     ]
 
