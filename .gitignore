@@ -27,14 +27,14 @@ languages/
 .Rdata
 .Rapp.history
 
-# Ignore private
+# Ignore private except for the appconfig template
 private/*
-!private/.gitkeep
+!private/appconfig_template.ini
 
 # cache folders
 __pycache__/
 */__pycache__/
 
-# dynamically generated module descriptions
+# dynamically generated module descriptions - keep the template but nothing else
 static/module_docx/*
 !static/module_docx/docx_template.docx

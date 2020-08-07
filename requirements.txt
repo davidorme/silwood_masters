@@ -1,3 +1,10 @@
+# Needed by timetabler
 pypandoc
 python-dateutil
 markdown
+# Needed by marking_reports
+# - fpdf also needs the DejaVu font files installed and configure in private/appconfig.ini
+fpdf
+openpyxl
+simplejson
+html2text
