@@ -38,9 +38,10 @@ db = DAL(configuration.get('db.uri'),
          migrate_enabled=configuration.get('db.migrate'),
          check_reserved=['all'])
 
-# Store db in the current object so it can be imported by modules
+# Store db and config in the current object so it can be imported by modules
 from gluon import current
 current.db = db
+current.configuration = configuration
 
 # -------------------------------------------------------------------------
 # by default give a view/generic.extension to all actions from localhost

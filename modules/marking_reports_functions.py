@@ -365,15 +365,15 @@ class Mail:
     
     def __init__(self):
         # Load the credentials from config
-        self.send_address = current.myconf.get('email.send_address')
-        self.password = current.myconf.get('email.password') 
+        self.send_address = current.configuration.get('email.send_address')
+        self.password = current.configuration.get('email.password') 
 
-        self.smtp_host = current.myconf.get('email.smtp_host')
-        self.smtp_user = current.myconf.get('email.smtp_user') 
+        self.smtp_host = current.configuration.get('email.smtp_host')
+        self.smtp_user = current.configuration.get('email.smtp_user') 
         self.smtp_server = None
 
-        self.imap_host = current.myconf.get('email.imap_host')
-        self.imap_user = current.myconf.get('email.imap_user') 
+        self.imap_host = current.configuration.get('email.imap_host')
+        self.imap_user = current.configuration.get('email.imap_user') 
         self.imap_server = None
         
         self.logged_in = None # ternary: None, False (failed) and True
@@ -527,7 +527,7 @@ def create_pdf(record, form_json, confidential):
         pdf = fpdf.FPDF(format='A4')
 
     # set up the fonts
-    fpdf.set_global('SYSTEM_TTFONTS', current.myconf.get('fpdf.font_dir'))
+    fpdf.set_global('SYSTEM_TTFONTS', current.configuration.get('fpdf.font_dir'))
     pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
     pdf.add_font('DejaVu', 'B', 'DejaVuSansCondensed-Bold.ttf', uni=True)
     
@@ -594,7 +594,7 @@ def create_pdf(record, form_json, confidential):
     pdf.close()
     pdf = pdf.output(dest='S').encode('latin-1') # unicode string to bytes
     filename = '{} {} {} {} {}.pdf'.format(record.course_presentation,
-                                            record.year, 
+                                            record.academic_year, 
                                             record.student_first_name,
                                             record.student_last_name,
                                             record.id)
