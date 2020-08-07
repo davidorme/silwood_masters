@@ -9,6 +9,6 @@ response.title = request.application.replace('_',' ').title()
 response.subtitle = ''
 
 response.menu = [
-    (T('Home'), False, URL('default', 'index'), []),
-    (T('Marking'), False, URL('marking_reports', 'index'), []),
+    (T('Home'), False, URL('marking_reports', 'index'), []),
     (T('Timetabler'), False, URL('timetabler', 'index'), [])]
+

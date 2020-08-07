@@ -15,9 +15,17 @@ timetabler_menu = [
     ]),
     (T('Help'), False, URL('timetabler', 'help'), [])]
 
-if auth.has_membership('admin'):
-    timetabler_menu.append((T('Admin'), False, None, [
-                            (T('User requests'), False, URL('default', 'user_requests'), []),
-                            (T('Freezer'), False, URL('default', 'freezer'), [])]))
-
 response.menu.extend(timetabler_menu)
+
+if auth.has_membership('admin'):
+    response.menu.append((T('Admin tools'), False, None, [
+                                  (T('User requests'), False, 
+                                      URL('default', 'user_requests'), []),
+                                  (T('Freezer'), False, 
+                                      URL('timetabler', 'freezer'), []),
+                                  (T('View Email Log'), False, 
+                                      URL('default', 'email_log'), []),
+                                  (T('Database (requires site password)'), False, 
+                                      URL(request.application, 'appadmin', 'index'), [])
+                                  ]))
+
