@@ -1,0 +1,34 @@
+{{extend 'layout.html'}}
+
+{{=H2('Marking assignments')}}
+
+
+{{=P('The table below shows all the assignments created on the system along with their current status. Authorised users can use ',
+     'the view links to look at and edit reports: this ability is needed to fix problems or moderate reports.')}}
+
+{{=P('When new assignments are ', A('created', _href=URL('new_assignment')), ' or ',  A('uploaded,', _href=URL('load_assignments')),
+     ' they are have status ', B('Created '), status_dict['Created'], ' . This gives coordinators a chance to check assignments',
+     ' before they are sent to markers and supervisors. Once assignments have been checked, you can select a set of them and then',
+     ' click ', B('Send To Markers'), ' to automatically distribute marking links')}}
+
+{{=P('Distributed assignments will initially show as being ', B('Not started '), status_dict['Not started'], ' . As markers fill ',
+     'in their reports, this will change either to ', B('Started '), status_dict['Started'], ' -- which shows that the marker ',
+     'has saved a partially complete report -- or ', B('Submitted '), status_dict['Submitted'], ' -- which shows that the marker ',
+     'has completed their report. You can repeat ',  B('Send To Markers'), ' to send reminders: the system will not remind markers ',
+     'about completed reports.')}}
+
+{{=P('Once reports have been submitted, you can select rows and click ', B('Release To Students'), ' to email the students with their ',
+     'reports. They will receive an email containing a set links that will allow them to download a PDF of the report, excluding ',
+     'any confidential report fields. Once you have released a report, the status of the report will change to ', B('Released'), 
+      status_dict['Released'], ' . The system will only release submitted and previously released reports, so you can resend ',
+     'links but not accidentally release partial reports.')}}
+     
+{{=P('At any point, you can select rows and click ', B('Download Confidential PDFs'), ' or ', B('Download Public PDFs'), 'to create and download ',
+     'PDF reports for a set of students. You will get a zipfile of the reports - note that only completed reports will be included. ',
+     'You can also select rows and click ', B('Download Grades'), ' to download an Excel file of compiled grades for a set of students. ',
+     'Grades for uncompleted reports will be shown as missing.')}}
+     
+{{=P('Some of these actions might take a little while to complete - please be patient! The system also holds records for ', old_count, 
+     ' reports from previous years, but these are not shown here.')}}
+
+{{=form}}
