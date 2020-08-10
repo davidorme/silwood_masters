@@ -72,7 +72,7 @@ response.form_label_separator = ''
 # Create ane use an overloaded Auth class that uses our own Mail class
 # -------------------------------------------------------------------------
 
-from marking_reports_functions import Mail
+from mailer import Mail
 
 class Auth_Mail(Auth):
     
@@ -96,13 +96,19 @@ class Auth_Mail(Auth):
         
         return False
 
-auth = Auth_Mail(db, host_names=configuration.get('host.names'))
+# Configure auth to use that new Auth class and to use the admin controller
+# and marking_reports index
+auth = Auth_Mail(db, 
+                 host_names=configuration.get('host.names'),
+                 controller='admin',
+                 url_index=URL('marking_reports', 'index'))
 
 # -------------------------------------------------------------------------
 # create all tables needed by auth, maybe add a list of extra fields
 # -------------------------------------------------------------------------
 auth.settings.extra_fields['auth_user'] = []
 auth.define_tables(username=False, signature=False)
+auth.settings.create_user_groups = False
 
 # -------------------------------------------------------------------------
 # configure auth policy
