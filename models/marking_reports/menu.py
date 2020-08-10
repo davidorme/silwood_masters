@@ -11,6 +11,17 @@ marking_reports_menu = [
 response.menu.extend(marking_reports_menu)
 
 if auth.has_membership('admin'):
+    
+    n_new = db(db.auth_user.registration_key == 'pending').count()
+    if n_new == 0:
+        badge = SPAN('0 new', 
+                     _class="badge badge-pill badge-secondary",
+                     _style='margin:0px 5px')
+    else:
+        badge = SPAN(str(n_new) + ' new', 
+                     _class="badge badge-pill badge-danger",
+                     _style='margin:0px 5px')
+    
     response.menu.append((T('Admin tools'), False, None, [
                                   (T('Create Marking Assignment'), False, 
                                       URL('marking_reports', 'new_assignment'), []),
@@ -20,10 +31,10 @@ if auth.has_membership('admin'):
                                       URL('marking_reports', 'assignments'), []),
                                   (T('View Project Markers'), False, 
                                       URL('marking_reports', 'markers'), []),
-                                  (T('User requests'), False, 
-                                      URL('default', 'user_requests'), []),
+                                  (CAT(T('View Users'), badge), False, 
+                                      URL('admin', 'show_users'), []),
                                   (T('View Email Log'), False, 
-                                      URL('marking_reports', 'email_log'), []),
+                                      URL('admin', 'email_log'), []),
                                   (T('Database (requires site password)'), False, 
                                       URL(request.application, 'appadmin', 'index'), [])
                                   ]))

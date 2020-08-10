@@ -639,17 +639,6 @@ def room_grid():
 
 ## Admin
 
-@auth.requires_membership('admin')
-def user_requests():
-    
-    # By default, the registration key is not visible or editable
-    db.auth_user.registration_key.readable=True
-    db.auth_user.registration_key.writable=True
-    
-    form = SQLFORM.grid(db(db.auth_user.registration_key == 'pending'))
-    
-    return dict(form = form)
-
 
 @auth.requires_membership('admin')
 def freezer():

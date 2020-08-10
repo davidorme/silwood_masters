@@ -130,22 +130,6 @@ db.define_table('assignments',
                 # By default hide previous years,
                 common_filter = lambda query: db.assignments.academic_year >= datetime.datetime.now().year)
 
-## -----------------------------------------------------------------------------
-## Email log
-## - db table just to record who got emailed what and when. Doesn't record message
-##   content since these emails are all from templates - record the template and
-##   the dictionary of info used to fill out the template to save bits.
-## -----------------------------------------------------------------------------
-
-db.define_table('email_log',
-                Field('subject', 'string'),
-                Field('email_to', 'text'),
-                Field('email_cc', 'text'),
-                Field('email_template','string'),
-                Field('email_template_dict','json'),
-                Field('sent','boolean'),
-                Field('status', 'string'),
-                Field('message_date','datetime'))
 
 ## -----------------------------------------------------------------------------
 ## Project proposals
@@ -199,9 +183,15 @@ db.define_table('project_proposals',
                 Field('project_filled', 'boolean', default=False))
 
 # style the filled status as an icon
-filled_icons = {True: SPAN(_class='glyphicon glyphicon-remove-circle', _style='color:red'),
-                False: SPAN(_class='glyphicon glyphicon-ok-circle', _style='color:green'),
-                None: SPAN(_class='glyphicon glyphicon-question-sign', _style='color:orange')}
+filled_icons = {True: SPAN(_class='fa fa-times-circle',
+                           _style='color:red;font-size: 1.3em;',
+                           _title='Filled'),
+                False: SPAN(_class='fa fa-check-circle', 
+                            _style='color:green;font-size: 1.3em;',
+                            _title='Available'),
+                None: SPAN(_class='fa fa-question-circle', 
+                           _style='color:orange;font-size: 1.3em;',
+                           _title='Unknown')}
 
 db.project_proposals.project_filled.represent = lambda value, row: filled_icons[value]
 

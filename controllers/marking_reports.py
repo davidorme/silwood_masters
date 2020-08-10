@@ -6,9 +6,9 @@ import os
 import csv
 import itertools
 import simplejson as json
-from marking_reports_functions import (Mail, create_pdf, release, distribute,
+from marking_reports_functions import (create_pdf, release, distribute,
                                       zip_pdfs, download_grades)
-
+from mailer import Mail
 
 def index():
     """
@@ -36,25 +36,6 @@ def markers():
     
     return dict(form=form)
 
-## --------------------------------------------------------------------------------
-## EMAIL LOG
-## --------------------------------------------------------------------------------
-
-@auth.requires_membership('admin')
-def email_log():
-    
-    # Just shows a searchable log of emails sent
-    db.email_log.email_template_dict.readable=False
-    db.email_log.email_cc.readable=False
-    db.email_log.id.readable=False
-    
-    form = SQLFORM.grid(db.email_log, 
-                        csv=False,
-                        create=False,
-                        editable=False,
-                        deletable=False)
-    
-    return dict(form=form)
 
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS
@@ -610,10 +591,11 @@ def project_proposals():
     db.project_proposals.id.readable=False
     
     links = [dict(header = '', 
-                  body = lambda row: A(SPAN('',_class="icon magnifier icon-zoom-in glyphicon glyphicon-zoom-in"),
-                                       SPAN('  Details  ', _class="buttontext button"),
+                  body = lambda row: A(SPAN('',_class="fa fa-info-circle", 
+                                            _style='font-size: 1.3em;',
+                                            _title='See details'),
                                        _class="button btn btn-default", 
-                                       _href=URL("default","proposal_details", args=[row.id], user_signature=True),
+                                       _href=URL("marking_reports","proposal_details", args=[row.id], user_signature=True),
                                        _style='padding: 3px 5px 3px 5px;'))]
     
     # show the standard grid display
@@ -674,7 +656,7 @@ def proposal_details():
     
     if proposal is None:
         session.flash = CENTER(B('Invalid project proposal number.'), _style='color: red')
-        redirect(URL('default','project_proposals'))
+        redirect(URL('marking_reports','project_proposals'))
     
     # optional fields
     if proposal.imperial_email:

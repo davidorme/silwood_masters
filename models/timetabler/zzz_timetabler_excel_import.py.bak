@@ -8,6 +8,9 @@ from gluon import current # to store FIRST_DAY
 
 if db(db.auth_group).count() == 0:
     db.auth_group.insert(role='admin', description='Power users')
+    db.auth_group.insert(role='project_proposer', description='Can submit project proposals')
+    db.auth_group.insert(role='timetabler', description='Can edit module and event data')
+    db.auth_group.insert(role='reviewer', description='Can see but not edit _all_ assignments')
 
 if db(db.auth_user).count() == 0:
     #Bulk load account
