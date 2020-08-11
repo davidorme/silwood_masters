@@ -10,6 +10,43 @@ response.subtitle = ''
 
 response.menu = [
     (T('Marking'), False, URL('marking_reports', 'index'), []),
-    (T('Timetabler'), False, URL('timetabler', 'index'), []),
-    (DIV(_style='border-left: 3px solid #FFFFFF80; height: 40px;margin:0px 10px'), False, False, [])]
+    (T('Timetabler'), False, URL('timetabler', 'index'), [])]
+    
+
+if auth.has_membership('admin'):
+    
+    n_new = db(db.auth_user.registration_key == 'pending').count()
+    if n_new == 0:
+        badge = SPAN('0 new', 
+                     _class="badge badge-pill badge-secondary",
+                     _style='margin:0px 5px')
+    else:
+        badge = SPAN(str(n_new) + ' new', 
+                     _class="badge badge-pill badge-danger",
+                     _style='margin:0px 5px')
+    
+    response.menu.append((T('Admin tools'), False, None, [
+                            (T('Create Marking Assignment'), False, 
+                                URL('marking_reports', 'new_assignment'), []),
+                            (T('Load Marking Assignments'), False, 
+                                URL('marking_reports', 'load_assignments'), []),
+                            (T('View Marking Assignments'), False, 
+                                URL('marking_reports', 'assignments'), []),
+                            (T('View Project Markers'), False, 
+                                URL('marking_reports', 'markers'), []),
+                            (DIV(_class='dropdown-divider'), False, False, []),
+                            (T('Timetable freezer'), False, 
+                                URL('timetabler', 'freezer'), []),
+                            (DIV(_class='dropdown-divider'), False, False, []),
+                            (CAT(T('View Users'), badge), False, 
+                                URL('admin', 'show_users'), []),
+                            (T('View Email Log'), False, 
+                                URL('admin', 'email_log'), []),
+                            (T('Database (requires site password)'), False, 
+                                URL(request.application, 'appadmin', 'index'), [])
+                            ]))
+
+
+response.menu.append((DIV(_style='border-left: 3px solid #FFFFFF80; height: 40px;margin:0px 10px'),
+                      False, False, []))
 
