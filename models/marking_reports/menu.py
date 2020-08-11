@@ -31,6 +31,7 @@ if auth.has_membership('admin'):
                                       URL('marking_reports', 'assignments'), []),
                                   (T('View Project Markers'), False, 
                                       URL('marking_reports', 'markers'), []),
+                                  (DIV(_class='dropdown-divider'), False, False, []),
                                   (CAT(T('View Users'), badge), False, 
                                       URL('admin', 'show_users'), []),
                                   (T('View Email Log'), False, 

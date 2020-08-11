@@ -31,7 +31,8 @@ if auth.has_membership('admin'):
     response.menu.append((T('Admin tools'), False, None, [
                                   (T('Freezer'), False, 
                                       URL('timetabler', 'freezer'), []),
-                                  (CAT(T('View Users'), badge), False, 
+                                  (DIV(_class='dropdown-divider'), False, False, []),
+                                  (SPAN(T('View Users'), badge), False, 
                                       URL('admin', 'show_users'), []),
                                   (T('View Email Log'), False, 
                                       URL('admin', 'email_log'), []),
