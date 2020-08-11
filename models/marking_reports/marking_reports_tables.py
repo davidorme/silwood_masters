@@ -2,6 +2,9 @@ from marking_reports_functions import (div_radio_widget,
                                       div_checkbox_widget, 
                                       div_checkbox_widget_wide)
 
+## Turn on signed tables
+db._common_fields.append(auth.signature)
+
 ## --------------------------------------------------------------------------------
 ## GLOBAL LIST DEFINITIONS
 ## --------------------------------------------------------------------------------
