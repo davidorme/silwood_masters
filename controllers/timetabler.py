@@ -29,10 +29,19 @@ def help():
 ##   and many are locked down to admin staff only
 
 def teaching_staff_table():
-    """Presents a view of teaching staff. Users can add and edit, admin delete
+    """Presents a view of teaching staff. 
+    
+    Timetablers can add and edit, Admin delete
     """
+    
+    db.teaching_staff.id.readable = False
+    
     is_admin = auth.has_membership('admin')
+    is_timetabler= auth.has_membership('timetabler')
+    
     form = SQLFORM.grid(db.teaching_staff,
+                        create=is_timetabler,
+                        editable=is_timetabler,
                         deletable=is_admin, 
                         csv=is_admin)
     
@@ -40,7 +49,9 @@ def teaching_staff_table():
 
 
 def locations_table():
-    """Presents a view of teaching staff. Only admins can edit, delete or add
+    """Presents a view of teaching staff. 
+    
+    Only Admins can edit, delete or add
     """
     
     db.locations.id.readable = False
@@ -109,7 +120,10 @@ def recurring_events_table():
 
 
 def events_table():
-    """Presents a view of module events. These should always be edited via events()
+    """Presents a view of module events. 
+    
+    Timetablers should always edit events via events() but admins can access
+    more details via this interface
     """
     
     db.events.id.readable = False
@@ -205,7 +219,7 @@ def module_information():
                              'other_notes'],
                    showid=False,
                    record=module_id, 
-                   readonly=not auth.is_logged_in())
+                   readonly=not auth.has_membership('timetabler'))
     
     if form.process().accepted:
         redirect(URL('module_view', args=[module_id]))
@@ -249,7 +263,8 @@ def module_events():
                                    start_time=record.start_time),
                      #formstyle='bootstrap3_stacked',
                      showid=False,
-                     readonly=not auth.is_logged_in())
+                     readonly=not auth.has_membership('timetabler'))
+    
     elif auth.is_logged_in():
         form= DIV(H4('Options'),
                   UL(LI('Click on an existing event to unlock it for editing. '
@@ -755,7 +770,7 @@ def get_events(module_id, start=None, end=None, event_id=None):
     return events_json
 
 
-@auth.requires_login()
+@auth.requires_membership('timetabler')
 @service.json
 def post_new_event(module_id, datetime, duration):
     """Used to create a new event when fullcalendar fires eventReceive"""
@@ -910,32 +925,3 @@ def get_modules(start=None, end=None, course_id=None):
         mod.pop('courses')
     
     return modules
-
-
-# ---- Action for login/register/etc (required for auth) -----
-def user():
-    """
-    exposes:
-    http://..../[app]/default/user/login
-    http://..../[app]/default/user/logout
-    http://..../[app]/default/user/register
-    http://..../[app]/default/user/profile
-    http://..../[app]/default/user/retrieve_password
-    http://..../[app]/default/user/change_password
-    http://..../[app]/default/user/bulk_register
-    use @auth.requires_login()
-        @auth.requires_membership('group name')
-        @auth.requires_permission('read','table name',record_id)
-    to decorate functions that need access control
-    also notice there is http://..../[app]/appadmin/manage/auth to allow administrator to manage users
-    """
-    return dict(form=auth())
-
-# ---- action to server uploaded static content (required) ---
-@cache.action()
-def download():
-    """
-    allows downloading of uploaded files
-    http://..../[app]/default/download/[filename]
-    """
-    return response.download(request, db)

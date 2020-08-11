@@ -595,7 +595,8 @@ def project_proposals():
                                             _style='font-size: 1.3em;',
                                             _title='See details'),
                                        _class="button btn btn-default", 
-                                       _href=URL("marking_reports","proposal_details", args=[row.id], user_signature=True),
+                                       _href=URL("marking_reports","proposal_details", 
+                                                 args=[row.id], user_signature=True),
                                        _style='padding: 3px 5px 3px 5px;'))]
     
     # show the standard grid display
@@ -621,21 +622,17 @@ def project_proposals():
                          formargs={'showid':False},
                          orderby= ~db.project_proposals.date_created)
     
-    
-    
-    #http://127.0.0.1:8000/marking_reports/default/project_proposals?_export_type=csv_with_hidden_cols
-    
     # edit the grid object
     # - extract the download button and retitle it
     # - insert it in the search menu
-    download = A('Download all', _class="btn btn-default btn-sm",
+    download = A('Download all', _class="btn btn-secondary",
                   _href=URL('project_proposals', 
                             vars={'_export_type': 'csv_with_hidden_cols'}))
     
     grid.element('.web2py_console form').append(download)
 
-    if auth.is_logged_in():
-        download = A('New proposal', _class="btn btn-default btn-sm",
+    if auth.has_membership('project_proposer'):
+        download = A('New proposal', _class="btn btn-secondary",
                       _href=URL('submit_proposal'))
         grid.element('.web2py_console form').append(download)
         
@@ -754,7 +751,7 @@ def proposal_details():
     return dict(proposal = propview)
 
 
-@auth.requires_login()
+@auth.requires_membership('project_proposer')
 def submit_proposal():
     
     form  = SQLFORM(db.project_proposals)
