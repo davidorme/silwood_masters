@@ -8,7 +8,6 @@ import io
 import openpyxl
 import simplejson as json
 from collections import Counter
-import html2text
 import fpdf
 import importlib
 
