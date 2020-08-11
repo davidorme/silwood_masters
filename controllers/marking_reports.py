@@ -48,7 +48,10 @@ def new_assignment():
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
+    db.markers._format = '%(last_name)s, %(first_name)s (%(email)s)'
+    
     form = SQLFORM(db.assignments)
+    
     if form.process().accepted:
         response.flash = 'Assignment created'
         redirect(URL('assignments'))
@@ -259,7 +262,7 @@ def load_assignments():
         else:
             # - get sets of records by marker email
             data.sort(key=lambda recs: recs['marker_email'])
-            marker_blocks = {k:list(recs) for k, recs in itertools.groupby(data, lambda x: x['marker_email'])}
+            marker_blocks = {k:list(recs) for k, recs in itertools.groupby(data, lambda x: x['marker_email'].lower())}
             
             # - loop over those blocks, inserting into the marker database if 
             #   needed and then inserting the assignments
