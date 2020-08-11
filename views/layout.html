@@ -43,7 +43,9 @@
        <div class="navbar-collapse collapse w-100" id="navbarNavDropdown">
          <ul class="navbar-nav w-100 justify-content-left">
           {{for _item in response.menu or []:}}
-          {{if len(_item)<4 or not _item[3]:}}
+          {{if isinstance(_item[0], DIV):}}
+             <li >{{=_item[0]}}</li>
+          {{elif len(_item)<4 or not _item[3]:}}
           <li class="nav-item {{if _item[1]:}}active{{pass}}">
             <a class="nav-link" href="{{=_item[2]}}">{{=_item[0]}}</a>
           </li>
@@ -52,7 +54,11 @@
             <a class="nav-link dropdown-toggle" href="{{=_item[2]}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{=_item[0]}}</a>
             <div class="dropdown-menu">
               {{for _subitem in _item[3]:}}
+              {{if isinstance(_subitem[0], DIV):}}
+                  {{=_subitem[0]}}
+              {{else:}}
               <a class="dropdown-item" href="{{=_subitem[2]}}">{{=_subitem[0]}}</a>
+              {{pass}}
               {{pass}}
             </div>
           </li>
@@ -89,14 +95,14 @@
     </nav>
 
     <!-- Masthead ===================================== -->
-	<!-- Freezing banner is currently disabled during merge of marking reports and timetables -->
-	{{#freezer = db(db.freezer).select().first()}}
-	{{#if freezer is not None and freezer.is_frozen:}}
-	{{if False:}}
-	<div class='row' style='background-color:teal'><div class='col-12'>
-		<H4 style='text-align:center;color:white'>The database is frozen</H4>
-	</div></div>
-	{{pass}}
+    <!-- Freezing banner is currently disabled during merge of marking reports and timetables -->
+    {{#freezer = db(db.freezer).select().first()}}
+    {{#if freezer is not None and freezer.is_frozen:}}
+    {{if False:}}
+    <div class='row' style='background-color:teal'><div class='col-12'>
+        <H4 style='text-align:center;color:white'>The database is frozen</H4>
+    </div></div>
+    {{pass}}
     {{block header}}
     {{end}}
     <!-- Main ========================================= -->

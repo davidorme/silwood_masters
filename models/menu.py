@@ -9,6 +9,7 @@ response.title = request.application.replace('_',' ').title()
 response.subtitle = ''
 
 response.menu = [
-    (T('Home'), False, URL('marking_reports', 'index'), []),
-    (T('Timetabler'), False, URL('timetabler', 'index'), [])]
+    (T('Marking'), False, URL('marking_reports', 'index'), []),
+    (T('Timetabler'), False, URL('timetabler', 'index'), []),
+    (DIV(_style='border-left: 3px solid #FFFFFF80; height: 40px;margin:0px 10px'), False, False, [])]
 
