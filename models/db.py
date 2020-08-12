@@ -100,7 +100,7 @@ class Auth_Mail(Auth):
 # and marking_reports index
 auth = Auth_Mail(db, 
                  host_names=configuration.get('host.names'),
-                 controller='admin',
+                 controller='sm_admin',
                  url_index=URL('marking_reports', 'index'))
 
 # -------------------------------------------------------------------------

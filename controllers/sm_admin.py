@@ -58,7 +58,7 @@ def show_users():
                   body = lambda row: A(SPAN(_class='fa fa-info-circle', 
                                             _style='color:#007BFF;font-size: 1.3em;',
                                             _title='Info'),
-                                       _href=URL('admin', 'user_details', args=row.id)))]
+                                       _href=URL('sm_admin', 'user_details', args=row.id)))]
     
     form = SQLFORM.grid(db.auth_user.id,
                         csv=False,
@@ -112,7 +112,7 @@ def user_details():
         # Delete first
         if form.vars.delete:
             record.delete_record()
-            redirect(URL('admin','show_users'))
+            redirect(URL('sm_admin','show_users'))
         
         # Group memberships
         for grp in groups:
@@ -140,7 +140,7 @@ def user_details():
                                            "been approved.")
             del mailer
         
-        redirect(URL('admin','show_users'))
+        redirect(URL('sm_admin','show_users'))
     
     return dict(form = form)
 
