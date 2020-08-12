@@ -390,10 +390,11 @@ def create_pdf(record, form_json, confidential):
     pdf.set_text_color(0, 0, 0)
     
     # ID table
-    label =   ['Student', 'CID', 'Course', 'Marker', 'Marker Role']
+    label =   ['Student', 'CID', 'Course', 'Year', 'Marker', 'Marker Role']
     content = ['{student_first_name} {student_last_name}',
                '{student_cid}',
                '{course_presentation}',
+               '{academic_year}',
                '{marker.first_name} {marker.last_name}',
                '{marker_role}']
     

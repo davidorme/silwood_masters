@@ -77,12 +77,12 @@ def assignments():
     # link to a non-default new edit page
     links = [dict(header = 'Report', 
                   body = lambda row: A('View',_class='button btn btn-secondary',
-                                       _href=URL("write_report", 
+                                       _href=URL("marking_reports", "write_report", 
                                                  vars={'record': row.id, 
                                                        'staff_access_token':row.staff_access_token}))),
              dict(header = 'Assignment', 
                   body = lambda row: A('Edit',_class='button btn btn-secondary',
-                                       _href=URL("edit_assignment", args=row.id)))]
+                                       _href=URL("marking_reports", "edit_assignment", args=row.id)))]
     
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
@@ -320,6 +320,8 @@ def write_report():
         session.flash = 'No project marking record id provided'
         redirect(URL('index'))
     else:
+        # allow old reports to be retrieved
+        db.assignments._common_filter = None
         record = db.assignments(int(security['record']))
         
         if record is None:
@@ -349,6 +351,7 @@ def write_report():
     header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
                      ('CID', '{student_cid}'),
                      ('Course Presentation', '{course_presentation}'),
+                     ('Academic Year', '{academic_year}'),
                      ('Marker', '{marker.first_name} {marker.last_name}'),
                      ('Marker Role', '{marker_role}'),
                      ('Status', '{status}')]
@@ -523,6 +526,8 @@ def download_pdf():
         session.flash = 'No project marking record id provided'
         redirect(URL('index'))
     else:
+        # allow old reports to be retrieved
+        db.assignments._common_filter = None
         record = db.assignments(int(security['record']))
     
         if record is None:
