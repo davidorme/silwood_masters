@@ -1,12 +1,12 @@
 {{extend 'layout.html'}}
 
 {{block head}}
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/locales-all.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.js"></script>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.1.0/main.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.2.0/main.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.2.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.2.0/locales-all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.2.0/main.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.2.0/main.min.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.2.0/main.min.css">
 
 <script>
 	// The examples for fullcalendar v5 all embed the mechaniscs of the calendar within
@@ -37,23 +37,38 @@
 		
 		// get the module id, which is saved as an attribute in the html
 		var module_id = document.getElementById('module_data').getAttribute('module_id');
-		var module_start = document.getElementById('module_data').getAttribute('module_start');
-		var event_id = document.getElementById('event_data').getAttribute('event_id');
+		
+		// Sort out the initial date and scroll time of the calendar
+		// - by default, this is the module start (date of the first event) and 09:00
+		var initial_date = document.getElementById('module_data').getAttribute('module_start');
+		var scroll_time = '09:00'
+		var event_id = null;
+		
+		// The controller might have passed back the date of the last event
+		if (window.location.search != ""){
+			const urlParams = new URLSearchParams(window.location.search);
+			initial_date = urlParams.get('last_date');
+		}
+		// get event data if present and override the initial date.
+		var event_data = document.getElementById('event_data');
+		if (event_data != null){
+			event_id = event_data.getAttribute('event_id');
+			initial_date = event_data.getAttribute('start');
+			// Set the scroll time to an hour before the select event
+			var init_date = new Date(initial_date);
+			init_date.setHours(init_date.getHours() - 1)
+			scroll_time = init_date.toLocaleTimeString()
+		}
 		
 		// function to update the form when events dropped, resized or received
 		
 		var event_to_form = function(event){
 			
-			var form_event_day = document.getElementsByName('event_day')
-			if (form_event_day.length == 1){
-				form_event_day[0].value = event.start.getDay();
+			var form_event_start = document.getElementsByName('start')
+			if (form_event_start.length == 1){
+				form_event_start[0].value = event.start.toISOString();
 			}
 			
-			var form_start_date = document.getElementsByName('start_time')
-			if (form_start_date.length == 1){
-				form_start_date[0].value = event.start.getHours() + ":" + event.start.getMinutes();
-			}
-
 			var form_event_duration = document.getElementsByName('duration')
 			if (form_event_duration.length === 1){
 				form_event_duration[0].value = (event.end - event.start) / 3600000;
@@ -78,10 +93,11 @@
 		// -----------------------------------------------------------------
 
 		var calendar = new Calendar(calendarEl, {
+			timeZone: 'UTC',
 			headerToolbar: {
 				left: 'prev,next',
 				center: 'title',
-				right: 'timeGridWeek,listYear'
+				right: 'timeGridWeek,dayGridMonth,listYear'
 				
 			},
 			views: {
@@ -91,7 +107,7 @@
 					slotDuration: "00:15:00",
 					slotMinTime: "06:00:00",
 					slotMaxTime: "18:00:00",
-					scrollTime: "09:00:00",
+					scrollTime: scroll_time,
 					slotLabelFormat: {'hour':'numeric', 'minute': '2-digit', 'hour12': false},
 					allDaySlot: true
 				},
@@ -115,8 +131,8 @@
 				// function to handle success of PUT
 				xhr.onreadystatechange = function() {
 					if (xhr.readyState === 4 && xhr.status === 200) {
-						var res = JSON.parse(xhr.response);
-						window.location.href = "{{=URL('module_events')}}" + '/' + module_id + '/' + res
+						event_id = JSON.parse(xhr.response);
+						window.location.href = "{{=URL('module_events')}}" + '/' + module_id + '/' + event_id
 					}
 				};
 				xhr.send(JSON.stringify(info));
@@ -152,8 +168,19 @@
 				editable: false
 			}],
 			resources: "{{=URL('call/json/get_locations')}}",
-			initialDate: module_start
+			initialDate: initial_date
 		});
+		
+		// // Experimenting with Ajax submission - need to derail the standard submission
+		// // - actually no, pretty much all the page logic would need to be java. No event 
+		// // text and all.
+		// event_details_form = document.getElementsByName('event_details')[0]
+		// 
+		// event_details_form.addEventListener('submit', function(event){
+		// 	event.preventDefault()
+		// 	console.log(this)
+		// })
+		
 		calendar.render();
 	});
 
