@@ -73,18 +73,18 @@
             </a>
             <div class="dropdown-menu dropdown-menu-right">
               {{if auth.user:}}
-              <a class="dropdown-item" href="{{=URL('admin','user/profile')}}">{{=T('Profile')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/profile')}}">{{=T('Profile')}}</a>
               {{if 'change_password' not in auth.settings.actions_disabled:}}
-              <a class="dropdown-item" href="{{=URL('admin','user/change_password')}}">{{=T('Change Password')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/change_password')}}">{{=T('Change Password')}}</a>
               {{pass}}
-              <a class="dropdown-item" href="{{=URL('admin','user/logout')}}">{{=T('Logout')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/logout')}}">{{=T('Logout')}}</a>
               {{else:}}
-              <a class="dropdown-item" href="{{=URL('admin','user/login')}}">{{=T('Login')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/login')}}">{{=T('Login')}}</a>
               {{if 'register' not in auth.settings.actions_disabled:}}
-              <a class="dropdown-item" href="{{=URL('admin','user/register')}}">{{=T('Sign up')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/register')}}">{{=T('Sign up')}}</a>
               {{pass}}
               {{if 'retrieve_password' not in auth.settings.actions_disabled:}}
-              <a class="dropdown-item" href="{{=URL('admin','user/retrieve_password')}}">{{=T('Lost Password')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/retrieve_password')}}">{{=T('Lost Password')}}</a>
               {{pass}}
               {{pass}}
             </div>

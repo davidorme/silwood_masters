@@ -39,9 +39,9 @@ if auth.has_membership('admin'):
                                 URL('timetabler', 'freezer'), []),
                             (DIV(_class='dropdown-divider'), False, False, []),
                             (CAT(T('View Users'), badge), False, 
-                                URL('admin', 'show_users'), []),
+                                URL('sm_admin', 'show_users'), []),
                             (T('View Email Log'), False, 
-                                URL('admin', 'email_log'), []),
+                                URL('sm_admin', 'email_log'), []),
                             (T('Database (requires site password)'), False, 
                                 URL(request.application, 'appadmin', 'index'), [])
                             ]))
