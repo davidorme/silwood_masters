@@ -205,7 +205,6 @@ def module_information():
     """Controller to return a SQLFORM for module level information"""
     module_id = request.args[0]
     
-    
     form = SQLFORM(db.modules, 
                    fields = ['title',
                              'convenors',
@@ -231,18 +230,44 @@ def module_events():
     """Controller to deliver a module level calendar and handle event creation and update.
     Editing is only possible for logged in users, but anyone can view and click through."""
     
-    if len(request.args) == 1:
-        module_id = request.args[0]
-        event_id = None
-    else:
-        module_id = request.args[0]
-        event_id = request.args[1]
+    if len(request.args) == 0:
+        redirect(URL('module_grid'))
     
-    if auth.is_logged_in():
-        db.events._common_filter = None
+    try:
+        module_id = int(request.args[0])
+    except ValueError:
+        session.flash = 'Invalid module id'
+        redirect(URL('module_grid'))
     
     module_record = db.modules[module_id]
+    if module_record is None:
+        session.flash = 'Unknown module id'
+        redirect(URL('module_grid'))
+        
     update_module_record_with_dates(module_record)
+    
+    if auth.has_membership('timetabler'):
+        db.events._common_filter = None
+    
+    if len(request.args) == 2:
+        try:
+            event_id = int(request.args[1])
+        except ValueError:
+            session.flash = 'Invalid event id'
+            redirect(URL('module_events', args=module_id))
+        
+        event_record = db.events[event_id]
+        
+        if event_record is None:
+            session.flash = 'Unknown event id'
+            redirect(URL('module_events', args=module_id))
+        
+        update_event_record_with_dates(event_record)
+        event_data = DIV(_id='event_data', _event_id=event_id,
+                         _start = event_record.start)
+    else:
+        event_id = None
+        event_data = DIV()
     
     # USE SQLFORM to create the event form when an event id is passed in the arguments
     # otherwise create some instructions. The day, time and duration fields are not 
@@ -251,21 +276,47 @@ def module_events():
     # internally below
     
     if event_id is not None:
-        record = db(db.events.id == event_id).select().first()
-        form=SQLFORM(db.events,
-                     deletable=auth.is_logged_in(),
-                     record = record,
-                     fields = ['title', 'description', 'teacher_id', 
-                               'location_id', 'courses', 'conceal'],
-                     hidden = dict(academic_week=record.academic_week,
-                                   event_day=record.day_of_week,
-                                   duration=record.duration,
-                                   start_time=record.start_time),
-                     #formstyle='bootstrap3_stacked',
-                     showid=False,
-                     readonly=not auth.has_membership('timetabler'))
+        if event_record.conceal:
+            conceal_toggle = BUTTON('Reveal', _type="submit", 
+                                     _class='btn btn-secondary', _name='reveal')
+        else:
+            conceal_toggle = BUTTON('Conceal', _type="submit", 
+                                     _class='btn btn-secondary', _name='conceal')
+            
+        form = SQLFORM(db.events,
+                       record = event_record,
+                       fields = ['title', 'description', 'teacher_id', 
+                                 'location_id', 'courses'],
+                       hidden = dict(start=event_record.start,
+                                     duration=event_record.duration),
+                       #formstyle='bootstrap3_stacked',
+                       showid=False,
+                       readonly=not auth.has_membership('timetabler'),
+                       buttons=[A(BUTTON('Back', _class='btn btn-secondary'),
+                                  _href=URL('module_events', args=module_id)),
+                                BUTTON('Submit', _type="submit", 
+                                       _class='btn btn-secondary', _name='submit'),
+                                conceal_toggle,
+                                BUTTON('Duplicate', _type="submit",
+                                       _class='btn btn-secondary', _name='duplicate'),
+                                BUTTON('Delete', _type="submit",  
+                                       _class='btn btn-secondary', _name='delete')])
+        
+        if auth.has_membership('timetabler'):
+            # Shrink the description box and let the buttons use the full row 
+            form.element('[name=description]')['_rows']= 4
+            form.element('[name=teacher_id]')['_size']= 4
+            form.element('[name=location_id]')['_size']= 4
+            form.element('[name=courses]')['_size']= 4
+            form.element('[id=submit_record__row]').elements()[1]['_class'] = 'col-sm-12'
+            # Add a name to the form, making it easier to target client side for 
+            # experimenting with AJAX updating of the events window. This would need
+            # a lot of reworking to move it all client side.
+            
+            # form.element()['_name'] = 'event_details'
+            # form.element()['_action'] = ''
     
-    elif auth.is_logged_in():
+    elif auth.has_membership('timetabler'):
         form= DIV(H4('Options'),
                   UL(LI('Click on an existing event to unlock it for editing. '
                         'You can drag and resize the event to reschedule it and '
@@ -291,29 +342,50 @@ def module_events():
                         A('locations', _href=URL('locations')),
                         ' if needed.',
                         _style='padding:2px'),
-                     LI('Events can be deleted or concealed - a concealed event will stay '
-                        'in the database and can be seen by registered users and unconcealed, '
-                        'but a deleted event is gone')),
+                     LI('Once selected, events can also be:', 
+                          UL(LI(B('Duplicated'), ' to make an exact copy for editing'),
+                             LI(B('Concealed'), ' to retain an event in the database '
+                                  'but hide it from public view'),
+                             LI(B('Deleted'), ' to permanently remove the event.')))),
                   _class='jumbotron')
     else:
         form= DIV(H4('Options'),
                   UL(LI('Log in to edit events.'),
                      LI('Click on an event to see event details.')),
                   _class='jumbotron')
-        
     
     # Process the form if that is what comes back, first adding the hidden fields back in
     if isinstance(form, gluon.sqlhtml.SQLFORM):
-        form.vars.start_time = request.vars.start_time
-        form.vars.event_day = request.vars.event_day
+        form.vars.start = request.vars.start
         form.vars.duration = request.vars.duration
     
     if isinstance(form, gluon.sqlhtml.SQLFORM) and form.process().accepted:
-        redirect(URL(args=[module_id]))
+        # The request variables contain the name of the submit button,
+        # which is used here to identify the action.
+        
+        if 'conceal' in request.vars:
+            event_record.update_record(conceal=True)
+        elif 'reveal' in request.vars:
+            event_record.update_record(conceal=False)
+        elif 'delete' in request.vars:
+            event_record.delete_record()
+        elif 'submit' in request.vars:
+            print(form.vars)
+            print(convert_date_to_weekdaytime(form.vars.start))
+            success, week, day, start = convert_date_to_weekdaytime(form.vars.start)
+            form.vars.academic_week = week
+            form.vars.day_of_week = day
+            form.vars.start_time = start
+            event_record.update_record(**form.vars)
+        elif 'duplicate' in request.vars:
+            db.events.insert(**db.events._filter_fields(event_record))
+        
+        # The redirect passes back the date of the record to allow the calendar
+        # to stay on the same calendar pane.
+        redirect(URL(args=[module_id], vars={'last_date': event_record.start.date()}))
     
     return dict(module_data=_module_page_header(module_id, 'Events'),
-                event_data=DIV(_id='event_data', _event_id=event_id),
-                form=form)
+                event_data=event_data, form=form)
 
 
 def module_view():
@@ -673,7 +745,9 @@ def freezer():
 ## Data services
 ##
 ## fullcalendar automatically sends start and end to do lazy loading of events, 
-## but that is currently not implemented in any of these services.
+## but that is currently not implemented in any of these services. Many of
+## these services include an unused timeZone argument. It is passed in by fullcalendar
+## but we aren't using it.
 
 
 def call():
@@ -681,7 +755,7 @@ def call():
     return service()
 
 @service.json
-def get_college_dates(start=None, end=None):
+def get_college_dates(start=None, end=None, timeZone=None):
     """Service to provide college dates as events, merging college dates and 
     recurring events into a single feed
     """
@@ -727,12 +801,12 @@ def get_college_dates(start=None, end=None):
 
 
 @service.json
-def get_events(module_id, start=None, end=None, event_id=None):
+def get_events(module_id, start=None, end=None, event_id=None, timeZone=None):
     """Service to provide the events within a module with locations as resources"""
     
     # Use the events set from the module to get the module details
     # and the events. Logged in users get to see concealed events
-    if auth.is_logged_in():
+    if auth.has_membership('timetabler'):
         db.events._common_filter = None
     
     module = db.modules[module_id]
@@ -762,7 +836,7 @@ def get_events(module_id, start=None, end=None, event_id=None):
             if ev.id == event_id:
                 ev_dict['color'] = 'salmon'
             
-            if ev.id == event_id and auth.is_logged_in():
+            if ev.id == event_id and auth.has_membership('timetabler'):
                 ev_dict['editable'] = True
         
         events_json.append(ev_dict)
@@ -793,7 +867,7 @@ def post_new_event(module_id, datetime, duration):
 
 
 @service.json
-def get_events_by_week(start=None, end=None):
+def get_events_by_week(start=None, end=None, timeZone=None):
     """Service to provide a week of events with locations as resources"""
     
     # Get modules that intersect the start date
@@ -885,7 +959,7 @@ def get_modules_old(start=None, end=None, course_id=None):
     return modules
 
 @service.json
-def get_modules(start=None, end=None, course_id=None):
+def get_modules(start=None, end=None, course_id=None, timeZone=None):
     """Service to provides module level events for the module grid. 
     
     Fullcalendar does a great job of laying out events and providing structures
