@@ -118,7 +118,8 @@ def assignments():
                    ("submit_4", "Download Grades"))
         for b in buttons:
             grid.element("[name=" +  b[0]+ "]", replace=None)
-            table_start.insert(0, INPUT(_name=b[0], _type='submit', _value=b[1], _style='padding:5px 15px;margin:10px'))
+            table_start.insert(0, INPUT(_name=b[0], _type='submit', _value=b[1], 
+                                        _style='padding:5px 15px;margin:10px;background:#6C757D;color:white'))
     
     # old records, turning off the common filter
     old_count = db(db.assignments.academic_year < datetime.datetime.now().year,

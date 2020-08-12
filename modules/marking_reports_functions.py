@@ -10,8 +10,9 @@ import simplejson as json
 from collections import Counter
 import fpdf
 import importlib
+from mailer import Mail
 
-from gluon import current, SQLFORM, DIV, LABEL, CAT, B, P, A, URL, HTTP
+from gluon import current, SQLFORM, DIV, LABEL, CAT, B, P, A, URL, HTTP, BR
 
 """
 This module contains key functions for processing marking reports. They have been 
@@ -166,10 +167,13 @@ def distribute(ids):
         recs = sorted(recs, key=lambda x: (x.course_presentation, x.marker_role))
         links = [CAT(P(B('Course: '), r.course_presentation,
                        B('; Marking Role: '), r.marker_role,
-                       B('; Student: '), A(r.student_first_name, ' ', r.student_last_name, 
-                                         _href=URL('write_report', scheme=True, host=True,
-                                                   vars={'record':r.id, 'staff_access_token': r.staff_access_token})),
-                       B('; Due Date: '), r.due_date)) for r in recs]
+                       B('; Student: '), r.student_first_name, ' ', r.student_last_name,
+                       B('; Due Date: '), r.due_date,
+                       BR(),
+                       A('Go to marking report for ', r.student_first_name, ' ', r.student_last_name, 
+                         _href=URL('write_report', scheme=True, host=True,
+                         vars={'record':r.id, 'staff_access_token': r.staff_access_token}))))
+                 for r in recs]
         
         success = mailer.sendmail(subject='Silwood Park Masters Project Marking', 
                                   to=marker, email_template='marker_distribute.html',
