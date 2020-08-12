@@ -48,7 +48,8 @@ def new_assignment():
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
-    db.markers._format = '%(last_name)s, %(first_name)s (%(email)s)'
+    db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', 
+                                              '%(last_name)s, %(first_name)s (%(email)s)')
     
     form = SQLFORM(db.assignments)
     
@@ -375,7 +376,7 @@ def write_report():
     # set whether the form is editable or not, which is basically just submitted/not submitted
     # - allow authorised users to edit completed reports but warn them
     
-    if auth.is_logged_in():
+    if auth.has_membership('admin'):
         warning = DIV(B('Reminder: '), "Logged in administrators have the ability to ",
                       "edit all reports in order to fix mistakes or unfortunate phrasing. ",
                       "Please do not do so lightly.", _class="alert alert-danger", _role="alert")
