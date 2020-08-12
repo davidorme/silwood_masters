@@ -136,7 +136,13 @@ def edit_assignment():
     
     record = db.assignments[request.args[0]]
     
+    if record.status in ['Created', 'Not started']:
+        delete_ok = True
+    else:
+        delete_ok = False
+    
     form = SQLFORM(db.assignments,
+                   deletable=delete_ok,
                    record=record)
     
     if form.process(onvalidation=submit_validation).accepted:
