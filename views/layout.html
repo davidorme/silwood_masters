@@ -79,7 +79,7 @@
               {{pass}}
               <a class="dropdown-item" href="{{=URL('sm_admin','user/logout')}}">{{=T('Logout')}}</a>
               {{else:}}
-              <a class="dropdown-item" href="{{=URL('sm_admin','user/login')}}">{{=T('Login')}}</a>
+              <a class="dropdown-item" href="{{=URL('sm_admin','user/login', vars=dict(_next=URL(args=request.args, vars=request.vars)))}}">{{=T('Login')}}</a>
               {{if 'register' not in auth.settings.actions_disabled:}}
               <a class="dropdown-item" href="{{=URL('sm_admin','user/register')}}">{{=T('Sign up')}}</a>
               {{pass}}
