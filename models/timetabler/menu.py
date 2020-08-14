@@ -13,6 +13,11 @@ timetabler_menu = [
         (T('Modules'), False, URL('timetabler', 'modules_table'), []),
         (T('Events'), False, URL('timetabler', 'events_table'), [])
     ]),
-    (T('Help'), False, URL('timetabler', 'help'), [])]
+    (T('Help'), False, None, [
+        (T('Overview'), False,  URL('timetabler', 'help'), []),
+        (T('Video tutorial'), False, 'https://imperial.cloud.panopto.eu/Panopto/Podcast/'
+                                    'StreamInBrowser/31fe3591-7a1f-4d18-8de8-ac1700d70d9b.mp4'
+                                    '?mediaTargetType=videoPodcast', [])
+    ])]
 
 response.menu.extend(timetabler_menu)
