@@ -1,0 +1,172 @@
+{
+	"title": "Grading form for Master's Project viva",
+	"pdftitle": "Viva Report",
+	"instructions": "<p>The internal viva voce examinations will be conducted by an two independent Examiners (also called markers), one of whom will typically have greater expertise in the project area.  There are two important components of this meeting:</p>",
+	"questions": [
+		{
+			"title": "Section 1) Agreed report grade",
+			"confidential": true,
+			"info": "<p><b>Before the viva begins, agree a grade for the written project report.</b></p><p>Markers must briefly discuss their assigned project written report grades and agree on a final grade before the student enters the room.</p><p>It is common that grades differ by one or two points on the marking scale due to simple differences in marking severity.  In the absence of a strong argument why one mark is more appropriate, it is usual to apply the benefit of the doubt and take the higher of two adjacent grades on the scale (e.g. 55 and 58 goes to 58) and the midpoint of two grades within two grade points of each other (e.g. 68 and 76 goes to 72).</p><p>If the agreed grade does not follow this simple rule of thumb, you must edit the justification to explain your decision. For large disparities between the two grades or if markers cannot agree on a grade, a third opinion will be sought after the viva has been concluded. The grade dropdown includes a specific option to indicate that moderation is required.</p>",
+			"components": [
+				{
+					"type": "comment",
+					"variable": "justification_comments",
+					"label": "Justification",
+					"nrow": 3,
+					"required": true,
+					"value": "Benefit of doubt"
+				},
+				{
+					"type": "select",
+					"variable": "project_agreed_grade",
+					"label": "Select a grade",
+					"options": [
+						"Moderation required",
+						"100% (A*)",
+						"95% (A*)",
+						"90% (A*)",
+						"85% (A*)",
+						"80% (A)",
+						"76% (A)",
+						"72% (A)",
+						"68% (B)",
+						"65% (B)",
+						"62% (B)",
+						"58% (C)",
+						"55% (C)",
+						"52% (C)",
+						"48% (D)",
+						"45% (D)",
+						"42% (D)",
+						"35% (D)",
+						"30% (D)",
+						"25% (D)",
+						"20% (D)",
+						"15% (D)",
+						"10% (D)",
+						"5% (D)",
+						"0% (D)"
+					],
+					"required": true
+				}
+			]
+		},
+		{
+			"title": "Section 2) Viva",
+			"confidential": false,
+			"info": "<p><b>Conduct a 20 to 25 minute viva and agree on a viva mark</b></p><p>It is particularly important that each student is given a comparable chance to demonstrate his or her abilities, and that each student's viva is assessed in a comparable way following the criteria below. While questions will obviously differ between projects, please try to assess each of the areas in the following table to fully evaluate the student's performance.</p><p>You must provide comments on each section to support the assigned grade. Given the time constraints in vivas, these can be very brief ('Adequate', 'Flaky on stats details', etc.) but should allow your grade to be matched to performance across the question areas.</p>",
+			"components": [
+				{
+					"type": "comment",
+					"variable": "aims_comments",
+					"label": "Broad aims",
+					"nrow": 3,
+					"required": true,
+					"info": "Ask an open question about the broad aims of the project to start the viva, to help the student to settle<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "value_comments",
+					"label": "Scientific value",
+					"nrow": 3,
+					"required": true,
+					"info": "Can the student explain why the questions addressed are important and interesting?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "literature_comments",
+					"label": "Knowledge of literature",
+					"nrow": 3,
+					"required": true,
+					"info": "How knowledgeable is the student about papers cited prominently in the thesis?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "method_choice_comments",
+					"label": "Methods choice",
+					"nrow": 3,
+					"required": true,
+					"info": "How well can the student explain the choice of methods used in the project?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "value_comments",
+					"label": "Methods use and intepretation",
+					"nrow": 3,
+					"required": true,
+					"info": "How well has the student understood the methods used and the results obtained from them?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "context_comments",
+					"label": "Results in context",
+					"nrow": 3,
+					"required": true,
+					"info": "How clearly can the student explain how the findings fit into the recent literature in the field?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "critique_comments",
+					"label": "Response to critical questioning",
+					"nrow": 3,
+					"required": true,
+					"info": "How well does the student defend the thesis in the face of critical questioning?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "limitations_comments",
+					"label": "Project limitations",
+					"nrow": 3,
+					"required": true,
+					"info": "How aware is the student of the limitations of the work presented in the thesis?<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "supervision_comments",
+					"label": "Problems in supervision",
+					"nrow": 3,
+					"required": true,
+					"info": "Also please be sure to ask whether the student felt there were any problems with their supervision during the project.<hr>"
+				}
+			]
+		},
+		{
+			"title": "Grade",
+			"confidential": true,
+			"components": [
+				{
+					"type": "select",
+					"variable": "viva_grade",
+					"label": "Select a grade",
+					"options": [
+						"100% (A*)",
+						"95% (A*)",
+						"90% (A*)",
+						"85% (A*)",
+						"80% (A)",
+						"76% (A)",
+						"72% (A)",
+						"68% (B)",
+						"65% (B)",
+						"62% (B)",
+						"58% (C)",
+						"55% (C)",
+						"52% (C)",
+						"48% (D)",
+						"45% (D)",
+						"42% (D)",
+						"35% (D)",
+						"30% (D)",
+						"25% (D)",
+						"20% (D)",
+						"15% (D)",
+						"10% (D)",
+						"5% (D)",
+						"0% (D)"
+					],
+					"required": true
+				}
+			]
+		}
+	]
+}
