@@ -479,12 +479,22 @@ def write_report():
     # add the questions in the order they appear in the JSON array
     for q in form_json['questions']:
         html.append(DIV(H4(q['title']), _style='background-color:lightgrey;padding:1px'))
-        html.append(DIV(_style='min-height:10px'))
-        for c in q['components']:
-            html.append(DIV(DIV(B(c['label']), _class='col-sm-2'), 
-                            DIV(form.custom.widget[c['variable']],_class='col-sm-10'), 
-                            _class='row'))
+        
+        if q.get('info') is not None:
+            html.append(DIV(q.get('info')))
+        else:
             html.append(DIV(_style='min-height:10px'))
+        
+        for c in q['components']:
+            html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
+                            DIV(form.custom.widget[c['variable']], _class='col-sm-10'),
+                            _class='row'))
+            
+            if c.get('info') is not None:
+                html.append(DIV(c.get('info')))
+            else:
+                html.append(DIV(_style='min-height:10px'))
+            
         html.append(DIV(_style='min-height:10px'))
         
     # finalise the form and send the whole thing back
