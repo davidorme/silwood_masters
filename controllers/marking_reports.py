@@ -470,6 +470,9 @@ def write_report():
                     form.custom.widget[c['variable']]['_rows'] = c['nrow']
                 if 'placeholder' in list(c.keys()):
                     form.custom.widget[c['variable']].update(_placeholder=c['placeholder'])
+                if 'value' in list(c.keys()):
+                    print(type(form.custom.widget[c['variable']]))
+                    form.custom.widget[c['variable']].components = [c['value']]
     
     # compile the laid out form in a list
     html = [H2(form_json['title'])] 
@@ -481,7 +484,7 @@ def write_report():
         html.append(DIV(H4(q['title']), _style='background-color:lightgrey;padding:1px'))
         
         if q.get('info') is not None:
-            html.append(DIV(q.get('info')))
+            html.append(DIV(XML(q.get('info'))))
         else:
             html.append(DIV(_style='min-height:10px'))
         
@@ -491,7 +494,7 @@ def write_report():
                             _class='row'))
             
             if c.get('info') is not None:
-                html.append(DIV(c.get('info')))
+                html.append(DIV(XML(c.get('info'))))
             else:
                 html.append(DIV(_style='min-height:10px'))
             
