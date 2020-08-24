@@ -483,10 +483,14 @@ def query_report_marker_grades(record, pdf=False):
                        (db.assignments.marker_role == 'Marker')
                        ).select(
                            db.assignments.marker,
-                           db.assignments.assignment_data)
+                           db.assignments.assignment_data,
+                           db.assignments.status)
     
     report_grades = list(report_grades.render())
-    report_grades = [(rw.marker, rw.assignment_data['grade']) for rw in report_grades]
+    report_grades = [(rw.marker, rw.assignment_data['grade']) 
+                        if rw.status in ['Submitted', 'Released']
+                        else (rw.marker, 'Not submitted')
+                        for rw in report_grades]
     
     if pdf:
         report_grades = [f'{rw[0]} ({rw[1]})' for rw in report_grades]
