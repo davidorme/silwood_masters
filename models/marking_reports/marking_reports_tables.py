@@ -2,6 +2,8 @@ from marking_reports_functions import (div_radio_widget,
                                       div_checkbox_widget, 
                                       div_checkbox_widget_wide)
 
+from collections import OrderedDict
+
 ## Turn on signed tables
 db._common_fields.append(auth.signature)
 
@@ -22,18 +24,21 @@ course_presentation_list = ['EEC MSc', 'EEC MRes Winter', 'EEC MRes Summer', 'TF
                             'CMEE MSc','CMEE MRes Mid-term', 'CMEE MRes',
                             'Cons Sci MSc','eeChange MRes', 'EA MSc']
 
-role_dict = {'Supervisor': {
-                 'form':'supervisor.json',
-                 'criteria':'Supervisor_Marking_Criteria.pdf'},
-             'Marker': {
-                 'form':'marker.json',
-                 'criteria':'Project_Marking_Criteria.pdf'},
-             'Presentation': {
-                 'form':'presentation.json',
-                 'criteria':'Presentation_Marking_Criteria.pdf'},
-             'Viva': {
-                 'form':'viva.json',
-                 'criteria':'Viva_Marking_Criteria.pdf'}}
+# An ordered dict is used here to set the order of reports when downloading grades
+
+role_dict = OrderedDict([
+             ('Supervisor', 
+              {'form':'supervisor.json',
+               'criteria':'Supervisor_Marking_Criteria.pdf'}),
+             ('Marker', 
+              {'form':'marker.json',
+               'criteria':'Project_Marking_Criteria.pdf'}),
+             ('Presentation', 
+              {'form':'presentation.json',
+               'criteria':'Presentation_Marking_Criteria.pdf'}),
+             ('Viva',
+              {'form':'viva.json',
+                 'criteria':'Viva_Marking_Criteria.pdf'})])
 
 role_list = list(role_dict.keys())
 

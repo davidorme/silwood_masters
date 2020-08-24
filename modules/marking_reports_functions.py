@@ -5,11 +5,13 @@ import csv
 import itertools
 import zipfile
 import io
+import re
 import openpyxl
 import simplejson as json
 from collections import Counter
 import fpdf
 import importlib
+from tempfile import NamedTemporaryFile
 from mailer import Mail
 
 from gluon import current, SQLFORM, DIV, LABEL, CAT, B, P, A, URL, HTTP, BR, TABLE
@@ -267,82 +269,126 @@ def download_grades(ids):
     ws['A1'] = 'Masters grades: downloaded {}'.format(datetime.datetime.today().isoformat())
     ws['A1'].font = head
     
-    # load records
-    records = [db.assignments(id) for id in ids]
+    # load reports and then group reports by student and role
+    records = db(db.assignments.id.belongs(ids)).select()
+    records = list(records.render()) # to render marker id to name
+    records.sort(key = lambda rw: (rw['student_cid'], rw['marker_role']))
+    records = {key: list(group) for key, group 
+                in itertools.groupby(records, lambda rw: (rw['student_cid'], rw['marker_role']))}
     
-    # find the maximum number of entries per student for each role
-    # - not assuming 1 supervisor and 2 markers and taking the role
-    #   names directly from the definition list in db.py.
-    roles = [(r.student_cid, r.marker_role) for r in records]
-    roles = list(Counter(roles).items())
-    roles = [(r[0][1], r[1]) for r in roles] # dropping student id
+    # Find the unique student details, ordered by presentation and surname
+    students = db(db.assignments.id.belongs(ids)).select(
+                    db.assignments.student_cid,
+                    db.assignments.student_last_name,
+                    db.assignments.student_first_name,
+                    db.assignments.course_presentation,
+                    db.assignments.academic_year,
+                    orderby=(db.assignments.course_presentation, 
+                             db.assignments.student_last_name),
+                    distinct=True)
     
-    n_roles = {}
-    for key, group in itertools.groupby(roles, lambda x: x[0]):
-        n_roles[key] = max([x[1] for x in group])
+    # Layout the headers and data above and below a fixed row
+    data_row = 6
+    hdr_row = data_row - 1
     
-    # Insert headers and get the starting columns for each role
-    ws['A3'] = 'CID'
-    ws['B3'] = 'Last Name'
-    ws['C3'] = 'First Name'
-    ws['D3'] = 'Course Presentation'
-    ws['E3'] = 'Year'
-    mark_start = 6
-    col_starts = {}
-    i = 0
-    for k, n in n_roles.items():
-        col_starts[k] = mark_start + i
-        for v in range(n):
-            ws.cell(row=3, column = mark_start + i, value='{} {} Grade'.format(k, v+1))
-            ws.cell(row=3, column = mark_start + i + 1, value='{} {} Name'.format(k, v+1))
-            i +=2
+    ws[f'A{hdr_row}'] = 'CID'
+    ws[f'B{hdr_row}'] = 'Last Name'
+    ws[f'C{hdr_row}'] = 'First Name'
+    ws[f'D{hdr_row}'] = 'Course Presentation'
+    ws[f'E{hdr_row}'] = 'Year'
     
-    # Write Data
-    row = 4
+    # Convert students to a dictionary keyed by CID, assigning a data row per student
+    student_dict = {}
+    for row, this_student in enumerate(students):
+        this_student['row'] = row + data_row
+        student_dict[this_student.student_cid] = this_student
     
-    # - group records by student
-    records.sort(key=lambda rec: rec['student_cid'])
-    students = {k: list(recs) for k, recs in itertools.groupby(records, lambda x: x['student_cid'])}
-    
-    for cid, student_recs in students.items():
+    # Fill in student details
+    for cid, details in student_dict.items():
         
-        # fill in the student info from the first record
-        ws.cell(row = row, column=1, value=student_recs[0].student_cid)
-        ws.cell(row = row, column=2, value=student_recs[0].student_last_name)
-        ws.cell(row = row, column=3, value=student_recs[0].student_first_name)
-        ws.cell(row = row, column=4, value=student_recs[0].course_presentation)
-        ws.cell(row = row, column=5, value=student_recs[0].academic_year)
+        ws.cell(row = details.row, column=1, value=details.student_cid)
+        ws.cell(row = details.row, column=2, value=details.student_last_name)
+        ws.cell(row = details.row, column=3, value=details.student_first_name)
+        ws.cell(row = details.row, column=4, value=details.course_presentation)
+        ws.cell(row = details.row, column=5, value=details.academic_year)
+    
+    # Now fill in report details for each kind of report in turn
+    role_list = current.globalenv['role_list']
+    column_pointer = 6
+    # A regex to convert '65% (B)' grades to numeric
+    grade_regex = re.compile('[0-9]+(?=%)')
+    
+    for this_role in role_list:
         
-        # now split records by role
-        student_recs.sort(key=lambda rec: rec['marker_role'])
-        student_recs = {k: list(recs) for k, recs in itertools.groupby(student_recs, lambda x: x['marker_role'])}
+        # Get the JSON data on what variables to export
+        form_json = current.globalenv['role_dict'][this_role]['form']
+        json_path = os.path.join(current.request.folder,'static','form_json', form_json)
+        form_json = json.load(open(json_path))
+        grade_export = form_json['grade_export']
+        cols_per_report = len(grade_export) + 1
         
-        # output the contents
-        for this_role in list(student_recs.keys()):
+        # Extract the columns
+        filtered_to_role = {key[0]: val for key, val in records.items() if key[1] == this_role}
+        
+        # Loop over students and reports
+        for this_student, these_reports in filtered_to_role.items():
             
-            # start in the right column
-            this_col = col_starts[this_role]
+            student_details = student_dict[this_student]
+            row = student_details.row
             
-            for this_record in student_recs[this_role]:
-                ws.cell(row = row, column=this_col+1, value=this_record.marker.first_name + ' ' + this_record.marker.last_name)
-                if (this_record.assignment_data is not None and 'grade' in list(this_record.assignment_data.keys()) 
-                    and this_record.assignment_data['grade'] is not None):
-                    # slice off the text part of the grade from the dropdown
-                    g = this_record.assignment_data['grade']
-                    g = int(g[0:g.index('%')])
-                    ws.cell(row = row, column=this_col, value=g)
-                this_col += 2
+            for report_num, this_report in enumerate(these_reports):
+                
+                report_data = this_report.get('assignment_data')
+                
+                for grade_num, this_grade in enumerate(grade_export):
+                    
+                    # Do we have any data for this grade - might be nothing at assignment level
+                    # or might not be completed in the assignment data
+                    val = None if report_data is None else report_data.get(this_grade)
+                    val = 'NA' if val is None else val
+                    
+                    # look for a percentage grade
+                    perc_grade = grade_regex.match(val)
+                    val = val if perc_grade is None else int(perc_grade.group(0))
+                    
+                    ws.cell(row = row, 
+                            column = column_pointer + cols_per_report * report_num + grade_num,
+                            value = val)
+                
+                # Add marker
+                ws.cell(row = row, 
+                        column = column_pointer + cols_per_report * report_num + len(grade_export),
+                        value = this_report.marker)
         
-        # advance to next row
-        row += 1
+        # Add role headers
+        max_n_reports = max([len(rep) for rep in filtered_to_role.values()])
+        for report_number in range(max_n_reports):
+            ws.cell(row = data_row - 2, 
+                    column= column_pointer + report_number * cols_per_report,
+                    value= f"{this_role} {report_number + 1}")
+            
+            for grade_num, this_grade in enumerate(grade_export):
+                ws.cell(row = data_row - 1, 
+                        column = column_pointer + cols_per_report * report_number + grade_num,
+                        value = this_grade)
+            
+            ws.cell(row = data_row - 1, 
+                    column= column_pointer + report_number * cols_per_report + cols_per_report - 1,
+                    value='Marker')
+        
+        column_pointer += max_n_reports * cols_per_report
     
     current.response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     attachment = 'attachment;filename=Marking_Grades_{}.xlsx'.format(datetime.date.today().isoformat())
     current.response.headers['Content-Disposition'] = attachment
-    content = openpyxl.writer.excel.save_virtual_workbook(wb)
-    raise HTTP(200, content,
-               **{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                  'Content-Disposition':attachment + ';'})
+    
+    with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            
+            raise HTTP(200, tmp.read(),
+                       **{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                          'Content-Disposition':attachment + ';'})
 
 ## --------------------------------------------------------------------------------
 ## PDF generation
@@ -487,6 +533,7 @@ def query_report_marker_grades(record, pdf=False):
                            db.assignments.status)
     
     report_grades = list(report_grades.render())
+    
     report_grades = [(rw.marker, rw.assignment_data['grade']) 
                         if rw.status in ['Submitted', 'Released']
                         else (rw.marker, 'Not submitted')

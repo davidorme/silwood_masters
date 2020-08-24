@@ -42,8 +42,10 @@ At the highest level:
     {"title":"A heading at the top of the report webpage",
     "pdftitle":"A heading at the top of the PDF report",
     "instructions":"HTML marked up text explaining how to <strong>use the marking form</strong>",
+    "grade_export": ["project_agreed_grade","viva_grade"],
     "questions":[ {question object 1}, {question object 2}, ...]}
 
+When the system downloads grades, it will download all variables named in the `grade_export` list.
 Question objects have the following structure:
 
     {"title":"A title to appear above a question block",
