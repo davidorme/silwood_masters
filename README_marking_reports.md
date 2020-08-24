@@ -1,6 +1,6 @@
-# Silwood Masters Report Marking web application
+# Silwood Masters web application
 
-## Design notes
+## Marking Reports design notes
 
 ### Previous system
 
@@ -27,7 +27,7 @@ The aim of this system is to reduce the number of steps and provide a more user-
 
 1.  Assignments are created and entered into a database, either through a friendly one at a time web form or by bulk upload from a CSV file, similar to the previous starting point. These are now fixed, so a marker can be sent a link to a form which has locked student information, and can only use the form to provide a single report. 
 
-    This also means that it is easy to have a single unified page that shows the complete set of expected marking assignments and to show their current status. This allows coordinators to monitor marking progress and easily chase down late reports etc. This page is currently only visible to logged in course administrators and also provides simple actions to: **distribute marking** to markers, **release reports** to students, **download PDFs** and **download grades** in an Excel file. This is only accessible to registered users.
+    This also means that it is easy to have a single unified page that shows the complete set of expected marking assignments and to show their current status. This allows coordinators to monitor marking progress and easily chase down late reports etc. This page is currently only visible to logged in course administrators and also provides simple actions to: **distribute marking** to markers, **release reports** to students, **download PDFs** and **download grades** in an Excel file. This is only accessible to registered users in the admin group.
 
 2.  Form styles and data are defined using JSON files (see below). The file will contain the layout, instructions and questions for a form and define a set of variables, associated with web form inputs, that are the form data. The JSON allows both web forms and report PDFs to be generated on the fly, and the data entered by markers is stored in the single assignements table as a JSON object. A simple pairing of course presentation and marker role pairs a particular assignment to a particular form JSON. This allows new forms to be cleanly added.
 
@@ -50,9 +50,16 @@ Question objects have the following structure:
      "confidential": A boolean true or false: any question with confidential set to true will not appear in public reports ,
      "components":[ {question component 1}, {question component 2}, ...]},
 
-Question component objects can be of three types: `rubric`, `comment` or `select`.  All three must contain a `type`, a name for the `variable` under which the marking data will be stored within the JSON data field in the database, a short text `label` that will appear to the left of the component in the webform or PDF report and a boolean `required` that tells the application which variables have to be provided before a user can submit a form.
 
-#### Rubric type 
+#### Confidentiality
+
+Both question objects and question component (below) can be set to be confidential. The contents of confidential components will be shown in the HTML form generated in `write_report`, which is only accessible via the staff access token and in the confidential PDF version of  a report. They will not be included in the version sent to students.
+
+#### Question components
+
+Question component objects can be of four types: `rubric`, `comment`, `select` or `query`.  All four must contain a `type`, a name for the `variable` under which the marking data will be stored within the JSON data field in the database, a short text `label` that will appear to the left of the component in the webform or PDF report and a boolean `required` that tells the application which variables have to be provided before a user can submit a form.
+
+##### Rubric type 
 
 Rubric components also need to provide an array of `options`, which are used to create and label a horizontal set of radio buttons. It probably isn't sensible to have more than five options! An example rubric component is:
 
@@ -62,7 +69,7 @@ Rubric components also need to provide an array of `options`, which are used to 
      "options":["Messy", "Below Average", "Average", "Above Average", "Publication Standard"],
      "required":true}
 
-#### Comment type 
+##### Comment type 
 
 Comment types just have some simple formatting options: `nrow` tells the web form how many tall a text box to use  - the default is rather tall - and `placeholder` sets some greyed out placeholder text in the box before a user starts typing in it. An example comment component is:
 
@@ -74,7 +81,7 @@ Comment types just have some simple formatting options: `nrow` tells the web for
      "required":false}
 
 
-#### Select component 
+##### Select component 
 
 Like the rubric component, this requires an array of `options`, which are used to populate a dropdown menu. This can be used to provide a wider set of options, such as for a grade selection:
 
@@ -88,4 +95,19 @@ Like the rubric component, this requires an array of `options`, which are used t
                 "48% (D)", "45% (D)", "42% (D)", "35% (D)", "30% (D)", "25% (D)", 
                 "20% (D)", "15% (D)", "10% (D)", "5% (D)", "0% (D)"],
      "required":true}
-  
+ 
+##### Query component
+ 
+This is more convoluted. It is used to insert data from the database into an assignment form or PDF. The component must include a `query` entry, which identifies the name of a function to be used to get the data. These functions will be stored in `modules/marking_report_functions.py` and need to be imported into  `models/marking_reports.py`. This is a more complex process - and this is inevitable because it requires that building the form runs code on the application.
+
+Currently, the only implemented example is in `viva.json`:
+
+    {
+        "type": "query",
+        "label": "Marker grades",
+        "query": "query_report_marker_grades",
+        "required": false,
+        "confidential": true
+    }
+
+This entry in the question components runs the function `query_report_marker_grades` using the current assignment record to look up the individual project marking reports and show those in the viva form. 
