@@ -76,7 +76,6 @@ def show_users():
 def user_details():
     
     if not request.args:
-        print(request.args)
         redirect(URL('marking_reports','index.html'))
     else:
         record = db.auth_user[int(request.args[0])]

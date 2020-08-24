@@ -459,8 +459,8 @@ def write_report():
                                  submission_date = datetime.datetime.now(),
                                  submission_ip = request.client)
         
-        redirect(URL('write_report', vars={'record':record.id, 'staff_access_token':record.staff_access_token}))
-    
+        redirect(URL('write_report', vars={'record':record.id, 
+                                           'staff_access_token':record.staff_access_token}))
     
     # modify any widget settings for active forms
     if not readonly:
@@ -471,7 +471,6 @@ def write_report():
                 if 'placeholder' in list(c.keys()):
                     form.custom.widget[c['variable']].update(_placeholder=c['placeholder'])
                 if 'value' in list(c.keys()):
-                    print(type(form.custom.widget[c['variable']]))
                     form.custom.widget[c['variable']].components = [c['value']]
     
     # compile the laid out form in a list

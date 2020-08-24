@@ -370,8 +370,6 @@ def module_events():
         elif 'delete' in request.vars:
             event_record.delete_record()
         elif 'submit' in request.vars:
-            print(form.vars)
-            print(convert_date_to_weekdaytime(form.vars.start))
             success, week, day, start = convert_date_to_weekdaytime(form.vars.start)
             form.vars.academic_week = week
             form.vars.day_of_week = day
