@@ -7,7 +7,8 @@ import csv
 import itertools
 import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute,
-                                      zip_pdfs, download_grades)
+                                      zip_pdfs, download_grades, 
+                                      query_report_marker_grades)
 from mailer import Mail
 
 def index():
@@ -419,6 +420,9 @@ def write_report():
                 fields.append(Field(c['variable'], 
                               type='string', 
                               requires=IS_NULL_OR(IS_IN_SET(c['options']))))
+            else:
+                # Other types that don't insert a form control- currently only 'query'
+                pass
     
     # - provide a save and a submit button
     buttons =  [TAG.BUTTON('Save', _type="submit", _class="button btn btn-default",
@@ -488,9 +492,22 @@ def write_report():
             html.append(DIV(_style='min-height:10px'))
         
         for c in q['components']:
-            html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
-                            DIV(form.custom.widget[c['variable']], _class='col-sm-10'),
-                            _class='row'))
+            
+            # Insert either the form variable and stored data or the output of a 
+            # query component.
+            if c['type'] == 'query':
+                # This is a tricky line. globals() contains globals functions, so needs
+                # the appropriate query function to be imported. All such functions
+                # get the assignment record as an input. You could use eval() here but
+                # that has security risks - hard to see them applying here, but hey.
+                query_data = globals()[c['query']](record)
+                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
+                                DIV(query_data, _class='col-sm-10'),
+                                _class='row'))
+            else:
+                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
+                                DIV(form.custom.widget[c['variable']], _class='col-sm-10'),
+                                _class='row'))
             
             if c.get('info') is not None:
                 html.append(DIV(XML(c.get('info'))))
@@ -498,6 +515,7 @@ def write_report():
                 html.append(DIV(_style='min-height:10px'))
             
         html.append(DIV(_style='min-height:10px'))
+    
         
     # finalise the form and send the whole thing back
     html.append(BR())

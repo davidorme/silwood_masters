@@ -12,7 +12,7 @@ import fpdf
 import importlib
 from mailer import Mail
 
-from gluon import current, SQLFORM, DIV, LABEL, CAT, B, P, A, URL, HTTP, BR
+from gluon import current, SQLFORM, DIV, LABEL, CAT, B, P, A, URL, HTTP, BR, TABLE
 
 """
 This module contains key functions for processing marking reports. They have been 
@@ -425,10 +425,24 @@ def create_pdf(record, form_json, confidential):
         
         # insert the components
         for c in q['components']:
+            
+            # skip confidential components if the report is not confidential
+            if not confidential and q['confidential']:
+                continue
+            
             pdf.set_font("DejaVu", size=12, style='B')
             pdf.cell(60, 8, txt=c['label'], align="L")
             pdf.set_font("DejaVu", size=12)
-            contents = record.assignment_data[c['variable']]
+            
+            if c['type'] == 'query':
+                # This is a tricky line. globals() contains globals functions, so needs
+                # the appropriate query function to be imported. All such functions
+                # get the assignment record as an input. You could use eval() here but
+                # that has security risks - hard to see them applying here, but hey.
+                contents = globals()[c['query']](record, pdf=True)
+            else:
+                contents = record.assignment_data[c['variable']]
+            
             if contents is None:
                 contents = ""
             pdf.set_left_margin(70)
@@ -450,5 +464,31 @@ def create_pdf(record, form_json, confidential):
     return (pdf, filename)
 
 
+## FORM QUERIES
+## These function (currently only one) allow a form to include data by specifying a 'query'
+## component in the form json. These should accept an assignments record as the first argument
+## and then the option to provide either html (default, for web display) or a text repr
+## for use in the PDF.
 
-
+def query_report_marker_grades(record, pdf=False):
+    """Creates a table of existing individual report marker grades
+    """
+    
+    db = current.db
+    
+    report_grades = db((db.assignments.student_cid == record.student_cid) &
+                       (db.assignments.course_presentation == record.course_presentation) &
+                       (db.assignments.academic_year == record.academic_year) &
+                       (db.assignments.marker_role == 'Marker')
+                       ).select(
+                           db.assignments.marker,
+                           db.assignments.assignment_data)
+    
+    report_grades = list(report_grades.render())
+    report_grades = [(rw.marker, rw.assignment_data['grade']) for rw in report_grades]
+    
+    if pdf:
+        report_grades = [f'{rw[0]} ({rw[1]})' for rw in report_grades]
+        return '\n'.join(report_grades)
+    else:
+        return TABLE(report_grades, _class='table')

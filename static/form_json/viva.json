@@ -1,13 +1,20 @@
 {
 	"title": "Grading form for Master's Project viva",
 	"pdftitle": "Viva Report",
-	"instructions": "<p>The internal viva voce examinations will be conducted by an two independent Examiners (also called markers), one of whom will typically have greater expertise in the project area.  There are two important components of this meeting:</p>",
+	"instructions": "<p>The internal viva voce examinations will be conducted by an two independent Examiners (also called markers), one of whom will typically have greater expertise in the project area.  There are two important components of this meeting: you must agree on a finalised report grade (or agree to disagree) before moving to the viva.</p>",
 	"questions": [
 		{
-			"title": "Section 1) Agreed report grade",
+			"title": "Agreed report grade",
 			"confidential": true,
-			"info": "<p><b>Before the viva begins, agree a grade for the written project report.</b></p><p>Markers must briefly discuss their assigned project written report grades and agree on a final grade before the student enters the room.</p><p>It is common that grades differ by one or two points on the marking scale due to simple differences in marking severity.  In the absence of a strong argument why one mark is more appropriate, it is usual to apply the benefit of the doubt and take the higher of two adjacent grades on the scale (e.g. 55 and 58 goes to 58) and the midpoint of two grades within two grade points of each other (e.g. 68 and 76 goes to 72).</p><p>If the agreed grade does not follow this simple rule of thumb, you must edit the justification to explain your decision. For large disparities between the two grades or if markers cannot agree on a grade, a third opinion will be sought after the viva has been concluded. The grade dropdown includes a specific option to indicate that moderation is required.</p>",
+			"info": "<br><p><b>Before the viva begins, agree a grade for the written project report.</b> Markers must briefly discuss their assigned project written report grades and agree on a final grade before the student enters the room.</p><p>It is common that grades differ by one or two points on the marking scale due to simple differences in marking severity.  In the absence of a strong argument why one mark is more appropriate, it is usual to apply the benefit of the doubt and take the higher of two adjacent grades on the scale (e.g. 55 and 58 goes to 58) and the midpoint of two grades within two grade points of each other (e.g. 68 and 76 goes to 72).</p><p>If the agreed grade does not follow this simple rule of thumb, you must edit the justification to explain your decision. For large disparities between the two grades or if markers cannot agree on a grade, a third opinion will be sought after the viva has been concluded. The grade dropdown includes a specific option to indicate that moderation is required.</p>",
 			"components": [
+				{
+					"type": "query",
+					"label": "Marker grades",
+					"query": "query_report_marker_grades",
+					"required": false,
+					"confidential": true
+				},
 				{
 					"type": "comment",
 					"variable": "justification_comments",
@@ -52,9 +59,9 @@
 			]
 		},
 		{
-			"title": "Section 2) Viva",
+			"title": "Viva",
 			"confidential": false,
-			"info": "<p><b>Conduct a 20 to 25 minute viva and agree on a viva mark</b></p><p>It is particularly important that each student is given a comparable chance to demonstrate his or her abilities, and that each student's viva is assessed in a comparable way following the criteria below. While questions will obviously differ between projects, please try to assess each of the areas in the following table to fully evaluate the student's performance.</p><p>You must provide comments on each section to support the assigned grade. Given the time constraints in vivas, these can be very brief ('Adequate', 'Flaky on stats details', etc.) but should allow your grade to be matched to performance across the question areas.</p>",
+			"info": "<br><p><b>Conduct a 20 to 25 minute viva and agree on a viva mark.</b> It is particularly important that each student is given a comparable chance to demonstrate his or her abilities, and that each student's viva is assessed in a comparable way following the criteria below. While questions will obviously differ between projects, please try to assess each of the areas in the following table to fully evaluate the student's performance.</p><p>You must provide comments on each section to support the assigned grade. Given the time constraints in vivas, these can be very brief ('Adequate', 'Flaky on stats details', etc.) but should allow your grade to be matched to performance across the question areas.</p>",
 			"components": [
 				{
 					"type": "comment",
@@ -90,7 +97,7 @@
 				},
 				{
 					"type": "comment",
-					"variable": "value_comments",
+					"variable": "method_use_comments",
 					"label": "Methods use and intepretation",
 					"nrow": 3,
 					"required": true,
