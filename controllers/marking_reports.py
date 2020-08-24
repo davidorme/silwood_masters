@@ -2,6 +2,7 @@
 # this file is released under public domain and you can use without limitations
 
 import datetime
+import io
 import os
 import csv
 import itertools
@@ -162,8 +163,9 @@ def load_assignments():
     
     if form.accepts(request.vars):
         
-        # get the data from the request
-        data = csv.DictReader(request.vars.myfile.value.splitlines())
+        # get the data from the request, converting from uploaded bytes into StringIO
+        data = io.StringIO(request.vars.myfile.value.decode('UTF-8-SIG'))
+        data = csv.DictReader(data)
         
         # create an html upload report as the function runs
         html = ''
