@@ -22,10 +22,10 @@ course_presentation_list = ['EEC MSc', 'EEC MRes Winter', 'EEC MRes Summer', 'TF
                             'CMEE MSc','CMEE MRes Mid-term', 'CMEE MRes',
                             'Cons Sci MSc','eeChange MRes', 'EA MSc']
 
-role_dict = {'Marker': {
+role_dict = {'Supervisor': {
                  'form':'supervisor.json',
                  'criteria':'Supervisor_Marking_Criteria.pdf'},
-             'Supervisor': {
+             'Marker': {
                  'form':'marker.json',
                  'criteria':'Project_Marking_Criteria.pdf'},
              'Presentation': {
