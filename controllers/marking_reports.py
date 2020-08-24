@@ -157,8 +157,11 @@ def edit_assignment():
 def load_assignments():
     
     form = FORM(DIV(DIV('Upload File:', _class='col-sm-2'),
-                    DIV(INPUT(_type='file', _name='myfile', id='myfile', requires=IS_NOT_EMPTY()), _class='col-sm-6'), 
-                    DIV(INPUT(_type='submit',_value='Upload', _style='padding:5px 15px'),_class='col-sm-2'),
+                    DIV(INPUT(_type='file', _name='myfile', id='myfile', 
+                              requires=IS_NOT_EMPTY()), _class='col-sm-6'), 
+                    DIV(INPUT(_type='submit',_value='Upload', _style='padding:5px 15px',
+                              _class='btn btn-primary')
+                        ,_class='col-sm-2'),
                     _class='row'))
     
     if form.accepts(request.vars):

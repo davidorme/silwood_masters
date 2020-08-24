@@ -23,18 +23,23 @@
 {{=P('Use the form below to upload a CSV file of marking assignments. The file needs to contain columns with the following headers:')}}
 
 
-{{=TAG.DL(TAG.DT('student_cid'), TAG.DD("An integer of the student's College ID number"),
-          TAG.DT('student_first_name'), TAG.DD("The student's first name"),
-          TAG.DT('student_last_name'), TAG.DD("The student's last name"),
-          TAG.DT('student_email'), TAG.DD("The student's college email address - this will be used to release marking reports to students."),
-          TAG.DT('course_presentation'), TAG.DD("This must take one of the following values: " + ', '.join(course_presentation_list)),
-          TAG.DT('year'), TAG.DD("The academic year"),
-          TAG.DT('marker_first_name'), TAG.DD("The marker's first name"),
-          TAG.DT('marker_last_name'), TAG.DD("The marker's last name"),
-          TAG.DT('marker_email'), TAG.DD("The marker's email address"),
-          TAG.DT('marker_role'), TAG.DD("The marking role for the assignment, which must be one of: " + ', '.join(role_list)),
-          TAG.DT('due_date'), TAG.DD("The due date for the assignment, in the format yyyy-mm-dd (e.g. 2016-09-01)"))}}
+{{=TABLE(TR(TD(B('student_cid')), TD("An integer of the student's College ID number")),
+         TR(TD(B('student_first_name')), TD("The student's first name")),
+         TR(TD(B('student_last_name')), TD("The student's last name")),
+         TR(TD(B('student_email')), TD("The student's college email address - this will be used to release marking reports to students.")),
+         TR(TD(B('course_presentation')), TD("This must take one of the following values: " + ', '.join(course_presentation_list))),
+         TR(TD(B('academic_year')), TD("The academic year")),
+         TR(TD(B('marker_first_name')), TD("The marker's first name")),
+         TR(TD(B('marker_last_name')), TD("The marker's last name")),
+         TR(TD(B('marker_email')), TD("The marker's email address")),
+         TR(TD(B('marker_role')), TD("The marking role for the assignment, which must be one of: " + ', '.join(role_list))),
+         TR(TD(B('due_date')), TD("The due date for the assignment, in the format yyyy-mm-dd (e.g. 2016-09-01)")),
+		 _class='table')}}
 
-{{=form}}
+<p>An example upload file can be found {{=A('here', _href=URL('static', 'data/example_load_assignments.csv'))}}</p>
+
+<div class='jumbotron'>
+	{{=form}}
+</div>
 
 {{=html}}
