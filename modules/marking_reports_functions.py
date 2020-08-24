@@ -432,6 +432,7 @@ def create_pdf(record, form_json, confidential):
             
             pdf.set_font("DejaVu", size=12, style='B')
             pdf.cell(60, 8, txt=c['label'], align="L")
+            pdf.ln()
             pdf.set_font("DejaVu", size=12)
             
             if c['type'] == 'query':
