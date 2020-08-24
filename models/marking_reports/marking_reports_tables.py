@@ -9,59 +9,44 @@ db._common_fields.append(auth.signature)
 ## GLOBAL LIST DEFINITIONS
 ## --------------------------------------------------------------------------------
 
+## The application uses a dictionary keyed by (course presentation, marker_role)
+## to identify the form JSON and marking criteria. This allows flexibility for 
+## multiple courses with multiple forms and presentations but it can be quite a
+## long dictionary.
+
+## TODO: Note that the role list is fixed but could differ between course presentations.
+## This could be restructured to define roles under each course (and the create assignment
+## page would then need to use AJAX or a dict to populate the role dropdown).
+
 course_presentation_list = ['EEC MSc', 'EEC MRes Winter', 'EEC MRes Summer', 'TFE MRes',
                             'CMEE MSc','CMEE MRes Mid-term', 'CMEE MRes',
                             'Cons Sci MSc','eeChange MRes', 'EA MSc']
 
-role_list = ['Marker', 'Supervisor']
+role_dict = {'Marker': {
+                 'form':'supervisor.json',
+                 'criteria':'Supervisor_Marking_Criteria.pdf'},
+             'Supervisor': {
+                 'form':'marker.json',
+                 'criteria':'Project_Marking_Criteria.pdf'},
+             'Presentation': {
+                 'form':'presentation.json',
+                 'criteria':'Presentation_Marking_Criteria.pdf'},
+             'Viva': {
+                 'form':'viva.json',
+                 'criteria':'Viva_Marking_Criteria.pdf'}}
 
-## Dictionary to map course presentation and marker role onto form template and marking criteria
+role_list = list(role_dict.keys())
 
-form_data_dict = {('EEC MSc', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('EEC MRes Winter',  'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('EEC MRes Summer',  'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('TFE MRes', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('CMEE MSc', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('CMEE MRes Mid-term', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('CMEE MRes Final', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('CMEE MRes', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('Cons Sci MSc', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('eeChange MRes',  'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('EA MSc', 'Supervisor'): {'form':'supervisor.json',
-                                              'criteria':'Supervisor_Marking_Criteria.pdf'},
-                  ('EEC MSc', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('EEC MRes Winter',  'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('EEC MRes Summer',  'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('TFE MRes', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('CMEE MSc', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('CMEE MRes Mid-term', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('CMEE MRes Final', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('CMEE MRes', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('Cons Sci MSc', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('eeChange MRes',  'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'},
-                  ('EA MSc', 'Marker'): {'form':'marker.json',
-                                              'criteria':'Project_Marking_Criteria.pdf'}}
+# Simply add each role for each presentation.
+# TODO: think about flexibility another day beyond simply modifying these defaults...
+# Oh, you idiot. This is data. It goes in tables in the db. You _idiot_. OK - that's
+# for another day - so, course table already exists. Add presentations, add marking_roles
 
+form_data_dict = {}
+
+for cpres in course_presentation_list:
+    for crole, role_details in role_dict.items():
+        form_data_dict[(cpres, crole)] = role_details
 
 # An assignment is first created, then set to the marker (becoming Not started).
 # Once someone has saved a partial record it becomes Started and then once
