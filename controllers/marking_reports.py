@@ -10,6 +10,7 @@ import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute,
                                       zip_pdfs, download_grades, 
                                       query_report_marker_grades)
+import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
 
 def index():
@@ -21,6 +22,17 @@ def index():
     return auth.wiki()
     """
     return dict()
+
+
+def help():
+    
+    filepath = os.path.join(request.folder, 'static', 'docs', 'marking_reports_help.md')
+    
+    with open(filepath, encoding="utf-8-sig") as help_file:
+        help_doc = XML(markdown.markdown(help_file.read()))
+    
+    return dict(help_doc=help_doc)
+
 
 
 ## --------------------------------------------------------------------------------

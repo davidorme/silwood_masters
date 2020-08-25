@@ -17,7 +17,7 @@ def index():
 
 def help():
     
-    filepath = os.path.join(request.folder, 'static', 'docs', 'help.md')
+    filepath = os.path.join(request.folder, 'static', 'docs', 'timetabler_help.md')
     
     with open(filepath, encoding="utf-8-sig") as help_file:
         help_doc = XML(markdown.markdown(help_file.read()))
