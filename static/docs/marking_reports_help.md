@@ -2,7 +2,15 @@
 
 This an online system for submitting thesis report, presentation and viva assessments for Masters degree projects at the Silwood Park campus of Imperial College London. 
 
+## Unconscious Bias
+
 When assessing these reports, we would like to remind you that there is strong evidence that all of us draw unconscious associations and inaccurate judgements about people (Greenwald and Krieger, 2006), which can reflect in marking, especially in face-to-face assessments. However, there is also evidence that **recognising the existence of unconscious bias** can help mitigate its impact: Greenwald, A. and Krieger, L. (2006) ‘Implicit bias: Scientific foundations’, California Law Review, pp. 945-967.
+
+## COVID-19 Impacts
+
+You **should not adjust your marking** to take into account the impacts of COVID-19 on a research project: grades should reflect the material presented. However, in the viva you should extend the normal discussion of supervisory issues to put together a quick statement about the impact of COVID-19 on the research.
+
+The viva form will have a separate box to record this information. This should be a brief description of any academic impacts: only the switch to remote working, planned field data collection lost, project switch at 8 weeks. It is intended to provide brief information to the exam board where mitigating circumstances do not explicitly cover this. 
 
 ## Assessment components
 
