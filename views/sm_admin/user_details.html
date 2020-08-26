@@ -1,6 +1,13 @@
 {{extend 'layout.html'}}
 
-<p>Delete pending from user registration key to approve their registration</p>
+<p>This form shows the selected user details and permissions. You can check and uncheck options to alter permissions. New users will also have the option to approve their registration - you can set their permissions at the same time. You can also delete users, but probably check first!</p>
+
+<ul>
+	<li><strong>Admin</strong>: approve users, upload and create assignments, set permissions and create new timetable courses and modules. This should be a small set of people!</li>
+	<li><strong>Projects</strong>: users with this permission are allowed to create new project proposals and edit proposals.</li>
+	<li><strong>Timetabler</strong>: users with this permission are allowed to edit timetable module details and manage module events.</li>
+	<li><strong>Reviewer</strong>: this is not yet fully implemented but will give a user read-only access to the set of marking assignments</li>
+</ul>
 
 {{=form}}
 
