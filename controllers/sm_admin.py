@@ -44,32 +44,38 @@ def show_users():
                          _style='color:green;font-size: 1.3em;',
                          _title='Granted')}
     
+    def _user_roles(row):
+        
+        db.auth_group._format = '%(role)s'
+        roles = db(db.auth_membership.user_id == row.id).select(db.auth_membership.group_id)
+        roles = [r['group_id'] for r in roles.render()]
+        
+        return ", ".join(roles)
+    
     links = [dict(header = 'New', 
                   body = lambda row: icons[row.registration_key == 'pending']),
-             dict(header = 'Admin', 
-                  body = lambda row: icons[auth.has_membership('admin', row.id)]),
-             dict(header = 'Projects', 
-                  body = lambda row: icons[auth.has_membership('project_proposer', row.id)]),
-             dict(header = 'Timetabler', 
-                  body = lambda row: icons[auth.has_membership('timetabler', row.id)]),
-             dict(header = 'Reviewer', 
-                  body = lambda row: icons[auth.has_membership('reviewer', row.id)]),
+             dict(header = 'Roles', 
+                  body = lambda row: _user_roles(row)),
              dict(header = 'Info', 
                   body = lambda row: A(SPAN(_class='fa fa-info-circle', 
                                             _style='color:#007BFF;font-size: 1.3em;',
                                             _title='Info'),
                                        _href=URL('sm_admin', 'user_details', args=row.id)))]
     
-    form = SQLFORM.grid(db.auth_user.id,
+    form = SQLFORM.grid(db.auth_user,
                         csv=False,
                         create=False,
                         editable=False,
                         deletable=False,
                         details=False,
                         links=links,
-                        orderby=db.auth_user.registration_key == 'pending')
+                        orderby=db.auth_user.registration_key != 'pending')
     
-    return dict(form=form)
+    roles = db(db.auth_group).select(db.auth_group.role, db.auth_group.description).as_list()
+    roles = [list(r.values()) for r in roles]
+    role_table = TABLE(roles, _class='table table-sm table-striped')
+    
+    return dict(role_table=role_table, form=form)
 
 
 @auth.requires_membership('admin')
@@ -105,7 +111,8 @@ def user_details():
     
     form = SQLFORM.factory(*fields,
                            record=record,
-                           labels=labels)
+                           labels=labels,
+                           showid=False)
     
     if form.process().accepted:
         # Delete first
@@ -141,7 +148,12 @@ def user_details():
         
         redirect(URL('sm_admin','show_users'))
     
-    return dict(form = form)
+    # Role table
+    roles = db(db.auth_group).select(db.auth_group.role, db.auth_group.description).as_list()
+    roles = [list(r.values()) for r in roles]
+    role_table = TABLE(roles, _class='table table-sm table-striped')
+    
+    return dict(role_table=role_table,form = form)
 
 
 @auth.requires_membership('admin')
