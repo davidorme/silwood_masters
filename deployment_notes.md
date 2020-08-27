@@ -127,7 +127,7 @@ echo "routers = dict(
 
 If you are moving an existing instance of the application rather than starting afresh, you now should need to simply move the `storage.sqlite` file from the old instance into the `databases` folder.
 
-* **Configure the application**. The application requires some configuration information, which is stored in `private/appconfig.ini`. This is not included in the repo because it contains sensitive information, but an empty template is that you will need to complete and rename. The configuration sets up the database connection,  the email account used to send email from the application and the local location of the fonts directory for use by FPDF.
+* **Configure the application**. The application requires some configuration information, which is stored in `private/appconfig.ini`. This is not included in the repo because it contains sensitive information, but an empty template is that you will need to complete and rename. The configuration sets up the database connection,  the email account used to send email from the application, the local location of the fonts directory for use by FPDF and a link used to share thesis reports with markers.
 
 * If you restart the webserver and web2py, the IP address should go straight to the landing page for `marking_reports`. The commands below are generally useful for refreshing and testing changes to the server and web2py.
 

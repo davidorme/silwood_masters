@@ -14,22 +14,24 @@ import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
 
 def index():
-    """
-    example action using the internationalization operator T and flash
-    rendered by views/default/index.html or views/generic.html
 
-    if you need a simple wiki simply replace the two lines below with:
-    return auth.wiki()
-    """
     return dict()
-
 
 def help():
     
     filepath = os.path.join(request.folder, 'static', 'docs', 'marking_reports_help.md')
     
     with open(filepath, encoding="utf-8-sig") as help_file:
-        help_doc = XML(markdown.markdown(help_file.read()))
+        
+        # OK - this is a hack. Simply reading and displaying static content from MD is
+        # straightforward but now there is a dynamic element from the config. The right
+        # way to do this would be either to write a markdown generic.view handler or
+        # move the page to HTML and use the templating. But this is quicker and maintains
+        # the MD for mostly static use.
+        
+        help_doc = help_file.read()
+        help_doc = help_doc.replace('REPORT_FOLDER.LINK', configuration.get('report_drive.link'))
+        help_doc = XML(markdown.markdown(help_doc))
     
     return dict(help_doc=help_doc)
 
