@@ -150,6 +150,9 @@ def edit_assignment():
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
+    db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', 
+                                              '%(last_name)s, %(first_name)s (%(email)s)')
+    
     record = db.assignments[request.args[0]]
     
     if record.status in ['Created', 'Not started']:
