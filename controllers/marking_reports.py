@@ -155,6 +155,8 @@ def edit_assignment():
     
     record = db.assignments[request.args[0]]
     
+    db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', '%(last_name)s, %(first_name)s (%(email)s)')
+    
     if record.status in ['Created', 'Not started']:
         delete_ok = True
     else:
@@ -319,6 +321,73 @@ def load_assignments():
     
     
     return dict(form=form, html=html)
+
+
+def my_assignments():
+    
+    """
+    This controller allows a marker to access a table of assignments that have been
+    assigned to them - like the admin assignments() controller - but with much reduced
+    capabilities!
+    """
+    
+    security = request.vars
+    
+    # is the marker id valid
+    if security['marker'] is None:
+        session.flash = 'No marker id provided'
+        redirect(URL('index'))
+    else:
+        # Find the marker
+        marker = db.markers(int(security['marker']))
+        
+        if marker is None:
+            session.flash = 'Unknown marker id provided'
+            redirect(URL('index'))
+    
+    # is there a matching access token
+    if security['marker_access_token'] is None:
+        session.flash = 'No marker access token provided'
+        redirect(URL('index'))
+    else:
+        access_token = security['marker_access_token']
+        
+        if marker.marker_access_token != access_token:
+            session.flash = 'Marker access token invalid'
+            redirect(URL('index'))
+    
+    # reduce the set of fields shown in the grid
+    db.assignments.id.readable = False
+    db.assignments.student_email.readable = False
+    db.assignments.student_first_name.readable = False
+    db.assignments.student_cid.readable = False
+    db.assignments.assignment_data.readable = False
+    
+    # and edit representations
+    db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
+    db.assignments.status.represent = lambda id, row: status_dict[row.status]
+    
+    # link to a non-default new edit page
+    links = [dict(header = 'Report', 
+                  body = lambda row: A('View',_class='button btn btn-secondary',
+                                       _href=URL("marking_reports", "write_report", 
+                                                 vars={'record': row.id, 
+                                                       'staff_access_token':row.staff_access_token})))]
+    
+    # create the SQLFORM grid to show the existing assignments
+    # and set up actions to be applied to selected rows - these
+    # are powered by action functions defined below
+    grid = SQLFORM.grid(db.assignments.marker == marker.id,
+                        csv=False,
+                        deletable=False,
+                        create=False,
+                        details=False,
+                        editable=False,
+                        links=links,
+                        headers= {'assignments.student_last_name': 'Student'},
+                        paginate=False)
+    
+    return dict(form=grid)
 
 ## --------------------------------------------------------------------------------
 ## WEB CONTROLLERS TO HANDLE TWO MODES
