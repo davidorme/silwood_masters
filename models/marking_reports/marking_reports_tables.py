@@ -90,6 +90,9 @@ db.define_table('markers',
                 Field('first_name','string'),
                 Field('last_name','string'),
                 Field('email', 'string', requires=IS_EMAIL()),
+                Field('marker_access_token',length=64, default=uuid.uuid4,
+                      readable=False, writable=False),
+                
                 format='%(first_name)s %(last_name)s')
 
 # This table records what the assignments are and provides access tokens

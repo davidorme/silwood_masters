@@ -1,0 +1,44 @@
+{{extend 'layout.html'}}
+
+{{=H2('My marking assignments')}}
+
+<p>The table below shows all the assignments from this academic year that have been assigned
+	 to you. The status icon shows the following:</p>
+	 
+<table class='table table-striped'>
+	<tr>
+		<td>
+			{{=status_dict['Not started']}}
+		</td>
+		<td>
+			<strong>Not started</strong>: No marking data has yet been saved.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			{{=status_dict['Started']}}
+		</td>
+		<td>
+			<strong>Started</strong>: Marking data has been saved but the final report has not been submitted.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			{{=status_dict['Submitted']}}
+		</td>
+		<td>
+			<strong>Submitted</strong>: You have completed this report and submitted it.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			{{=status_dict['Released']}}
+		</td>
+		<td>
+			<strong>Released</strong>: This report has been released to the student.
+		</td>
+	</tr>
+
+</table>	
+
+{{=form}}
