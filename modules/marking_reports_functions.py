@@ -165,7 +165,7 @@ def distribute(ids):
 
     for marker, recs in marker_blocks.items():
         
-        # now create a set of links:
+        # now create a set of links to individual student reports:
         recs = sorted(recs, key=lambda x: (x.course_presentation, x.marker_role))
         links = [CAT(P(B('Course: '), r.course_presentation,
                        B('; Marking Role: '), r.marker_role,
@@ -177,10 +177,17 @@ def distribute(ids):
                          vars={'record':r.id, 'staff_access_token': r.staff_access_token}))))
                  for r in recs]
         
+        # Create a link to the marker my assignments page.
+        my_assignments_url = A('View my assignments',
+                               _href = URL('my_assignments', scheme=True, host=True,
+                                           vars={'marker': recs[0].marker.id, 
+                                                 'marker_access_token': recs[0].marker.marker_access_token}))
+        
         success = mailer.sendmail(subject='Silwood Park Masters Project Marking', 
                                   to=marker, email_template='marker_distribute.html',
                                   email_template_dict={'name':recs[0].marker.first_name,
-                                                 'links':CAT(links).xml()})
+                                                       'links':CAT(links).xml(),
+                                                       'my_assignments_url': my_assignments_url.xml()})
         
         if not success:
             fails += 1

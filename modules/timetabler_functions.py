@@ -81,6 +81,7 @@ def update_module_record_with_dates(module, for_fullcalendar=False):
             module.start = current.FIRST_DAY
             module.end = current.FIRST_DAY
 
+
 def update_event_record_with_dates(event, week=1, duration=1, event_day=0, 
                                    start_time=datetime.time(9,0)):
     """Calculates the start and end date of an event from the event row 
@@ -164,8 +165,12 @@ def module_markdown(module_id, title=False, show_events=True):
         
             for ev in gp:
                 content += f'{ev.start.strftime("%H:%M")} - {ev.end.strftime("%H:%M")} {ev.title}  \n'
-                content += f':   ({ev.teacher_id}, {ev.location_id})  \n'
-                content += f'    {ev.description}  \n\n'
+                content += f':   *Staff*: {ev.teacher_id}  \n'
+                content += f'    *Locations*: {ev.location_id}  \n'
+                if ev.courses is not None:
+                    content += f'    *Courses*: {ev.courses}  \n'
+                if ev.description is not None:
+                    content += f'    *Description*: {ev.description}  \n\n'
     
     content += '\n\n\n\n'
     

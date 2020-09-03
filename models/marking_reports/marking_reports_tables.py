@@ -58,7 +58,7 @@ for cpres in course_presentation_list:
 # Submitted it becomes readonly to all but admins. Once Released, students are
 # able to download it.
 
-status_dict =  {'Created': SPAN('',_class="fa fa-check-square-o",
+status_dict =  {'Created': SPAN('',_class="fa fa-check",
                                   _style="color:grey;font-size: 1.3em;",
                                   _title='Created'),
                 'Not started': SPAN('',_class="fa fa-pencil-square-o",
@@ -70,7 +70,7 @@ status_dict =  {'Created': SPAN('',_class="fa fa-check-square-o",
                 'Submitted': SPAN('',_class="fa fa-pencil-square-o",
                                   _style="color:green;font-size: 1.3em;",
                                   _title='Submitted'),
-                'Released': SPAN('',_class="fa fa-check-square-o",
+                'Released': SPAN('',_class="fa fa-eye",
                                   _style="color:green;font-size: 1.3em;",
                                   _title='Released')}
 
