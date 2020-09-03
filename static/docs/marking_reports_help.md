@@ -8,9 +8,15 @@ When assessing these reports, we would like to remind you that there is strong e
 
 ## COVID-19 Impacts
 
+### Project Markers
+
 You **should not adjust your marking** to take into account the impacts of COVID-19 on a research project: grades should reflect the material presented. However, in the viva you should extend the normal discussion of supervisory issues to put together a quick statement about the impact of COVID-19 on the research.
 
-The viva form will have a separate box to record this information. This should be a brief description of any academic impacts: only the switch to remote working, planned field data collection lost, project switch at 8 weeks. It is intended to provide brief information to the exam board where mitigating circumstances do not explicitly cover this. 
+The viva form will have a separate box to record this information. This should be a brief description of any academic impacts: only the switch to remote working, planned field data collection lost, project switch at 8 weeks. It is intended to provide brief information to the exam board where mitigating circumstances do not explicitly cover this.
+
+### Project Supervisors
+
+The project supervisor assesses the student's research performance over the course of the project. In contrast to report markers - who can focus on the final report in front of them - it is unrealistic for supervisors to attempt to separate the performance they observed from any constraints and impacts imposed on the resarch by COVID-19. Consequently, all supervisors should attempt to assess performance relative to those impacts and constraints.
 
 ## Assessment components
 
@@ -47,5 +53,3 @@ Each link will take you to the appropriate assessment form. The form will have i
 After the exam board has met, project assessments are **released to students**. This is something like the manuscript review process and allows students to understand where the strengths and weaknesses of their research lie and how it might be improved. Students **do not** see percentage grades, but do see all comments and Likert scale choices.
 
 For this reason, please provide as many of your comments as possible as **constructive feedback** in open comments sections. If you do have confidential comments on the project that you do not wish the student to see, please use the private comments section: you can view this as 'Comments to Editors'!
-
-
