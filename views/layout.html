@@ -33,9 +33,13 @@
     {{block head}}{{end}}
   </head>
   
-  <body>
+  
+   <!-- Padding top to accomodate fixed navbar-->
+  <body style='padding-top: 100px'>
     <div class="w2p_flash alert alert-dismissable">{{=response.flash or ''}}</div>
+	
     <!-- Navbar ======================================= -->
+	<div class='fixed-top'>
     <nav class="navbar navbar-light navbar-expand-md bg-faded bg-dark navbar-dark">
        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
          <span class="navbar-toggler-icon"></span>
@@ -93,8 +97,14 @@
         {{pass}}
       </div>
     </nav>
-
+	
     <!-- Masthead ===================================== -->
+	<div class='bg-danger text-white p-2 text-center'>
+		This system will be rebooting at 18:00 today. Save changes before then!
+	</div>
+	</div>
+
+
     <!-- Freezing banner is currently disabled during merge of marking reports and timetables -->
     {{#freezer = db(db.freezer).select().first()}}
     {{#if freezer is not None and freezer.is_frozen:}}
@@ -105,6 +115,7 @@
     {{pass}}
     {{block header}}
     {{end}}
+	
     <!-- Main ========================================= -->
     <!-- Begin page content -->
     <div class="container-fluid main-container">
