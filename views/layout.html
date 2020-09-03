@@ -35,7 +35,7 @@
   
   
    <!-- Padding top to accomodate fixed navbar-->
-  <body style='padding-top: 100px'>
+  <body style='padding-top: 50px'>
     <div class="w2p_flash alert alert-dismissable">{{=response.flash or ''}}</div>
 	
     <!-- Navbar ======================================= -->
@@ -99,20 +99,12 @@
     </nav>
 	
     <!-- Masthead ===================================== -->
-	<div class='bg-danger text-white p-2 text-center'>
+    <!--	<div class='bg-danger text-white p-2 text-center'>
 		This system will be rebooting at 18:00 today. Save changes before then!
 	</div>
 	</div>
+    -->
 
-
-    <!-- Freezing banner is currently disabled during merge of marking reports and timetables -->
-    {{#freezer = db(db.freezer).select().first()}}
-    {{#if freezer is not None and freezer.is_frozen:}}
-    {{if False:}}
-    <div class='row' style='background-color:teal'><div class='col-12'>
-        <H4 style='text-align:center;color:white'>The database is frozen</H4>
-    </div></div>
-    {{pass}}
     {{block header}}
     {{end}}
 	
