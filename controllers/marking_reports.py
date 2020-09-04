@@ -369,10 +369,12 @@ def my_assignments():
     
     # link to a non-default new edit page
     links = [dict(header = 'Report', 
-                  body = lambda row: A('View',_class='button btn btn-secondary',
+                  body = lambda row: A('View',
+                                       _class='button btn btn-secondary',
                                        _href=URL("marking_reports", "write_report", 
                                                  vars={'record': row.id, 
-                                                       'staff_access_token':row.staff_access_token})))]
+                                                       'staff_access_token':row.staff_access_token}),
+                                       _target='_blank'))]
     
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
