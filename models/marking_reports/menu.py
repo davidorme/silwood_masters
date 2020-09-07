@@ -12,6 +12,8 @@ if request.function in ['wiki', 'manage_wikicontent', 'manage_wikimedia']:
             (T('Wiki content'), False, None, [
                 (T('Pages'), False, URL('marking_reports','manage_wikicontent'), []),
                 (T('Media'), False, URL('marking_reports','manage_wikimedia'), []),
+                (T('Editing the wiki'), False, URL('marking_reports','wiki', 
+                 args=['editing-this-wiki']), []),
             ])
             ]
         
