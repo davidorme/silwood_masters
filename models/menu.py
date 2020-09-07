@@ -10,7 +10,8 @@ response.subtitle = ''
 
 response.menu = [
     (T('Marking'), False, URL('marking_reports', 'index'), []),
-    (T('Timetabler'), False, URL('timetabler', 'index'), [])]
+    (T('Timetabler'), False, URL('timetabler', 'index'), []),
+    (T('Wiki'), False, URL('marking_reports', 'wiki'), [])]
     
 
 if auth.has_membership('admin'):

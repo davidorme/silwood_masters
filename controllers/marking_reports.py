@@ -10,6 +10,7 @@ import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute,
                                       zip_pdfs, download_grades, 
                                       query_report_marker_grades)
+
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
 
@@ -36,6 +37,129 @@ def help():
     return dict(help_doc=help_doc)
 
 
+## --------------------------------------------------------------------------------
+## Expose the wiki - see models/db.py for customisations and notes
+## --------------------------------------------------------------------------------
+
+def wiki():
+    
+    if not request.args:
+        slug = 'index'
+    else:
+        slug = request.args[0]
+    
+    # Try and get the content page
+    content_row = db(db.wikicontent.slug == slug).select().first()
+    
+    if content_row is not None:
+        # Get the main page content
+        content = XML(markdown.markdown(content_row.wikicontent, extensions=['extra']))
+        
+        # Get the ToC
+        toc_row = db(db.wikicontent.slug == content_row.toc_slug).select().first()
+        if toc_row is not None:
+            toc = XML(markdown.markdown(toc_row.wikicontent, extensions=['extra']))
+            ftoc = FoldingTOC()
+            ftoc.feed(toc)
+            toc = XML(ftoc.get_toc())
+        else:
+            toc = 'Unknown toc slug'
+    
+    else:
+        content = 'Unknown wiki slug'
+        toc = 'Unknown toc slug'
+    
+    return dict(toc=toc, content=content)
+
+
+def wikimedia():
+    """
+    Simple controller to stream a file from the wikimedia table to a client
+    """
+
+    media = db(db.wikimedia.slug == request.args[0]).select().first()
+    
+    if media is not None:
+        path = os.path.join(request.folder, 'uploads', media.mediafile)
+        response.stream(path)
+
+@auth.requires_membership('wiki_editor')
+def manage_wikimedia():
+    """
+    SQLFORM.grid interface to the contents of the wikimedia table
+    """
+
+    grid = SQLFORM.grid(db.wikimedia, create=True, csv=False)
+    
+    return dict(grid=grid)
+
+@auth.requires_membership('wiki_editor')
+def manage_wikicontent():
+    """
+    SQLFORM.grid interface to the contents of the wikicontent table
+    """
+    
+    grid = SQLFORM.grid(db.wikicontent, create=True, csv=False)
+    
+    return dict(grid=grid)
+
+
+# TODO - move this into the module when the site is a bit quieter!
+from html.parser import HTMLParser 
+
+class FoldingTOC(HTMLParser):
+    """
+    This parser scans html and inserts ids, classes and spans to turn
+    <ul> or <ol> into a click to expand table of contents tree. The
+    layout_wiki.html file contains JS and CSS to make it work.
+    """
+    
+    def __init__(self):
+        super().__init__()
+        self.content = []
+        self.depth = 0
+        self.last_li_index = 0
+
+    def handle_starttag(self, tag, attrs): 
+
+        if tag in ['ul', 'ol']:
+            if self.depth == 0:
+                self.content.append(f'<{tag.upper()} id="root">')
+            else:
+                self.content.append(f'<{tag.upper()} class="nested">')
+                self.content[self.last_li_index] = '<LI><SPAN class="caret"></SPAN>'
+            self.depth += 1
+        
+        elif tag == 'li':
+            self.content.append('<LI><SPAN class="end"></SPAN>')
+            self.last_li_index = len(self.content) - 1
+        
+        else:
+            self.content.append(self.get_starttag_text())
+        
+    def handle_data(self, data): 
+        self.content.append(data)
+    
+    def handle_endtag(self, tag):
+        if tag in ['ul', 'ol']:
+            self.depth -= 1
+        
+        self.content.append(f'</{tag.upper()}>')
+    
+    def get_toc(self):
+        
+        return ''.join(self.content)
+
+
+# ---- action to server uploaded static content (required) ---
+@cache.action()
+def download():
+    """
+    allows downloading of uploaded files
+    http://..../[app]/default/download/[filename]
+    """
+    return response.download(request, db)
+    
 
 ## --------------------------------------------------------------------------------
 ## MARKERS DATABASE
