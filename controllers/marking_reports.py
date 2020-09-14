@@ -739,6 +739,9 @@ def write_report():
     html.append(form.custom.submit)
     html.append(form.custom.end)
     
+    # Set the form title
+    response.title = f"{record.student_last_name}: {record.marker_role}"
+    
     return dict(html=CAT(*html))
 
 
