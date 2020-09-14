@@ -22,7 +22,7 @@
 					"label": "Justification",
 					"nrow": 3,
 					"required": true,
-					"value": "Benefit of doubt"
+					"placeholder": "Benefit of doubt"
 				},
 				{
 					"type": "select",
