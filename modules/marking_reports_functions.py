@@ -509,10 +509,11 @@ def create_pdf(record, form_json, confidential):
     
     pdf.close()
     pdf = pdf.output(dest='S').encode('latin-1') # unicode string to bytes
-    filename = '{} {} {} {} {}.pdf'.format(record.course_presentation,
+    filename = '{} {} {} {} {} {}.pdf'.format(record.course_presentation,
                                             record.academic_year, 
-                                            record.student_first_name,
                                             record.student_last_name,
+                                            record.student_first_name,
+                                            record.marker_role,
                                             record.id)
     
     return (pdf, filename)
@@ -529,6 +530,11 @@ def query_report_marker_grades(record, pdf=False):
     """
     
     db = current.db
+    
+    # Bizarre issue - this is called with pdf=True from a page that has
+    # altered the represent of status and that causes it to be masked from
+    # the table, so reset that here to ensure that status can be read
+    db.assignments.status.represent = None
     
     report_grades = db((db.assignments.student_cid == record.student_cid) &
                        (db.assignments.course_presentation == record.course_presentation) &
