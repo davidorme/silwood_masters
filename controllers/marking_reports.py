@@ -891,16 +891,19 @@ def project_proposals():
     # edit the grid object
     # - extract the download button and retitle it
     # - insert it in the search menu
-    download = A('Download all', _class="btn btn-secondary",
+    download = A('Download all', _class="btn btn-secondary btn-sm",
                   _href=URL('project_proposals', 
                             vars={'_export_type': 'csv_with_hidden_cols'}))
     
-    grid.element('.web2py_console form').append(download)
+    if grid.element('.web2py_console form') is not None:
+        grid.element('.web2py_console form').append(download)
 
     if auth.has_membership('project_proposer'):
-        download = A('New proposal', _class="btn btn-secondary",
+        download = A('New proposal', _class="btn btn-success btn-sm",
                       _href=URL('submit_proposal'))
-        grid.element('.web2py_console form').append(download)
+        
+        if grid.element('.web2py_console form') is not None:
+            grid.element('.web2py_console form').append(download)
         
     
     return(dict(grid=grid))
