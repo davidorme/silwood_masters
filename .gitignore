@@ -30,6 +30,7 @@ languages/
 # Ignore private except for the appconfig template
 private/*
 !private/appconfig_template.ini
+!private/CELCAT_inputs/*
 
 # cache folders
 __pycache__/
