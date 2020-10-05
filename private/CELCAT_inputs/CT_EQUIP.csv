@@ -1,0 +1,4 @@
+CT_EQUIP,,,,,,,,,,,,
+_equip_id,_unique_name,_name,_deptName,_staff1Name,_staff2Name,_custom1,_custom2,_custom3,_booking_interval,_schedulable,_charge,_www
+936,LB Hard hats & Hi-vis Jackets,LB Hard hats & Hi-vis Jackets,LB Department of Life Sciences (Silwood Park),,,,,,,Y,,
+937,LB Video and TV Monitor,LB Video and TV Monitor,LB Department of Life Sciences (Silwood Park),,,,,,,Y,,

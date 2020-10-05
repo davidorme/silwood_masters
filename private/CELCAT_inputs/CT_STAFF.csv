@@ -1,0 +1,57 @@
+CT_STAFF,,,,,,,,,,,,,
+_staff_id,_unique_name,_name,_title,_sex,_address1,_address2,_address3,_address4,_postcode,_roomName,_deptName,_custom1,_custom2
+7978,00000208,"Archer, Simon A",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Visiting Researcher,Default
+930618,00154102,"Vogler, Alfried P",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+146976,00154556,"Burt, Austin",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+610,00154997,"Themis, Michael",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Honorary,Default
+144875,00156335,"Koufopanou, Vassiliki",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+8484,00156933,"Purvis, Andy J",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+8505,00157755,"Tristem, Michael",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+8534,00159113,"Barraclough, Tim G",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Visiting Researcher,Default
+9005,00170563,"Milner-Gulland, EJ J",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Honorary,Default
+9153,00206010,"Orme, David",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+1561896,00384421,"Walters, Keith F A",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Honorary,Default
+1565592,00385133,"Clubbe, Colin",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Honorary,No AutoCalEx
+10260,00392658,"Bidartondo, Martin I",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+10305,00397024,"Clark, Lorna",Miss,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+2142317,00427175,"Pearse, Will",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+153960,00488512,"O\'Loughlin, Samantha M",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+1443569,00509665,"Lee, Adam",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Visiting Researcher,Default
+11665,00527811,"Ewers, Robert M",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+11671,00528470,"Savolainen, Vincent",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+127769,00541392,"Bastos Araujo, Miguel",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Honorary,Default
+127763,00543580,"Banks-Leite, Cristina",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+964317,00547484,"Rowcliffe, Marcus",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Visiting Researcher,Default
+12226,00573135,"Daniel, Olivia Z",Ms,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+956251,00575512,"Selby, Martin J",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+754708,00639658,"Prentice, Colin",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+165570,00647480,"Woodward, Guy",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+1565329,00703492,"Windram, Oliver P F",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,No AutoCalEx
+964399,00705624,"Hui, Tin-Yu Jonathan J",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+520321,00717990,"Rosindell, James L",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+503330,00719798,"Bell, Thomas D C",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+127766,00771508,"Knight, Andrew T",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+15540,00794941,"Gill, Richard J",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+15547,00795175,"Pawar, Samraat",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+15585,00796384,"Brazeau, Martin D",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+118359,00798073,"Lloyd, Jon",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+138891,00810706,"Cator, Lauren J",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+964396,00811852,"Estrada Montes, Catalina",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+283974,00813448,"Ellis, Amanda J",Mrs,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+730538,00848092,"Kordas, Rebecca L",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Not in SoV,Default
+657608,00858004,"Abzhanov, Arkhat",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+774472,00858022,"Schroeder, Julia",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+697668,00860179,"Tobias, Joseph A",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+1476527,00867415,"Osborne, Owen G",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Contingent Worker,Default
+1440305,00867433,"Herraiz Yebes, Alba",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+1038748,00909259,"Jackson, Michelle",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+964159,00926329,"Fumagalli, Matteo",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee + PGT,Default
+964186,00940387,"Riutta, Terhi E",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+1673549,00961252,"Proctor, Emma L",Ms,,,,,,,,LB Department of Life Sciences (Silwood Park),Not in SoV,Default
+1993862,01000819,"Graystock, Peter",Dr,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+2084392,01050502,"Ahlstrom, Elisabeth M",Ms,,,,,,,,LB Department of Life Sciences (Silwood Park),Employee,Default
+964312,01288950,"Jansen, Vincent",Professor,,,,,,,,LB Department of Life Sciences (Silwood Park),Contingent Worker,Default
+1586430,LB No Staff Required,-,,,,,,,,,LB Department of Life Sciences (Silwood Park),Not in SoV,Default
+1603358,LB See Published Notes for details,See Published Notes for details,,,,,,,,,LB Department of Life Sciences (Silwood Park),Not in SoV,Default
+1586432,LB See Team for details,See Team for details,,,,,,,,,LB Department of Life Sciences (Silwood Park),Not in SoV,Default
+1586433,LB Staff to be confirmed,Staff to be confirmed,,,,,,,,,LB Department of Life Sciences (Silwood Park),Not in SoV,Default

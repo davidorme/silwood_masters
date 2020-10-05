@@ -1,0 +1,12 @@
+CT_ROOM,,,,,,,,,,,,,
+_room_id,_unique_name,_name,_deptName,_siteName,_area,_staff1Name,_staff2Name,_custom1,_custom2,_custom3,_schedulable,_auto_schedulable,_by_dept_access_ex
+559,SPHA-01-101,SPHA 101 - Hamilton 101 Boardroom,LB Department of Life Sciences (Silwood Park),Silwood Park,39.11,00575512,00401437,Requestable (MA),Meeting/Conference,SPHA-01-101,Y,N,N
+560,SPHA-01-103,SPHA 103 - Hamilton 103 Computer Room,LB Department of Life Sciences (Silwood Park),Silwood Park,131.85,00575512,00401437,Requestable (TC),Computer Classroom,SPHA-01-103,Y,N,N
+557,SPHA-01-106,SPHA 106 - Hamilton Seminar Room 1,LB Department of Life Sciences (Silwood Park),Silwood Park,27.29,00575512,00401437,Requestable (TA),Classroom,SPHA-01-106,Y,N,N
+558,SPHA-01-110,SPHA 110 - Hamilton Seminar Room 2,LB Department of Life Sciences (Silwood Park),Silwood Park,27.3,00575512,00401437,Requestable (TA),Classroom,SPHA-01-110,Y,N,N
+561,SPHA-G-G01A,SPHA G01A - Hamilton Darwin Seminar Room,LB Department of Life Sciences (Silwood Park),Silwood Park,47.48,00575512,00401437,Requestable (MA),Meeting/Conference,SPHA-G-G01A,Y,N,N
+562,SPHA-G-G01B,SPHA G01B - Hamilton Wallace Seminar Room,LB Department of Life Sciences (Silwood Park),Silwood Park,36.2,00575512,00401437,Requestable (MA),Meeting/Conference,SPHA-G-G01B,Y,N,N
+563,SPHA-G-G02A,SPHA G02A - Hamilton Fisher Seminar Room,LB Department of Life Sciences (Silwood Park),Silwood Park,54.98,00575512,00401437,Requestable (MA),Meeting/Conference,SPHA-G-G02A,Y,N,N
+564,SPHA-G-G02B,SPHA G02B - Hamilton Haldane Seminar Room,LB Department of Life Sciences (Silwood Park),Silwood Park,58.62,00575512,00401437,Requestable (MA),Meeting/Conference,SPHA-G-G02B,Y,N,N
+565,SPHA-G-G03,SPHA G03 - Hamilton Field Laboratory,LB Department of Life Sciences (Silwood Park),Silwood Park,94.54,00575512,00401437,Specialist Space (TB),Laboratory,SPHA-G-G03,Y,N,N
+97591,SPPB-02-2.4,SPPB 2.4,LB Department of Life Sciences (Silwood Park),Silwood Park,277.8,00575512,00401437,Requestable (MA),Meeting/Conference,SPPB-02-2.4,Y,N,N
