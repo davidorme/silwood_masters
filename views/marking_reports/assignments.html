@@ -1,34 +1,89 @@
 {{extend 'layout.html'}}
 
-{{=H2('Marking assignments')}}
+<h2>Marking assignments</h2>
 
+<p>The table below shows all the assignments created on the system along with their current 
+	status. Authorised users can use the view links to look at and edit reports: this ability 
+	is needed to fix problems or moderate reports. Each assignment has one of the following 
+	status indicators.
+</p>
 
-{{=P('The table below shows all the assignments created on the system along with their current status. Authorised users can use ',
-     'the view links to look at and edit reports: this ability is needed to fix problems or moderate reports.')}}
+<TABLE class='table'>
+	<TR>
+		<TD>
+			{{=status_dict['Created']}}
+		</TD>
+		<TD>
+			<strong>Created</strong>. When new assignments are <A href={{=URL('new_assignment')}}>
+			created</A> or <A href={{=URL('load_assignments')}}>uploaded</A>, they are given this 
+			status. This gives coordinators a chance to check assignments before they are sent to
+			markers and supervisors. Once assignments have been checked, you can select a set of 
+			them and then click <strong>Send To Markers</strong> to automatically distribute 
+			marking links.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Not started']}}
+		</TD>
+		<TD>
+			<strong>'Not started</strong>. These assignments have been distributed to their marker
+			but no marking data has yet been entered. You can re-use the <strong>Send To 
+			Markers</strong> option to send reminders to markers about reports that are not yet 
+			started or have not been completed: the system will not remind markers about submitted 
+			reports.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Started']}}
+		</TD>
+		<TD>
+			<strong>Started</strong>. The marker has entered some marking data and saved their
+			progress but the report has not yet been submitted.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Submitted']}}
+		</TD>
+		<TD>
+			<strong>Submitted</strong>. The marker has completed their report and submitted it.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Released']}}
+		</TD>
+		<TD>
+			<strong>Released</strong>. Once reports have been submitted, you can select rows
+			and click <strong>Release To Students</strong> to email the students with their 
+			reports. They will receive an email containing a set of links that will allow them
+			to download a PDF of the report, excluding any confidential report fields. The system 
+			will only release submitted and previously released reports, so you can resend links
+			but not accidentally release partial reports.
+		</TD>
+	</TR>
+</TABLE>
 
-{{=P('When new assignments are ', A('created', _href=URL('new_assignment')), ' or ',  A('uploaded,', _href=URL('load_assignments')),
-     ' they are have status ', B('Created '), status_dict['Created'], ' . This gives coordinators a chance to check assignments',
-     ' before they are sent to markers and supervisors. Once assignments have been checked, you can select a set of them and then',
-     ' click ', B('Send To Markers'), ' to automatically distribute marking links')}}
+<h5>Other actions</h5>
 
-{{=P('Distributed assignments will initially show as being ', B('Not started '), status_dict['Not started'], ' . As markers fill ',
-     'in their reports, this will change either to ', B('Started '), status_dict['Started'], ' -- which shows that the marker ',
-     'has saved a partially complete report -- or ', B('Submitted '), status_dict['Submitted'], ' -- which shows that the marker ',
-     'has completed their report. You can repeat ',  B('Send To Markers'), ' to send reminders: the system will not remind markers ',
-     'about completed reports.')}}
+<p>At any point, you can select rows and click <strong>Download Confidential PDFs</strong> or 
+	<strong>Download Public PDFs</strong> to create and download PDF reports for a set of students. 
+	You will get a zipfile of the reports - note that only completed reports will be included.
+</p>
 
-{{=P('Once reports have been submitted, you can select rows and click ', B('Release To Students'), ' to email the students with their ',
-     'reports. They will receive an email containing a set links that will allow them to download a PDF of the report, excluding ',
-     'any confidential report fields. Once you have released a report, the status of the report will change to ', B('Released'), 
-      status_dict['Released'], ' . The system will only release submitted and previously released reports, so you can resend ',
-     'links but not accidentally release partial reports.')}}
-     
-{{=P('At any point, you can select rows and click ', B('Download Confidential PDFs'), ' or ', B('Download Public PDFs'), 'to create and download ',
-     'PDF reports for a set of students. You will get a zipfile of the reports - note that only completed reports will be included. ',
-     'You can also select rows and click ', B('Download Grades'), ' to download an Excel file of compiled grades for a set of students. ',
-     'Grades for uncompleted reports will be shown as missing.')}}
-     
-{{=P('Some of these actions might take a little while to complete - please be patient! The system also holds records for ', old_count, 
-     ' reports from previous years, but these are not shown here.')}}
+<p>You can also select rows and click <strong>Download Grades</strong> to download an Excel file 
+	of compiled grades for a set of students. Grades for uncompleted reports will be shown as 
+	missing.
+</p>
+
+<h5>Current and old reports</h5>
+
+<p>By default, this page only shows records from the most current academic year, but you can 
+	click on <a href={{=URL('assignments', vars=dict(request.vars, **{'all': ''}))}}>this link</a> 
+	show all records. There are {{=old_count}} reports from previous years, so these may take a 
+	while to load.
+</p>
 
 {{=form}}
