@@ -519,7 +519,7 @@ def my_assignments():
                         headers= {'assignments.student_last_name': 'Student'},
                         paginate=False)
     
-    return dict(form=grid)
+    return dict(name=marker.first_name + " " + marker.last_name, form=grid)
 
 ## --------------------------------------------------------------------------------
 ## WEB CONTROLLERS TO HANDLE TWO MODES
