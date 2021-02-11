@@ -1,5 +1,6 @@
 {
 	"title": "Grading form for Master's Project Markers",
+	"marking_criteria": "Project_Marking_Criteria.pdf",
 	"pdftitle": "Project Marker's Report",
 	"instructions": "<ul><li>Tick one box in each row, using the centre box (Average) to indicate the normal, adequate standard. The endpoints of the scales show the expectations for the lowest and highest standards.</li><li> Comments can be made on individual assessment points as well as in the provided section for general comments and summary below.</li><li>Please note that all of this form <i>excluding private comments and the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li></ul>",
 	"grade_export": ["grade"],

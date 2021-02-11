@@ -1,5 +1,6 @@
 {
 	"title": "Grading form for Master's Project viva",
+	"marking_criteria": "Viva_Marking_Criteria.pdf",
 	"pdftitle": "Viva Report",
 	"instructions": "<p>The internal viva voce examinations will be conducted by an two independent Examiners (also called markers), one of whom will typically have greater expertise in the project area.  There are two important components of this meeting: you must agree on a finalised report grade (or agree to disagree) before moving to the viva.</p>",
 	"grade_export": ["project_agreed_grade","viva_grade"],

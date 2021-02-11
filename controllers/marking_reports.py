@@ -700,12 +700,12 @@ def write_report():
     #   and store it in the session to make it accessible to validation without having to reload
     # - TODO move criterion path into JSON form definition
     
-    form_json, criteria = get_assignment_json(record)
+    form_json = get_assignment_json(record)
     session.form_json = form_json
     
     # define the header block
     security = {'record': record.id, 'staff_access_token': marker.marker_access_token}
-    header = get_form_header(form_json, record, readonly, criteria, security=security)
+    header = get_form_header(form_json, record, readonly, security=security)
     
     # Get the form as html
     # - provide a save and a submit button
@@ -782,11 +782,11 @@ def show_form():
                      marker=Storage(first_name='Sir Alfred', last_name='Marker'),
                      marker_role=request.args[0])
 
-    form_json, criteria = get_assignment_json(record)
+    form_json = get_assignment_json(record)
     session.form_json = form_json
     
     # define the header block
-    header = get_form_header(form_json, record, readonly=False, criteria=criteria)
+    header = get_form_header(form_json, record, readonly=False)
     
     form = assignment_to_sqlform(form_json, record, readonly=False)
     
@@ -809,14 +809,13 @@ def get_assignment_json(record):
     with open(form_path) as f:
         form_json = json.load(f)
 
-    return form_json, style_dict['criteria']
+    return form_json
 
 
-def get_form_header(form_json, record, readonly, criteria, security=None):
+def get_form_header(form_json, record, readonly, security=None):
     """Takes a marking form definition and a marking assignment record
     and returns a standard header block for a form.
     """
-    
     
     # Define the header block
     header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
@@ -834,8 +833,8 @@ def get_form_header(form_json, record, readonly, criteria, security=None):
     
     header.insert(0, H2(form_json['title']))
     header.append(DIV(LABEL('Marking critera', _class='col-sm-3'),
-                      DIV(A(criteria,
-                            _href=URL('static','marking_criteria/' + criteria),
+                      DIV(A(form_json['marking_criteria'],
+                            _href=URL('static','marking_criteria/' + form_json['marking_criteria']),
                             _target='blank'),
                           _class='col-sm-9'),
                       _class='row'))
