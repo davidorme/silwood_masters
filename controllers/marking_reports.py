@@ -1033,6 +1033,7 @@ def create_html_form(record, submitable=True):
 
     return CAT(*html)
 
+
 def download_pdf():
 
     """
@@ -1072,7 +1073,14 @@ def download_pdf():
         
     elif security['staff_access_token'] is not None:
         
-        if record.staff_access_token != security['staff_access_token']:
+        marker = db.markers(record.marker)
+        
+        # Two factor authentication
+        if not session.tf_validated:
+            _next = URL(args=request.args, vars=request.vars)
+            redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+        
+        if marker.marker_access_token != security['staff_access_token']:
             session.flash = 'Staff access token invalid for PDF download'
             redirect(URL('index'))
         else:
