@@ -605,7 +605,7 @@ def my_assignments():
                                        _class='button btn btn-secondary',
                                        _href=URL("marking_reports", "write_report", 
                                                  vars={'record': row.id, 
-                                                       'staff_access_token':row.staff_access_token}),
+                                                       'staff_access_token':marker.marker_access_token}),
                                        _target='_blank'))]
     
     # create the SQLFORM grid to show the existing assignments
@@ -633,6 +633,7 @@ def my_assignments():
 ##                   be a confidential version including private comments and
 ##                   grade or a public version for students.
 ## --------------------------------------------------------------------------------
+
 
 def write_report():
     
@@ -679,42 +680,6 @@ def write_report():
         _next = URL(args=request.args, vars=request.vars)
         redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
     
-    # - load the correct form  and marking criteria from the definition string 
-    #   and store it in the session to make it accessible to validation without having to reload
-    style_dict = form_data_dict[(record.course_presentation, record.marker_role)] 
-    form_json = style_dict['form']
-    f = open(os.path.join(request.folder,'static','form_json', form_json))
-    form_json = json.load(f)
-    session.form_json = form_json
-    
-    # define the header block
-    header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
-                     ('CID', '{student_cid}'),
-                     ('Course Presentation', '{course_presentation}'),
-                     ('Academic Year', '{academic_year}'),
-                     ('Marker', '{marker.first_name} {marker.last_name}'),
-                     ('Marker Role', '{marker_role}'),
-                     ('Status', '{status}')]
-     
-    header_pack = [DIV(LABEL(l, _class='col-sm-3'), DIV(v.format(**record), _class='col-sm-9'), _class='row')
-                       for l, v in header_rows]
-    
-    header_pack.append(DIV(LABEL('Marking critera', _class='col-sm-3'), 
-                           DIV(A(style_dict['criteria'], 
-                                 _href=URL('static','marking_criteria/' + style_dict['criteria']), 
-                                 _target='blank'),
-                               _class='col-sm-9'), _class='row'))
-    
-    # If the report has been submitted, edit the html to insert a PDF download link with 
-    # staff security credentials. Otherwise, insert any instructions
-    if record.status in ['Submitted','Released']:
-        pdf_link = CAT(': click ', A('here', _href=URL('download_pdf', vars=security)),
-                       ' to download a confidential pdf of the full report.')
-        header_pack[5].elements()[2].append(pdf_link)
-        header_pack.append(H4('Completed report'))
-    else:
-        header_pack.append(H4('Instructions'))
-        header_pack.append(XML(form_json['instructions']))
     
     # set whether the form is editable or not, which is basically just submitted/not submitted
     # - allow authorised users to edit completed reports but warn them
@@ -729,6 +694,174 @@ def write_report():
         readonly = True
     else:
         readonly = False
+    
+    
+    # - load the correct form  and marking criteria from the definition string 
+    #   and store it in the session to make it accessible to validation without having to reload
+    # - TODO move criterion path into JSON form definition
+    
+    form_json, criteria = get_assignment_json(record)
+    session.form_json = form_json
+    
+    # define the header block
+    security = {'record': record.id, 'staff_access_token': marker.marker_access_token}
+    header = get_form_header(form_json, record, readonly, criteria, security=security)
+    
+    # Get the form as html
+    # - provide a save and a submit button
+    buttons =  [TAG.BUTTON('Save', _type="submit", _class="button btn btn-default",
+                           _style='padding: 10px 15px 10px 15px;width:100px', _name='save'),
+                XML('&nbsp;')*5,
+                TAG.BUTTON('Submit', _type="submit", _class="button btn btn-default",
+                               _style='padding: 10px 15px 10px 15px;width:100px', _name='submit')]
+    
+    form = assignment_to_sqlform(form_json, record, readonly, buttons)
+        
+    # process the form to handle storing the data, via a validation function
+    # that checks required fields are complete when users press submit
+    if form.process(onvalidation=submit_validation).accepted:
+        
+        # add the id from the record into the data (an id is needed by the form code)
+        data = form.vars
+        data['id'] = record.id
+        
+        if 'save' in list(request.vars.keys()):
+            session.flash = 'Changes to report saved'
+            record.update_record(assignment_data = data,
+                                 status='Started')
+        elif 'submit' in list(request.vars.keys()):
+            session.flash = 'Report submitted'
+            record.update_record(assignment_data = data,
+                                 status='Submitted',
+                                 submission_date = datetime.datetime.now(),
+                                 submission_ip = request.client)
+        
+        # TODO - Would be neater to use ajax here rather than reloading the page
+        # but parking that for another day.
+        redirect(URL('write_report', vars={'record':record.id, 
+                                           'staff_access_token':marker.marker_access_token}))
+    
+    # Style SQLFORM
+    html = style_sqlform(form_json, form, readonly)
+    
+    # Set the form title
+    response.title = f"{record.student_last_name}: {record.marker_role}"
+    
+    return dict(header=CAT(*header), form=CAT(*html))
+
+
+def submit_validation(form):
+    """
+    Takes a submitted form and checks that all components tagged as
+    required in the JSON description have been completed. Requires that
+    the appropriate form JSON has been stored in the session object, since
+    it seems to be impossible to pass extra arguments to onvalidation functions.
+    """
+    
+    if 'submit' in list(request.vars.keys()):
+        for q in session.form_json['questions']:
+            for c in q['components']:
+                if c['required'] and form.vars[c['variable']] in [None, '']:
+                    if c['type'] == 'rubric':
+                        form.errors[c['variable']] = 'You must select an option'
+                    elif c['type'] == 'comment':
+                        form.errors[c['variable']] = 'Please provide comments'
+                    elif c['type'] == 'select':
+                        form.errors[c['variable']] = 'Please select a grade'
+
+
+def show_form():
+    """This controller displays a form dynamically from a JSON description
+    but as a simple static form with no submit method. This is a convenient
+    way for students to be able to see the forms.
+    """
+
+    record = Storage(student_first_name='Awesome', student_last_name='Student', 
+                     student_cid='00000000', course_presentation='EEC MSc',
+                     academic_year=2020, status='Not started',
+                     marker=Storage(first_name='Sir Alfred', last_name='Marker'),
+                     marker_role=request.args[0])
+
+    form_json, criteria = get_assignment_json(record)
+    session.form_json = form_json
+    
+    # define the header block
+    header = get_form_header(form_json, record, readonly=False, criteria=criteria)
+    
+    form = assignment_to_sqlform(form_json, record, readonly=False)
+    
+    # Style SQLFORM
+    html = style_sqlform(form_json, form, readonly=False)
+    
+    # Set the form title
+    response.title = f"{record.student_last_name}: {record.marker_role}"
+    
+    return dict(header=CAT(*header), form=CAT(*html))
+
+
+
+def get_assignment_json(record):
+
+    style_dict = form_data_dict[(record.course_presentation, record.marker_role)] 
+    form_json = style_dict['form']
+    form_path = os.path.join(request.folder,'static','form_json', form_json) 
+    
+    with open(form_path) as f:
+        form_json = json.load(f)
+
+    return form_json, style_dict['criteria']
+
+
+def get_form_header(form_json, record, readonly, criteria, security=None):
+    """Takes a marking form definition and a marking assignment record
+    and returns a standard header block for a form.
+    """
+    
+    
+    # Define the header block
+    header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
+                     ('CID', '{student_cid}'),
+                     ('Course Presentation', '{course_presentation}'),
+                     ('Academic Year', '{academic_year}'),
+                     ('Marker', '{marker.first_name} {marker.last_name}'),
+                     ('Marker Role', '{marker_role}'),
+                     ('Status', '{status}')]
+     
+    header = [DIV(LABEL(l, _class='col-sm-3'),
+                  DIV(v.format(**record), _class='col-sm-9'),
+                  _class='row')
+              for l, v in header_rows]
+    
+    header.insert(0, H2(form_json['title']))
+    header.append(DIV(LABEL('Marking critera', _class='col-sm-3'),
+                      DIV(A(criteria,
+                            _href=URL('static','marking_criteria/' + criteria),
+                            _target='blank'),
+                          _class='col-sm-9'),
+                      _class='row'))
+    
+    # If readonly, provide a link to the PDF download link, otherwise, insert any instructions
+    if readonly:
+        header.append(H4('Completed report'))
+        header.append(P('Click ', A('here', _href=URL('download_pdf', vars=security)),
+                        ' to download a confidential pdf of the full report.'))
+    else:
+        header.append(H4('Instructions'))
+        header.append(XML(form_json['instructions']))
+    
+    return header
+
+
+def assignment_to_sqlform(form_json, record, readonly, buttons=[]):
+    
+    """Takes a marking assignment and generates the appropriate marking form,
+    converting the fields defined in the form JSON description into a SQLFORM
+    object. This object can be processed and then style_sqlform is used to 
+    modify the SQLFORM representation as required.
+    
+    Returns the SQLFORM object and the form JSON description, which is used
+    for validation.
+    """
     
     # - Extract the set of fields from the components section of the questions array
     #   This allows a question to have multiple bits (e.g. rubric + optional comments)
@@ -756,13 +889,6 @@ def write_report():
                 # Other types that don't insert a form control- currently only 'query'
                 pass
     
-    # - provide a save and a submit button
-    buttons =  [TAG.BUTTON('Save', _type="submit", _class="button btn btn-default",
-                           _style='padding: 10px 15px 10px 15px;width:100px', _name='save'),
-                XML('&nbsp;')*5,
-                TAG.BUTTON('Submit', _type="submit", _class="button btn btn-default",
-                               _style='padding: 10px 15px 10px 15px;width:100px', _name='submit')]
-    
     # - define the form for IO using the fields object,
     #   preloading any existing data
     if record.assignment_data in [None, '']:
@@ -770,33 +896,18 @@ def write_report():
     else:
         data_json=record.assignment_data
     
+    # - define a SQLFORM object the fields object for processing data
     form = SQLFORM.factory(*fields,
                            readonly=readonly,
                            buttons=buttons,
                            record=data_json,
                            showid=False)
+
+    return form
+
+
+def style_sqlform(form_json, form, readonly=False):
     
-    # process the form to handle storing the data, via a validation function
-    # that checks required fields are complete when users press submit
-    if form.process(onvalidation=submit_validation).accepted:
-        
-        # add the id from the record into the data (an id is needed by the form code)
-        data = form.vars
-        data['id'] = record.id
-        
-        if 'save' in list(request.vars.keys()):
-            session.flash = 'Changes to report saved'
-            record.update_record(assignment_data = data,
-                                 status='Started')
-        elif 'submit' in list(request.vars.keys()):
-            session.flash = 'Report submitted'
-            record.update_record(assignment_data = data,
-                                 status='Submitted',
-                                 submission_date = datetime.datetime.now(),
-                                 submission_ip = request.client)
-        
-        redirect(URL('write_report', vars={'record':record.id, 
-                                           'staff_access_token':record.staff_access_token}))
     
     # modify any widget settings for active forms
     if not readonly:
@@ -810,9 +921,7 @@ def write_report():
                     form.custom.widget[c['variable']].components = [c['value']]
     
     # compile the laid out form in a list
-    html = [H2(form_json['title'])] 
-    [html.append(h) for h in header_pack]
-    html.append(form.custom.begin)
+    html = [form.custom.begin]
     
     # add the questions in the order they appear in the JSON array
     for q in form_json['questions']:
@@ -854,184 +963,7 @@ def write_report():
     html.append(form.custom.submit)
     html.append(form.custom.end)
     
-    # Set the form title
-    response.title = f"{record.student_last_name}: {record.marker_role}"
-    
-    return dict(html=CAT(*html))
-
-
-def submit_validation(form):
-    
-    """
-    Takes a submitted form and checks that all components tagged as
-    required in the JSON description have been completed
-    """
-    
-    if 'submit' in list(request.vars.keys()):
-        for q in session.form_json['questions']:
-            for c in q['components']:
-                if c['required'] and form.vars[c['variable']] in [None, '']:
-                    if c['type'] == 'rubric':
-                        form.errors[c['variable']] = 'You must select an option'
-                    elif c['type'] == 'comment':
-                        form.errors[c['variable']] = 'Please provide comments'
-                    elif c['type'] == 'select':
-                        form.errors[c['variable']] = 'Please select a grade'
-
-#
-# Controller to display the structure of the marking forms
-#
-
-
-def show_form():
-    
-    """
-    This function generates a form dynamically from a JSON description
-    but as a simple static form with no submit method. This is a convenient
-    way for students to be able to see the forms.
-    """
-
-    record = Storage(student_first_name='Awesome', student_last_name='Student', 
-                     student_cid='00000000', course_presentation='EEC MSc',
-                     academic_year=2020, status='Not started',
-                     marker=Storage(first_name='Sir Alfred', last_name='Marker'),
-                     marker_role=request.args[0])
-
-    html = create_html_form(record, submitable=False)
-    
-    # Add header alert box
-    html = DIV(H4('Example form'),
-                    P('This page shows an ', B('exact'), ' copy of the form that a '
-                      'marker will complete for this component of a Masters thesis '
-                      'examination. ', _class='mb-0'),
-                    _class="alert alert-success", _role="alert") + html
-    
-    # Set the form title
-    response.title = f"{record.student_last_name}: {record.marker_role}"
-    
-    return dict(html=html)
-
-
-def create_html_form(record, submitable=True):
-    
-    """Creates an html marking form for a marking record
-    """
-    
-    # Get the form definition from the JSON 
-    style_dict = form_data_dict[(record.course_presentation, record.marker_role)] 
-    form_json = style_dict['form']
-    f = open(os.path.join(request.folder,'static','form_json', form_json))
-    form_json = json.load(f)
-    session.form_json = form_json
-    
-    # define the header block
-    header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
-                     ('CID', '{student_cid}'),
-                     ('Course Presentation', '{course_presentation}'),
-                     ('Academic Year', '{academic_year}'),
-                     ('Marker', '{marker.first_name} {marker.last_name}'),
-                     ('Marker Role', '{marker_role}'),
-                     ('Status', '{status}')]
-     
-    header_pack = [DIV(LABEL(l, _class='col-sm-3'), DIV(v.format(**record), _class='col-sm-9'), _class='row')
-                       for l, v in header_rows]
-    
-    header_pack.append(DIV(LABEL('Marking critera', _class='col-sm-3'), 
-                           DIV(A(style_dict['criteria'], 
-                                 _href=URL('static','marking_criteria/' + style_dict['criteria']), 
-                                 _target='blank'),
-                               _class='col-sm-9'), _class='row'))
-    
-    header_pack.append(H4('Instructions'))
-    header_pack.append(XML(form_json['instructions']))
-    
-    # - Extract the set of fields from the components section of the questions array
-    #   This allows a question to have multiple bits (e.g. rubric + optional comments)
-    fields=[]
-    for q in form_json['questions']:
-        for c in q['components']:
-            if c['type'] == 'rubric':
-                fields.append(Field(c['variable'], 
-                              type='string', 
-                              requires=IS_NULL_OR(IS_IN_SET(c['options'])),
-                              widget=div_radio_widget))
-            elif c['type'] == 'comment':
-                # protect carriage returns in the display of the text but stop anybody using 
-                # any other tags
-                fields.append(Field(c['variable'], 
-                              type='text', 
-                              represent=lambda text: "" if text is None else XML(text.replace('\n', '<br />'),
-                              sanitize=True, 
-                              permitted_tags=['br/'])))
-            elif c['type'] == 'select':
-                fields.append(Field(c['variable'], 
-                              type='string', 
-                              requires=IS_NULL_OR(IS_IN_SET(c['options']))))
-            else:
-                # Other types that don't insert a form control- currently only 'query'
-                pass
-    
-    # - define the form for IO using the fields object, making it editable but with no save.
-    form = SQLFORM.factory(*fields,
-                           showid=False)
-    
-    # modify any widget settings for active forms
-    for q in form_json['questions']:
-        for c in q['components']:
-            if 'nrow' in list(c.keys()):
-                form.custom.widget[c['variable']]['_rows'] = c['nrow']
-            if 'placeholder' in list(c.keys()):
-                form.custom.widget[c['variable']].update(_placeholder=c['placeholder'])
-            if 'value' in list(c.keys()):
-                form.custom.widget[c['variable']].components = [c['value']]
-    
-    # compile the laid out form in a list
-    html = [H2(form_json['title'])]
-    [html.append(h) for h in header_pack]
-    html.append(form.custom.begin)
-    
-    # add the questions in the order they appear in the JSON array
-    for q in form_json['questions']:
-        html.append(DIV(H4(q['title']), _style='background-color:lightgrey;padding:1px'))
-        
-        if q.get('info') is not None:
-            html.append(DIV(XML(q.get('info'))))
-        else:
-            html.append(DIV(_style='min-height:10px'))
-        
-        for c in q['components']:
-            
-            # Insert either the form variable and stored data or the output of a 
-            # query component.
-            if c['type'] == 'query':
-                # This is a tricky line. globals() contains globals functions, so needs
-                # the appropriate query function to be imported. All such functions
-                # get the assignment record as an input. You could use eval() here but
-                # that has security risks - hard to see them applying here, but hey.
-                query_data = globals()[c['query']](record)
-                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
-                                DIV(query_data, _class='col-sm-10'),
-                                _class='row'))
-            else:
-                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
-                                DIV(form.custom.widget[c['variable']], _class='col-sm-10'),
-                                _class='row'))
-            
-            if c.get('info') is not None:
-                html.append(DIV(XML(c.get('info'))))
-            else:
-                html.append(DIV(_style='min-height:10px'))
-            
-        html.append(DIV(_style='min-height:10px'))
-    
-        
-    # finalise the form and send the whole thing back
-    html.append(BR())
-    if submitable:
-        html.append(form.custom.submit)
-    html.append(form.custom.end)
-
-    return CAT(*html)
+    return html
 
 
 def download_pdf():
