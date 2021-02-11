@@ -860,69 +860,6 @@ def write_report():
     return dict(html=CAT(*html))
 
 
-
-def write_report_2fa():
-    
-    """
-    This function generates a form dynamically from a JSON description
-    and stores the data in a json field in the database. This approach
-    avoids having to declare a bunch of different tables for different 
-    forms and then handling the structure of each display. A user can 
-    just provide a form definition and a marking criteria file and the
-    forms are provided on the fly, with data stored in a single data 
-    in the assignments table as a json object.
-    """
-    
-    security = request.vars
-    
-    # is the record id valid
-    if security['record'] is None:
-        session.flash = 'No project marking record id provided'
-        redirect(URL('index'))
-    else:
-        # allow old reports to be retrieved
-        db.assignments._common_filter = None
-        record = db.assignments(int(security['record']))
-        
-        if record is None:
-            session.flash = 'Unknown project marking record id provided'
-            redirect(URL('index'))
-    
-    # is there a matching access token
-    if security['staff_access_token'] is None:
-        session.flash = 'No staff access token provided'
-        redirect(URL('index'))
-    else:
-        access_token = security['staff_access_token']
-        
-        if record.staff_access_token != access_token:
-            session.flash = 'Staff access token invalid'
-            redirect(URL('index'))
-    
-    marker = db.markers[record.marker]
-    
-    # Two factor authentication
-    if not session.tf_validated:
-        _next = URL(args=request.args, vars=request.vars)
-        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
-    
-    html = create_html_form(record)
-    
-    # Add a warning for administrators
-    if auth.has_membership('admin'):
-        warning = DIV(B('Reminder: '), "Logged in administrators have the ability to ",
-                      "edit all reports in order to fix mistakes or unfortunate phrasing. ",
-                      "Please do not do so lightly.", 
-                      # _style="position: -webkit-sticky; position: sticky; top: 50;"
-                      _class="alert alert-danger", _role="alert")
-        html = warning + html
-    
-    # Set the form title
-    response.title = f"{record.student_last_name}: {record.marker_role}"
-    
-    return dict(html=html)
-
-
 def submit_validation(form):
     
     """
