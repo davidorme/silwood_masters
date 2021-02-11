@@ -181,6 +181,7 @@ def markers():
 
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS
+## - ADMIN FUNCTIONS
 ## --------------------------------------------------------------------------------
 
 @auth.requires_membership('admin')
@@ -452,6 +453,87 @@ def load_assignments():
     
     return dict(form=form, html=html)
 
+## --------------------------------------------------------------------------------
+## MARKING ASSIGNMENTS
+## - MARKER FUNCTIONS - ALL OF THESE SHOULD USE THE 2FA MECHANISM VIA authenticate()
+## --------------------------------------------------------------------------------
+
+def authenticate():
+    """Two factor authentication by email
+    
+    This page emails a numeric code to the marker, validates it and
+    redirects to the referring page. It expects vars identifying
+    'marker' and '_next'. It uses global session variables to track
+    the authentication process and report that the per session code
+    has been successfully entered.
+    
+    To use this, another controller needs to check the value of 
+    session.tf_validated and redirect to /authenticate?marker=XX&_next=YY
+    where YY is the URL of the controller to return to.
+    """
+    
+    max_attempts = 3
+    timeout = 10
+    
+    marker = request.vars['marker']
+    marker = db.markers[marker]
+    _next = request.vars['_next']
+    
+    # (Re)set if no code yet exists or timeout has expired
+    if (session.tf_code is None or 
+        (session.tf_timeout is not None and datetime.datetime.now() > session.tf_timeout)):
+            session.tf_code = str(random.randint(100000, 999999))
+            session.tf_attempts = max_attempts
+            session.tf_validated = session.tf_validated or False
+            session.tf_mailed = False
+            session.tf_timeout = None
+    
+    if not session.tf_mailed:
+        
+        # Email code to the marker.
+        email_dict = {'name': marker.first_name,
+                      'code': session.tf_code}
+        
+        mailer = Mail()
+        success = mailer.sendmail(subject='Marking report code',
+                                  to=marker.email,
+                                  email_template='marker_two_factor.html',
+                                  email_template_dict=email_dict)
+        session.tf_mailed = True
+    
+    if session.tf_attempts > 0:
+        session.tf_attempts -= 1
+        readonly=False
+        comment = CAT('Please enter the authentication code', BR(), 
+                      f'{session.tf_attempts} attempts remaining')
+    else:
+        readonly=True
+        session.tf_timeout = datetime.datetime.now() + datetime.timedelta(minutes=timeout)
+        comment = CAT('Three invalid codes entered', BR(), 
+                      f'Try again in {timeout} minutes')
+    
+    # Create a form to get the verification code - this is still shown
+    # but disabled when too many failed attempts have been made
+    form = SQLFORM.factory(
+                Field('authentication_code',
+                      label=B('Enter authentication code'),
+                      required=True,
+                      comment=comment,
+                      widget=lambda f, v: SQLFORM.widgets.string.widget(f, v, _disabled=readonly)),
+                formstyle='bootstrap3_stacked')
+    
+    if readonly:
+        submit = form.element('.btn')
+        submit['_disabled'] = True
+        submit['_class'] = 'btn btn-secondary' 
+        
+    if form.process(onsuccess=None).accepted:
+        if form.vars.authentication_code == session.tf_code:
+            session.tf_validated = True
+            redirect(_next)
+
+    return dict(html=form)
+
 
 def my_assignments():
     
@@ -485,6 +567,13 @@ def my_assignments():
         if marker.marker_access_token != access_token:
             session.flash = 'Marker access token invalid'
             redirect(URL('index'))
+    
+    # Two factor authentication
+    if not session.tf_validated:
+        _next = URL(args=request.args, vars=request.vars)
+        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    
+    # db.assignments._common_filter = None
     
     # reduce the set of fields shown in the grid
     db.assignments.id.readable = False
@@ -751,6 +840,14 @@ def write_report():
     return dict(html=CAT(*html))
 
 
+# # This controller resets 2FA session tokens - useful in debugging
+# def deauthenticate():
+#
+#     session.tf_code = None
+#     session.tf_attempts = None
+#     session.tf_validated = False
+
+
 def write_report_2fa():
     
     """
@@ -764,10 +861,6 @@ def write_report_2fa():
     """
     
     security = request.vars
-    
-    session.two_factor_code = session.two_factor_code or random.randint(100000, 999999)
-    session.two_factor_attempts = session.two_factor_attempts or 3 
-    session.two_factor_validated = session.two_factor_validated or False
     
     # is the record id valid
     if security['record'] is None:
