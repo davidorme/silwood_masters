@@ -8,9 +8,9 @@ import csv
 import itertools
 import random
 import simplejson as json
-from marking_reports_functions import (create_pdf, release, distribute,
-                                      zip_pdfs, download_grades, 
-                                      query_report_marker_grades)
+from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
+                                       query_report_marker_grades, get_form_header, 
+                                       assignment_to_sqlform, style_sqlform, FoldingTOC)
 
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
@@ -85,6 +85,7 @@ def wikimedia():
         path = os.path.join(request.folder, 'uploads', media.mediafile)
         response.stream(path)
 
+
 @auth.requires_membership('wiki_editor')
 def manage_wikimedia():
     """
@@ -95,6 +96,7 @@ def manage_wikimedia():
     
     return dict(grid=grid)
 
+
 @auth.requires_membership('wiki_editor')
 def manage_wikicontent():
     """
@@ -104,53 +106,6 @@ def manage_wikicontent():
     grid = SQLFORM.grid(db.wikicontent, create=True, csv=False)
     
     return dict(grid=grid)
-
-
-# TODO - move this into the module when the site is a bit quieter!
-from html.parser import HTMLParser 
-
-class FoldingTOC(HTMLParser):
-    """
-    This parser scans html and inserts ids, classes and spans to turn
-    <ul> or <ol> into a click to expand table of contents tree. The
-    layout_wiki.html file contains JS and CSS to make it work.
-    """
-    
-    def __init__(self):
-        super().__init__()
-        self.content = []
-        self.depth = 0
-        self.last_li_index = 0
-
-    def handle_starttag(self, tag, attrs): 
-
-        if tag in ['ul', 'ol']:
-            if self.depth == 0:
-                self.content.append(f'<{tag.upper()} id="root">')
-            else:
-                self.content.append(f'<{tag.upper()} class="nested">')
-                self.content[self.last_li_index] = '<LI><SPAN class="caret"></SPAN>'
-            self.depth += 1
-        
-        elif tag == 'li':
-            self.content.append('<LI><SPAN class="end"></SPAN>')
-            self.last_li_index = len(self.content) - 1
-        
-        else:
-            self.content.append(self.get_starttag_text())
-        
-    def handle_data(self, data): 
-        self.content.append(data)
-    
-    def handle_endtag(self, tag):
-        if tag in ['ul', 'ol']:
-            self.depth -= 1
-        
-        self.content.append(f'</{tag.upper()}>')
-    
-    def get_toc(self):
-        
-        return ''.join(self.content)
 
 
 # ---- action to server uploaded static content (required) ---
@@ -178,6 +133,31 @@ def markers():
     
     return dict(form=form)
 
+
+@auth.requires_membership('admin')
+def presentations():
+    
+    # don't allow deleting as the referencing to project marks will 
+    # drop referenced rows from marking tables
+    form = SQLFORM.grid(db.presentations, 
+                        csv=False,
+                        deletable=False)
+    
+    return dict(form=form)
+
+
+@auth.requires_membership('admin')
+def marking_roles():
+    
+    # don't allow deleting as the referencing to project marks will 
+    # drop referenced rows from marking tables
+    form = SQLFORM.grid(db.marking_roles,
+                        fields=[db.marking_roles.name, db.marking_roles.marking_criteria,
+                                db.marking_roles.form_file],
+                        csv=False,
+                        deletable=False)
+    
+    return dict(form=form)
 
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS
@@ -210,31 +190,36 @@ def assignments():
     if 'all' in request.vars.keys():
         db.assignments._common_filter = None
     
-    # reduce the set of fields shown in the grid
-    db.assignments.id.readable = False
-    db.assignments.student_email.readable = False
+    # hide some of fields used in the grid
     db.assignments.student_first_name.readable = False
-    db.assignments.student_cid.readable = False
-    db.assignments.assignment_data.readable = False
     
     # and edit representations
     db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
-    
-    # link to a non-default new edit page
-    links = [dict(header = 'Report', 
+
+    # Link to a non-default report page and edit page. Note that this is an admin
+    # only page and the write_report() controller allows logged in admin access
+    # so no need to pass any security credentials beyond being logged in
+    links = [dict(header = 'Report',
                   body = lambda row: A('View',_class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "write_report", 
-                                                 vars={'record': row.id, 
-                                                       'staff_access_token':row.staff_access_token}))),
-             dict(header = 'Assignment', 
+                                       _href=URL("marking_reports", "write_report",
+                                                 vars={'record': row.id}))),
+             dict(header = 'Assignment',
                   body = lambda row: A('Edit',_class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "edit_assignment", args=row.id)))]
+                                       _href=URL("marking_reports", "edit_assignment", 
+                                                 args=row.id)))]
     
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
     grid = SQLFORM.grid(db.assignments,
+                        fields = [db.assignments.student_first_name,
+                                  db.assignments.student_last_name, 
+                                  db.assignments.course_presentation_id,
+                                  db.assignments.marker,
+                                  db.assignments.marker_role_id,
+                                  db.assignments.due_date,
+                                  db.assignments.status],
                         csv=False,
                         deletable=False,
                         create=False,
@@ -242,10 +227,10 @@ def assignments():
                         editable=False,
                         links=links,
                         headers= {'assignments.student_last_name': 'Student'},
-                        selectable = [('Release to students', lambda ids: release(ids)), 
-                                      ('Send to markers', lambda ids: distribute(ids)), 
-                                      ('Download Confidential PDFs',lambda ids: zip_pdfs(ids, confidential=True)), 
-                                      ('Download Public PDFs',lambda ids: zip_pdfs(ids)), 
+                        selectable = [('Release to students', lambda ids: release(ids)),
+                                      ('Send to markers', lambda ids: distribute(ids)),
+                                      ('Download Confidential PDFs',lambda ids: zip_pdfs(ids, confidential=True)),
+                                      ('Download Public PDFs',lambda ids: zip_pdfs(ids)),
                                       ('Download Grades',lambda ids: download_grades(ids))],
                         paginate = 50)
     
@@ -306,6 +291,12 @@ def edit_assignment():
 @auth.requires_membership('admin')
 def load_assignments():
     
+    known_presentations = db(db.presentations).select(db.presentations.name)
+    known_presentations = set([rw.name for rw in known_presentations])
+    
+    role_list = db(db.marking_roles).select(db.marking_roles.name)
+    role_list = set([rw.name for rw in role_list])
+    
     form = FORM(DIV(DIV('Upload File:', _class='col-sm-2'),
                     DIV(INPUT(_type='file', _name='myfile', id='myfile', 
                               requires=IS_NOT_EMPTY()), _class='col-sm-6'), 
@@ -345,7 +336,7 @@ def load_assignments():
         fields = {key:[item[key] for item in data] for key in headers}
         
         # - roles are recognized?
-        unknown_roles = set(fields['marker_role']).difference(set(role_list))
+        unknown_roles = set(fields['marker_role']).difference(role_list)
         
         if len(unknown_roles) > 0:
             html = CAT(html,
@@ -355,14 +346,14 @@ def load_assignments():
                        P('Valid values are: ', ', '.join(role_list)))
         
         # - course presentations are recognized?
-        unknown_presentations = set(fields['course_presentation']).difference(set(course_presentation_list))
+        unknown_presentations = set(fields['course_presentation']).difference(known_presentations)
         
         if len(unknown_presentations) > 0:
             html = CAT(html,
                        H4('Unknown course presentations'),
                        P('These course presentations are found in the file but are not recognized:'),
                        P(', '.join(unknown_presentations)),
-                       P('Valid values are: ', ', '.join(course_presentation_list)))
+                       P('Valid values are: ', ', '.join(known_presentations)))
         
         # bad student emails
         bad_emails = [IS_EMAIL()(x) for x in fields['student_email']]
@@ -451,12 +442,28 @@ def load_assignments():
         html=''
     
     
-    return dict(form=form, html=html)
+    return dict(form=form, html=html, role_list=role_list, 
+                known_presentations=known_presentations)
 
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS
-## - MARKER FUNCTIONS - ALL OF THESE SHOULD USE THE 2FA MECHANISM VIA authenticate()
+## - MARKER FUNCTIONS 
+## - ALL OF THESE SHOULD USE THE 2FA MECHANISM VIA authenticate()
+##
+## THESE WEB CONTROLLERS TO HANDLE
+## - Assignments:    provides markers with an overview of all the reports they
+##                   need to complete.
+## - Report writing: provides a form to complete and then a static view for 
+##                   submitted reports. This is only accessible to staff who 
+##                   will need to have a link with the assignment record and 
+##                   a matching access token
+## - PDF download:   provides a link to pull down a generated PDF. This can 
+##                   be a confidential version including private comments and
+##                   grade or a public version for students.
+## - Show form:      Allows students to see the form layout and links to marking
+##                   criteria.
 ## --------------------------------------------------------------------------------
+
 
 def authenticate():
     """Two factor authentication by email
@@ -535,13 +542,19 @@ def authenticate():
     return dict(html=form)
 
 
-def deauthenticate():
+def reset_two_factor_tokens():
     """Reset 2FA tokens
     
     This controller resets 2FA session tokens. It is useful in debugging but should not
     be disabled in production as it resets timeout, making it easier to brute force the
     session token.
     """
+    
+    disabled = True
+    
+    if disabled:
+        session.flash = 'Resetting two factor session tokens is disabled'
+        redirect(URL('index'))
     
     session.tf_code = None
     session.tf_attempts = None
@@ -623,17 +636,6 @@ def my_assignments():
     
     return dict(name=marker.first_name + " " + marker.last_name, form=grid)
 
-## --------------------------------------------------------------------------------
-## WEB CONTROLLERS TO HANDLE TWO MODES
-## - Report writing: provides a form to complete and then a static view for 
-##                   submitted reports. This is only accessible to staff who 
-##                   will need to have a link with the assignment record and 
-##                   a matching access token
-## - PDF download:   provides a link to pull down a generated PDF. This can 
-##                   be a confidential version including private comments and
-##                   grade or a public version for students.
-## --------------------------------------------------------------------------------
-
 
 def write_report():
     
@@ -645,6 +647,10 @@ def write_report():
     just provide a form definition and a marking criteria file and the
     forms are provided on the fly, with data stored in a single data 
     in the assignments table as a json object.
+    
+    The JSON form definitions are stored in the marking roles table
+    which is referenced from assignments, so the form definition is
+    accessible as assignment_record.marking_role_id.form_json
     """
     
     security = request.vars
@@ -656,56 +662,55 @@ def write_report():
     else:
         # allow old reports to be retrieved
         db.assignments._common_filter = None
-        record = db.assignments(int(security['record']))
+        # Retrieve as a row to expose the render method.
+        row = db(db.assignments.id == int(security['record'])).select()
         
-        if record is None:
+        if row is None:
             session.flash = 'Unknown project marking record id provided'
             redirect(URL('index'))
-    
-    # is there a staff access token and does it match the marker records
-    marker = db.markers(record.marker)
-    
-    if security['staff_access_token'] is None:
-        session.flash = 'No staff access token provided'
-        redirect(URL('index'))
-    else:
-        access_token = security['staff_access_token']
         
-        if marker.marker_access_token != access_token:
-            session.flash = 'Staff access token invalid'
-            redirect(URL('index'))
+        # Render the row to get the representation of reference fields
+        record_rendered = row.render(0)
+        record = row[0]
     
-    # Two factor authentication
-    if not session.tf_validated:
-        _next = URL(args=request.args, vars=request.vars)
-        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
-    
-    
-    # set whether the form is editable or not, which is basically just submitted/not submitted
-    # - allow authorised users to edit completed reports but warn them
+    # Access control - if the user is logged in as an admin, then
+    # don't need to do any validation, otherwise use 2FA 
     
     if auth.has_membership('admin'):
-        warning = DIV(B('Reminder: '), "Logged in administrators have the ability to ",
-                      "edit all reports in order to fix mistakes or unfortunate phrasing. ",
-                      "Please do not do so lightly.", _class="alert alert-danger", _role="alert")
-        header_pack.insert(0, warning)
-        readonly=False
-    elif record.status in ['Submitted','Released']:
-        readonly = True
-    else:
+        
+        admin_warn =  DIV(B('Reminder: '), "Logged in administrators have the ability to ",
+                          "edit all reports in order to fix mistakes or unfortunate phrasing. ",
+                          "Please do not do so lightly.", 
+                          _class="alert alert-danger", _role="alert")
         readonly = False
+    else:
+        
+        admin_warn = ""
+        
+        # is there a staff access token and does it match the marker records
+        marker = db.markers(record.marker)
     
+        if security['staff_access_token'] is None:
+            session.flash = 'No staff access token provided'
+            redirect(URL('index'))
+        else:
+            if marker.marker_access_token != security['staff_access_token']:
+                session.flash = 'Staff access token invalid'
+                redirect(URL('index'))
     
-    # - load the correct form  and marking criteria from the definition string 
-    #   and store it in the session to make it accessible to validation without having to reload
-    # - TODO move criterion path into JSON form definition
+        # Two factor authentication
+        if not session.tf_validated:
+            _next = URL(args=request.args, vars=request.vars)
+            redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
     
-    form_json = get_assignment_json(record)
-    session.form_json = form_json
+        if record.status in ['Submitted','Released']:
+            readonly = True
+        else:
+            readonly = False
     
-    # define the header block
-    security = {'record': record.id, 'staff_access_token': marker.marker_access_token}
-    header = get_form_header(form_json, record, readonly, security=security)
+    # define the header block - this is for display so needs the rendered data
+    header = get_form_header(record.marker_role_id.form_json, record_rendered,
+                             readonly, security=security)
     
     # Get the form as html
     # - provide a save and a submit button
@@ -715,7 +720,7 @@ def write_report():
                 TAG.BUTTON('Submit', _type="submit", _class="button btn btn-default",
                                _style='padding: 10px 15px 10px 15px;width:100px', _name='submit')]
     
-    form = assignment_to_sqlform(form_json, record, readonly, buttons)
+    form = assignment_to_sqlform(record, readonly, buttons)
         
     # process the form to handle storing the data, via a validation function
     # that checks required fields are complete when users press submit
@@ -738,16 +743,15 @@ def write_report():
         
         # TODO - Would be neater to use ajax here rather than reloading the page
         # but parking that for another day.
-        redirect(URL('write_report', vars={'record':record.id, 
-                                           'staff_access_token':marker.marker_access_token}))
+        redirect(URL('write_report', vars=security))
     
     # Style SQLFORM
-    html = style_sqlform(form_json, form, readonly)
+    html = style_sqlform(record, form, readonly)
     
     # Set the form title
     response.title = f"{record.student_last_name}: {record.marker_role}"
     
-    return dict(header=CAT(*header), form=CAT(*html))
+    return dict(header=CAT(admin_warn, *header), form=CAT(*html))
 
 
 def submit_validation(form):
@@ -770,199 +774,90 @@ def submit_validation(form):
                         form.errors[c['variable']] = 'Please select a grade'
 
 
+def criteria_and_forms():
+    """Creates a publicly viewable table of marking roles with links to forms and criteria"""
+    
+    marking_roles = db(db.marking_roles).select()
+    
+    db.marking_roles.id.readable=False
+    
+    crit = db.marking_roles.marking_criteria
+    crit.represent = lambda value, rw: A(value, _href=URL('static', 
+                                                          os.path.join('marking_criteria', value)))
+
+    name = db.marking_roles.name
+    name.represent = lambda value, rw: A(value, 
+                                         _href=URL('marking_reports', 'show_form', args=rw.name))
+    
+    marking_roles = SQLFORM.grid(db.marking_roles,
+                                 fields=[db.marking_roles.name, 
+                                         db.marking_roles.marking_criteria],
+                                 details=False,
+                                 editable=False,
+                                 create=False,
+                                 deletable=False,
+                                 csv=False,
+                                 searchable=False,
+                                 sortable=False)
+    
+    return dict(table=marking_roles)
+
+
 def show_form():
     """This controller displays a form dynamically from a JSON description
     but as a simple static form with no submit method. This is a convenient
     way for students to be able to see the forms.
     """
-
-    record = Storage(student_first_name='Awesome', student_last_name='Student', 
-                     student_cid='00000000', course_presentation='EEC MSc',
-                     academic_year=2020, status='Not started',
-                     marker=Storage(first_name='Sir Alfred', last_name='Marker'),
-                     marker_role=request.args[0])
-
-    form_json = get_assignment_json(record)
-    session.form_json = form_json
+    
+    role = db(db.marking_roles.name == request.args[0]).select().first()
+    
+    # Redirect back to form list if the role is unknown
+    if role is None:
+        session.flash = 'Unknown marking role in show_form'
+        redirect(URL('criteria_and_forms'))
+    
+    # The idea here is to pass something that looks exactly like a real
+    # row to the form display methods used in write_report but using
+    # some dummy values. That needs to behave exactly like a real record
+    # in order to make use of the represent and referencing on a real 
+    # Row. So this uses .insert() to create actual rows but then rolls
+    # back those inserts before leaving the controller. This doesn't seem
+    # optimal.
+    
+    db.assignments._common_filter = None
+    marker = db.markers.insert(first_name='Sir Alfred', last_name='Marker', email='null@null')
+    record = db.assignments.insert(student_first_name='Awesome', 
+                                   student_last_name='Student', 
+                                   student_cid='00000000', 
+                                   course_presentation_id=1, 
+                                   academic_year=2020, 
+                                   status='Not started', 
+                                   marker=marker, 
+                                   marker_role_id=role.id, 
+                                   student_email='null@null', 
+                                   due_date='1970-01-01')
+    
+    # Get the new row
+    rows = db(db.assignments.id == record).select()
+    
+    # Render the row to get the field representations and get the record itself
+    record_rendered = rows.render(0)
+    record = rows[0]
     
     # define the header block
-    header = get_form_header(form_json, record, readonly=False)
+    header = get_form_header(record.marker_role_id.form_json, record_rendered, readonly=False)
     
-    form = assignment_to_sqlform(form_json, record, readonly=False)
-    
-    # Style SQLFORM
-    html = style_sqlform(form_json, form, readonly=False)
+    # get the form object and style it
+    form = assignment_to_sqlform(record, readonly=False)
+    html = style_sqlform(record, form, readonly=False)
     
     # Set the form title
     response.title = f"{record.student_last_name}: {record.marker_role}"
     
+    # Rollback the inserts
+    db.rollback()
+    
     return dict(header=CAT(*header), form=CAT(*html))
-
-
-
-def get_assignment_json(record):
-
-    style_dict = form_data_dict[(record.course_presentation, record.marker_role)] 
-    form_json = style_dict['form']
-    form_path = os.path.join(request.folder,'static','form_json', form_json) 
-    
-    with open(form_path) as f:
-        form_json = json.load(f)
-
-    return form_json
-
-
-def get_form_header(form_json, record, readonly, security=None):
-    """Takes a marking form definition and a marking assignment record
-    and returns a standard header block for a form.
-    """
-    
-    # Define the header block
-    header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
-                     ('CID', '{student_cid}'),
-                     ('Course Presentation', '{course_presentation}'),
-                     ('Academic Year', '{academic_year}'),
-                     ('Marker', '{marker.first_name} {marker.last_name}'),
-                     ('Marker Role', '{marker_role}'),
-                     ('Status', '{status}')]
-     
-    header = [DIV(LABEL(l, _class='col-sm-3'),
-                  DIV(v.format(**record), _class='col-sm-9'),
-                  _class='row')
-              for l, v in header_rows]
-    
-    header.insert(0, H2(form_json['title']))
-    header.append(DIV(LABEL('Marking critera', _class='col-sm-3'),
-                      DIV(A(form_json['marking_criteria'],
-                            _href=URL('static','marking_criteria/' + form_json['marking_criteria']),
-                            _target='blank'),
-                          _class='col-sm-9'),
-                      _class='row'))
-    
-    # If readonly, provide a link to the PDF download link, otherwise, insert any instructions
-    if readonly:
-        header.append(H4('Completed report'))
-        header.append(P('Click ', A('here', _href=URL('download_pdf', vars=security)),
-                        ' to download a confidential pdf of the full report.'))
-    else:
-        header.append(H4('Instructions'))
-        header.append(XML(form_json['instructions']))
-    
-    return header
-
-
-def assignment_to_sqlform(form_json, record, readonly, buttons=[]):
-    
-    """Takes a marking assignment and generates the appropriate marking form,
-    converting the fields defined in the form JSON description into a SQLFORM
-    object. This object can be processed and then style_sqlform is used to 
-    modify the SQLFORM representation as required.
-    
-    Returns the SQLFORM object and the form JSON description, which is used
-    for validation.
-    """
-    
-    # - Extract the set of fields from the components section of the questions array
-    #   This allows a question to have multiple bits (e.g. rubric + optional comments)
-    fields=[]
-    for q in form_json['questions']:
-        for c in q['components']:
-            if c['type'] == 'rubric':
-                fields.append(Field(c['variable'], 
-                              type='string', 
-                              requires=IS_NULL_OR(IS_IN_SET(c['options'])),
-                              widget=div_radio_widget))
-            elif c['type'] == 'comment':
-                # protect carriage returns in the display of the text but stop anybody using 
-                # any other tags
-                fields.append(Field(c['variable'], 
-                              type='text', 
-                              represent=lambda text: "" if text is None else XML(text.replace('\n', '<br />'),
-                              sanitize=True, 
-                              permitted_tags=['br/'])))
-            elif c['type'] == 'select':
-                fields.append(Field(c['variable'], 
-                              type='string', 
-                              requires=IS_NULL_OR(IS_IN_SET(c['options']))))
-            else:
-                # Other types that don't insert a form control- currently only 'query'
-                pass
-    
-    # - define the form for IO using the fields object,
-    #   preloading any existing data
-    if record.assignment_data in [None, '']:
-        data_json=None
-    else:
-        data_json=record.assignment_data
-    
-    # - define a SQLFORM object the fields object for processing data
-    form = SQLFORM.factory(*fields,
-                           readonly=readonly,
-                           buttons=buttons,
-                           record=data_json,
-                           showid=False)
-
-    return form
-
-
-def style_sqlform(form_json, form, readonly=False):
-    
-    
-    # modify any widget settings for active forms
-    if not readonly:
-        for q in form_json['questions']:
-            for c in q['components']:
-                if 'nrow' in list(c.keys()):
-                    form.custom.widget[c['variable']]['_rows'] = c['nrow']
-                if 'placeholder' in list(c.keys()):
-                    form.custom.widget[c['variable']].update(_placeholder=c['placeholder'])
-                if 'value' in list(c.keys()):
-                    form.custom.widget[c['variable']].components = [c['value']]
-    
-    # compile the laid out form in a list
-    html = [form.custom.begin]
-    
-    # add the questions in the order they appear in the JSON array
-    for q in form_json['questions']:
-        html.append(DIV(H4(q['title']), _style='background-color:lightgrey;padding:1px'))
-        
-        if q.get('info') is not None:
-            html.append(DIV(XML(q.get('info'))))
-        else:
-            html.append(DIV(_style='min-height:10px'))
-        
-        for c in q['components']:
-            
-            # Insert either the form variable and stored data or the output of a 
-            # query component.
-            if c['type'] == 'query':
-                # This is a tricky line. globals() contains globals functions, so needs
-                # the appropriate query function to be imported. All such functions
-                # get the assignment record as an input. You could use eval() here but
-                # that has security risks - hard to see them applying here, but hey.
-                query_data = globals()[c['query']](record)
-                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
-                                DIV(query_data, _class='col-sm-10'),
-                                _class='row'))
-            else:
-                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
-                                DIV(form.custom.widget[c['variable']], _class='col-sm-10'),
-                                _class='row'))
-            
-            if c.get('info') is not None:
-                html.append(DIV(XML(c.get('info'))))
-            else:
-                html.append(DIV(_style='min-height:10px'))
-            
-        html.append(DIV(_style='min-height:10px'))
-    
-        
-    # finalise the form and send the whole thing back
-    html.append(BR())
-    html.append(form.custom.submit)
-    html.append(form.custom.end)
-    
-    return html
 
 
 def download_pdf():
@@ -1023,21 +918,16 @@ def download_pdf():
             session.flash = 'Public access token invalid for PDF download'
             redirect(URL('index'))
         elif record.status != 'Released':
-            session.flash = ("Report not yet released. Also, we'd just love to know how you " + 
-                             "got your hands on a valid public access token for an unreleased report.")
+            session.flash = ("Report not yet released. Also, we'd just love to know "
+                             "how you got your hands on a valid public access token "
+                             "for an unreleased report.")
             redirect(URL('index'))
         else:
             confidential = False
     
-    # - load the correct form definition 
-    style_dict = form_data_dict[(record.course_presentation, record.marker_role)] 
-    form_json = style_dict['form']
-    f = open(os.path.join(request.folder,'static','form_json', form_json))
-    form_json = json.load(f)
-    
     # create the form - this is a separate function so that the file creation 
     # can be used by other functions (like downloading a zipfile of selected pdf)
-    pdf, filename = create_pdf(record, form_json, confidential=confidential)
+    pdf, filename = create_pdf(record, confidential=confidential)
     
     # return a pdf version of the record
     response.headers['Content-Type'] = 'application/pdf'

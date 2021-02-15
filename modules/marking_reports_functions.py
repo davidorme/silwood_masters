@@ -12,9 +12,11 @@ from collections import Counter
 import fpdf
 import importlib
 from tempfile import NamedTemporaryFile
+from html.parser import HTMLParser 
 from mailer import Mail
 
-from gluon import current, SQLFORM, DIV, LABEL, CAT, B, P, A, URL, HTTP, BR, TABLE
+from gluon import (current, SQLFORM, DIV, LABEL, CAT, B, P, A,
+                   URL, HTTP, BR, TABLE, H2, H4, XML, Field, IS_NULL_OR, IS_IN_SET)
 
 """
 This module contains key functions for processing marking reports. They have been 
@@ -224,15 +226,8 @@ def zip_pdfs(ids, confidential=False):
         # can't create a PDF of incomplete assignments
         if record.status in ['Submitted','Released']:
             
-            # - load the correct form definition 
-            style_dict = current.globalenv['form_data_dict'][(record.course_presentation, record.marker_role)] 
-            form_json = style_dict['form']
-            f = open(os.path.join(current.request.folder,'static','form_json', form_json))
-            form_json = json.load(f)
-            
-            # create the form - this is a separate function so that the file creation 
-            # can be used by other functions (like downloading a zipfile of selected pdf)
-            pdf, filename = create_pdf(record, form_json, confidential=confidential)
+            # create the form
+            pdf, filename = create_pdf(record, confidential=confidential)
             
             zf.writestr(filename, pdf)
     
@@ -320,7 +315,7 @@ def download_grades(ids):
         ws.cell(row = details.row, column=5, value=details.academic_year)
     
     # Now fill in report details for each kind of report in turn
-    role_list = current.globalenv['role_list']
+    role_list = db(db.marking_roles).select()
     column_pointer = 6
     # A regex to convert '65% (B)' grades to numeric
     grade_regex = re.compile('[0-9]+(?=%)')
@@ -328,9 +323,7 @@ def download_grades(ids):
     for this_role in role_list:
         
         # Get the JSON data on what variables to export
-        form_json = current.globalenv['role_dict'][this_role]['form']
-        json_path = os.path.join(current.request.folder,'static','form_json', form_json)
-        form_json = json.load(open(json_path))
+        form_json = this_role.json
         grade_export = form_json['grade_export']
         cols_per_report = len(grade_export) + 1
         
@@ -398,6 +391,167 @@ def download_grades(ids):
                           'Content-Disposition':attachment + ';'})
 
 ## --------------------------------------------------------------------------------
+## HTML Report writing functions shared by show_form and write_report
+## --------------------------------------------------------------------------------
+
+def get_form_header(form_json, record, readonly, security=None):
+    """Takes a marking form definition and a marking assignment record
+    and returns a standard header block for a form.
+    """
+    
+    # Define the header block
+    header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
+                     ('CID', '{student_cid}'),
+                     ('Course Presentation', '{course_presentation_id}'),
+                     ('Academic Year', '{academic_year}'),
+                     ('Marker', '{marker}'),
+                     ('Marker Role', '{marker_role_id}'),
+                     ('Status', '{status}')]
+     
+    header = [DIV(LABEL(l, _class='col-sm-3'),
+                  DIV(v.format(**record), _class='col-sm-9'),
+                  _class='row')
+              for l, v in header_rows]
+    
+    header.insert(0, H2(form_json['title']))
+    header.append(DIV(LABEL('Marking critera', _class='col-sm-3'),
+                      DIV(A(form_json['marking_criteria'],
+                            _href=URL('static','marking_criteria/' + form_json['marking_criteria']),
+                            _target='blank'),
+                          _class='col-sm-9'),
+                      _class='row'))
+    
+    # If readonly, provide a link to the PDF download link, otherwise, insert any instructions
+    if readonly:
+        header.append(H4('Completed report'))
+        header.append(P('Click ', A('here', _href=URL('download_pdf', vars=security)),
+                        ' to download a confidential pdf of the full report.'))
+    else:
+        header.append(H4('Instructions'))
+        header.append(XML(form_json['instructions']))
+    
+    return header
+
+
+def assignment_to_sqlform(record, readonly, buttons=[]):
+    
+    """Takes a marking assignment and generates the appropriate marking form,
+    converting the fields defined in the form JSON description into a SQLFORM
+    object. This form then can be processed for user input by the controller
+    but is restyled for display using style_sqlform to modify the default
+    SQLFORM representation.
+    
+    Returns the SQLFORM object and the form JSON description, which is used
+    for validation.
+    """
+    
+    # - Extract the set of fields from the components section of the questions array
+    #   This allows a question to have multiple bits (e.g. rubric + optional comments)
+    form_json = record.marker_role_id.form_json
+    
+    fields=[]
+    for q in form_json['questions']:
+        for c in q['components']:
+            if c['type'] == 'rubric':
+                fields.append(Field(c['variable'], 
+                              type='string', 
+                              requires=IS_NULL_OR(IS_IN_SET(c['options'])),
+                              widget=div_radio_widget))
+            elif c['type'] == 'comment':
+                # protect carriage returns in the display of the text but stop anybody using 
+                # any other tags
+                fields.append(Field(c['variable'], 
+                              type='text', 
+                              represent=lambda text: "" if text is None else XML(text.replace('\n', '<br />'),
+                              sanitize=True, 
+                              permitted_tags=['br/'])))
+            elif c['type'] == 'select':
+                fields.append(Field(c['variable'], 
+                              type='string', 
+                              requires=IS_NULL_OR(IS_IN_SET(c['options']))))
+            else:
+                # Other types that don't insert a form control- currently only 'query'
+                pass
+    
+    # - define the form for IO using the fields object,
+    #   preloading any existing data
+    if record.assignment_data in [None, '']:
+        data_json=None
+    else:
+        data_json=record.assignment_data
+    
+    # - define a SQLFORM object the fields object for processing data
+    form = SQLFORM.factory(*fields,
+                           readonly=readonly,
+                           buttons=buttons,
+                           record=data_json,
+                           showid=False)
+
+    return form
+
+
+def style_sqlform(record, form, readonly=False):
+    
+    form_json = record.marker_role_id.form_json
+    
+    # modify any widget settings for active forms
+    if not readonly:
+        for q in form_json['questions']:
+            for c in q['components']:
+                if 'nrow' in list(c.keys()):
+                    form.custom.widget[c['variable']]['_rows'] = c['nrow']
+                if 'placeholder' in list(c.keys()):
+                    form.custom.widget[c['variable']].update(_placeholder=c['placeholder'])
+                if 'value' in list(c.keys()):
+                    form.custom.widget[c['variable']].components = [c['value']]
+    
+    # compile the laid out form in a list
+    html = [form.custom.begin]
+    
+    # add the questions in the order they appear in the JSON array
+    for q in form_json['questions']:
+        html.append(DIV(H4(q['title']), _style='background-color:lightgrey;padding:1px'))
+        
+        if q.get('info') is not None:
+            html.append(DIV(XML(q.get('info'))))
+        else:
+            html.append(DIV(_style='min-height:10px'))
+        
+        for c in q['components']:
+            
+            # Insert either the form variable and stored data or the output of a 
+            # query component.
+            if c['type'] == 'query':
+                # This is a tricky line. globals() contains globals functions, so needs
+                # the appropriate query function to be imported. All such functions
+                # get the assignment record as an input. You could use eval() here but
+                # that has security risks - hard to see them applying here, but hey.
+                query_data = globals()[c['query']](record)
+                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
+                                DIV(query_data, _class='col-sm-10'),
+                                _class='row'))
+            else:
+                html.append(DIV(DIV(B(c['label']), _class='col-sm-2'),
+                                DIV(form.custom.widget[c['variable']], _class='col-sm-10'),
+                                _class='row'))
+            
+            if c.get('info') is not None:
+                html.append(DIV(XML(c.get('info'))))
+            else:
+                html.append(DIV(_style='min-height:10px'))
+            
+        html.append(DIV(_style='min-height:10px'))
+    
+        
+    # finalise the form and send the whole thing back
+    html.append(BR())
+    html.append(form.custom.submit)
+    html.append(form.custom.end)
+    
+    return html
+
+
+## --------------------------------------------------------------------------------
 ## PDF generation
 ## --------------------------------------------------------------------------------
 
@@ -413,7 +567,7 @@ class ConfidentialPDF(fpdf.FPDF):
         self.set_xy(10,20)
 
 
-def create_pdf(record, form_json, confidential):
+def create_pdf(record, confidential):
     
     """
     This code writes a simple PDF file of the marking report
@@ -425,7 +579,10 @@ def create_pdf(record, form_json, confidential):
         pdf = ConfidentialPDF(format='A4')
     else:
         pdf = fpdf.FPDF(format='A4')
-
+    
+    
+    form_json = record.marker_role_id.form_json
+    
     # set up the fonts
     fpdf.set_global('SYSTEM_TTFONTS', current.configuration.get('fpdf.font_dir'))
     pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
@@ -557,3 +714,50 @@ def query_report_marker_grades(record, pdf=False):
         return '\n'.join(report_grades)
     else:
         return TABLE(report_grades, _class='table')
+
+## --------------------------------------------------------------------------------
+## WIKI FUNCTIONS
+## --------------------------------------------------------------------------------
+
+class FoldingTOC(HTMLParser):
+    """
+    This parser scans html and inserts ids, classes and spans to turn
+    <ul> or <ol> into a click to expand table of contents tree. The
+    layout_wiki.html file contains JS and CSS to make it work.
+    """
+    
+    def __init__(self):
+        super().__init__()
+        self.content = []
+        self.depth = 0
+        self.last_li_index = 0
+
+    def handle_starttag(self, tag, attrs): 
+
+        if tag in ['ul', 'ol']:
+            if self.depth == 0:
+                self.content.append(f'<{tag.upper()} id="root">')
+            else:
+                self.content.append(f'<{tag.upper()} class="nested">')
+                self.content[self.last_li_index] = '<LI><SPAN class="caret"></SPAN>'
+            self.depth += 1
+        
+        elif tag == 'li':
+            self.content.append('<LI><SPAN class="end"></SPAN>')
+            self.last_li_index = len(self.content) - 1
+        
+        else:
+            self.content.append(self.get_starttag_text())
+        
+    def handle_data(self, data): 
+        self.content.append(data)
+    
+    def handle_endtag(self, tag):
+        if tag in ['ul', 'ol']:
+            self.depth -= 1
+        
+        self.content.append(f'</{tag.upper()}>')
+    
+    def get_toc(self):
+        
+        return ''.join(self.content)
