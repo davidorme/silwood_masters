@@ -594,19 +594,26 @@ def my_assignments():
             session.flash = 'Marker access token invalid'
             redirect(URL('index'))
     
+    # Use 'all' variable in URL to toggle access to previous records
+    if 'all' in security:
+        security.pop('all')
+        db.assignments._common_filter = None
+        header = P("The table below shows all the assignments that have been assigned to you ",
+                   B("across all years"),". To focus on your current marking assignments, click ",
+                   A("here", _href=URL(vars=security)))
+    else:
+        security['all'] = ""
+        header = P("The table below shows your ", B("current marking assignments"),
+                   ". To also see records from previous years, click ",
+                   A("here", _href=URL(vars=security)))
+        
     # Two factor authentication
     if not session.tf_validated:
         _next = URL(args=request.args, vars=request.vars)
         redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
     
-    # db.assignments._common_filter = None
-    
     # reduce the set of fields shown in the grid
-    db.assignments.id.readable = False
-    db.assignments.student_email.readable = False
     db.assignments.student_first_name.readable = False
-    db.assignments.student_cid.readable = False
-    db.assignments.assignment_data.readable = False
     
     # and edit representations
     db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
@@ -625,6 +632,13 @@ def my_assignments():
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
     grid = SQLFORM.grid(db.assignments.marker == marker.id,
+                        fields = [db.assignments.student_first_name, 
+                                  db.assignments.student_last_name,
+                                  db.assignments.academic_year,
+                                  db.assignments.course_presentation_id,
+                                  db.assignments.marker_role_id,
+                                  db.assignments.status
+                              ],
                         csv=False,
                         deletable=False,
                         create=False,
@@ -634,7 +648,7 @@ def my_assignments():
                         headers= {'assignments.student_last_name': 'Student'},
                         paginate=False)
     
-    return dict(name=marker.first_name + " " + marker.last_name, form=grid)
+    return dict(name=marker.first_name + " " + marker.last_name, header=header, form=grid)
 
 
 def write_report():
