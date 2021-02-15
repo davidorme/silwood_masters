@@ -21,22 +21,11 @@ if request.function in ['wiki', 'manage_wikicontent', 'manage_wikimedia']:
 
 else:
     
-    # Generate the marking criteria and example form lists from the role dictionary 
-    criteria = [(T('- ' + role), False, URL('static','marking_criteria/' + details['criteria']), [])
-                for role, details in role_dict.items()]
-    example_forms = [(T('- ' + role), False, URL('marking_reports', 'show_form', args=[role])) 
-                     for role, details in role_dict.items()]
-
     # Generate the 
     marking_reports_menu = [
         (T('Project Proposals'), False, URL('marking_reports','project_proposals'), []),
-        (T('Criteria and Forms'), False, None, [
-            (T('Reports'), False, configuration.get('report_drive.link'), []),
-            (DIV('Marking criteria', _style='padding:4px 24px;color:grey'), False, False, []),
-            *criteria,
-            (DIV('Example forms', _style='padding:4px 24px;color:grey'), False, False, []),
-            *example_forms
-            ]),
+        (T('Criteria and Forms'), False, URL('marking_reports','criteria_and_forms'), []),
+        (T('Reports'), False, configuration.get('report_drive.link'), []),
         (T('Help'), False, None, [
             (T('Overview'), False,  URL('marking_reports', 'help'), [])])
         ]

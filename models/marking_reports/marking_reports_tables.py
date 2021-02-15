@@ -11,52 +11,10 @@ db._common_fields.append(auth.signature)
 ## GLOBAL LIST DEFINITIONS
 ## --------------------------------------------------------------------------------
 
-## The application uses a dictionary keyed by (course presentation, marker_role)
-## to identify the form JSON and marking criteria. This allows flexibility for 
-## multiple courses with multiple forms and presentations but it can be quite a
-## long dictionary.
-
-## TODO: Note that the role list is fixed but could differ between course presentations.
-## This could be restructured to define roles under each course (and the create assignment
-## page would then need to use AJAX or a dict to populate the role dropdown).
-
-course_presentation_list = ['EEC MSc', 'EEC MRes Winter', 'EEC MRes Summer', 'TFE MRes',
-                            'CMEE MSc','CMEE MRes Mid-term', 'CMEE MRes',
-                            'Cons Sci MSc','eeChange MRes', 'EA MSc']
-
-# An ordered dict is used here to set the order of reports when downloading grades
-
-role_dict = OrderedDict([
-             ('Supervisor', 
-              {'form':'supervisor.json',
-               'criteria':'Supervisor_Marking_Criteria.pdf'}),
-             ('Marker', 
-              {'form':'marker.json',
-               'criteria':'Project_Marking_Criteria.pdf'}),
-             ('Presentation', 
-              {'form':'presentation.json',
-               'criteria':'Presentation_Marking_Criteria.pdf'}),
-             ('Viva',
-              {'form':'viva.json',
-                 'criteria':'Viva_Marking_Criteria.pdf'})])
-
-role_list = list(role_dict.keys())
-
-# Simply add each role for each presentation.
-# TODO: think about flexibility another day beyond simply modifying these defaults...
-# Oh, you idiot. This is data. It goes in tables in the db. You _idiot_. OK - that's
-# for another day - so, course table already exists. Add presentations, add marking_roles
-
-form_data_dict = {}
-
-for cpres in course_presentation_list:
-    for crole, role_details in role_dict.items():
-        form_data_dict[(cpres, crole)] = role_details
-
 # An assignment is first created, then set to the marker (becoming Not started).
 # Once someone has saved a partial record it becomes Started and then once
 # Submitted it becomes readonly to all but admins. Once Released, students are
-# able to download it.
+# able to download it. Arguably this is CSS. Okay, not arguably. It _is_ CSS.
 
 status_dict =  {'Created': SPAN('',_class="fa fa-check",
                                   _style="color:grey;font-size: 1.3em;",
@@ -74,14 +32,6 @@ status_dict =  {'Created': SPAN('',_class="fa fa-check",
                                   _style="color:green;font-size: 1.3em;",
                                   _title='Released')}
 
-grade_options = ['100% (A*)', '95% (A*)', '90% (A*)', '85% (A*)',
-                 '80% (A)', '76% (A)', '72% (A)',
-                 '68% (B)', '65% (B)', '62% (B)',
-                 '58% (C)', '55% (C)', '52% (C)',
-                 '48% (D)', '45% (D)', '42% (D)', '35% (D)', '30% (D)', '25% (D)',
-                 '20% (D)', '15% (D)', '10% (D)', '5% (D)', '0% (D)']
-
-
 ## --------------------------------------------------------------------------------
 ## TABLE DEFINITIONS
 ## --------------------------------------------------------------------------------
@@ -92,30 +42,46 @@ db.define_table('markers',
                 Field('email', 'string', requires=IS_EMAIL()),
                 Field('marker_access_token',length=64, default=uuid.uuid4,
                       readable=False, writable=False),
-                
                 format='%(first_name)s %(last_name)s')
 
-# This table records what the assignments are and provides access tokens
-# to act as locks on individual records. The data field holds a JSON object
+# This table maintains a editable list of marking 'presentations'. This
+# is basically a combination of course and coursework.
+
+db.define_table('presentations',
+                Field('name', 'string', notnull=True),
+                format = "%(name)s")
+
+# This table maintains a list of available marking roles and the form
+# and marking criteria associated with each
+db.define_table('marking_roles',
+                Field('name', 'string', notnull=True),
+                Field('marking_criteria', 'string', notnull=True),
+                Field('form_file', 'string', notnull=True),
+                Field('form_json', 'json', notnull=True),
+                format = "%(name)s")
+
+# This table records what the assignments are and provides a public access token
+# to act as locks on individual records. Access for markers uses a marker specific
+# access token stored in the markers table. The data field holds a JSON object
 # containing the content of the variables listed in the correct report
-# template - which is assigned by the combination of the course presentation
-# and marker role.
+# template which is defined by the marking form.
 
 db.define_table('assignments',
                 Field('student_cid','integer', notnull=True),
                 Field('student_first_name','string', notnull=True),
                 Field('student_last_name','string', notnull=True),
                 Field('student_email','string', notnull=True, requires=IS_EMAIL()),
-                Field('course_presentation','string', 
-                      requires=IS_IN_SET(course_presentation_list)),
+                Field('course_presentation','string'),
+                Field('course_presentation_id','reference presentations'),
                 Field('academic_year','integer', notnull=True),
                 Field('marker','reference markers'),
-                Field('marker_role','string', requires=IS_IN_SET(role_list)),
+                Field('marker_role','string'),
+                Field('marker_role_id','reference marking_roles'),
                 Field('assignment_data','json'),
                 Field('due_date','date', notnull=True, requires=IS_DATE()),
                 # Access and record fields
-                Field('staff_access_token',length=64, default=uuid.uuid4,
-                      readable=False, writable=False),
+                #Field('staff_access_token',length=64, default=uuid.uuid4,
+                #      readable=False, writable=False),
                 Field('public_access_token',length=64, default=uuid.uuid4,
                       readable=False, writable=False),
                 Field('submission_date','datetime', readable=False, writable=False),
@@ -125,7 +91,6 @@ db.define_table('assignments',
                 #migrate=False, fake_migrate=True,
                 # By default hide previous years,
                 common_filter = lambda query: db.assignments.academic_year >= datetime.datetime.now().year)
-
 
 ## -----------------------------------------------------------------------------
 ## Project proposals
