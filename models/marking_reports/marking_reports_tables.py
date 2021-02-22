@@ -66,7 +66,19 @@ db.define_table('marking_roles',
 # containing the content of the variables listed in the correct report
 # template which is defined by the marking form.
 
+#
+db.define_table('students',
+                Field('student_cid','integer', notnull=True),
+                Field('student_first_name','string', notnull=True),
+                Field('student_last_name','string', notnull=True),
+                Field('student_email','string', notnull=True, requires=IS_EMAIL()),
+                Field('access_token',length=64, default=uuid.uuid4,
+                      readable=False, writable=False),
+                Field('course', 'string'))
+
+
 db.define_table('assignments',
+                Field('student', 'reference students', notnull=True), 
                 Field('student_cid','integer', notnull=True),
                 Field('student_first_name','string', notnull=True),
                 Field('student_last_name','string', notnull=True),

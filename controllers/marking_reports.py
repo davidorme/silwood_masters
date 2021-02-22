@@ -135,6 +135,18 @@ def markers():
 
 
 @auth.requires_membership('admin')
+def students():
+    
+    # don't allow deleting as the referencing to project marks will 
+    # drop referenced rows from marking tables
+    form = SQLFORM.grid(db.students, 
+                        csv=False,
+                        deletable=False)
+    
+    return dict(form=form)
+
+
+@auth.requires_membership('admin')
 def presentations():
     
     # don't allow deleting as the referencing to project marks will 
