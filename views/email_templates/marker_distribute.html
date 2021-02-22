@@ -26,7 +26,7 @@
 
 <p>The summary below shows the number of each kind of report that still need to be submitted:</p>
 
-{{=reports_to_submit}} 
+{{=TABLE(reports_to_submit, _class='table table-striped')}} 
 
 <p>A pdf version of each student's 
 	dissertation report can be found <a href = {{=configuration.get('report_drive.link')}}>here</a>.</p>

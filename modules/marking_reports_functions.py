@@ -87,10 +87,10 @@ def release(ids):
             n += 1
     
     # now group by student
-    email.sort(key=lambda rec: rec['student_email'])
+    email.sort(key=lambda rec: rec['student'])
     student_blocks = {k:list(recs) 
                       for k, recs 
-                      in itertools.groupby(email, lambda x: x['student_email'])}
+                      in itertools.groupby(email, lambda x: x['student'])}
 
     # Create a mailer instance to send multiple emails using the same connection
     fails = 0
@@ -101,18 +101,20 @@ def release(ids):
         
         # Create a set of links to the reports
         links = [CAT(P(B('Marking Role: '), 
-                       r.marker_role,
+                       r.marker_role_id.name,
                        B('; Marker: '), 
                        A(r.marker.first_name, ' ', r.marker.last_name, 
                          _href=URL('download_pdf', scheme=True, host=True,
                                    vars={'record':r.id, 
-                                         'public_access_token': r.public_access_token}))))
+                                         'student_access_token': r.student.student_access_token}))))
                 for r in recs]
         
         success = mailer.sendmail(subject='Your Project Marking Reports', 
-                                  to=student, email_template='student_release.html',
-                                  email_template_dict={'name':recs[0].student_first_name + ' ' + recs[0].student_last_name,
-                                                 'links':CAT(links).xml()})
+                                  to=recs[0].student.student_email, 
+                                  email_template='student_release.html',
+                                  email_template_dict={'name':recs[0].student.student_first_name + 
+                                                              ' ' + recs[0].student.student_last_name,
+                                                       'links':CAT(links).xml()})
         
         if not success:
             fails += 1
@@ -178,7 +180,7 @@ def distribute(ids):
     for marker, recs in marker_blocks.items():
         
         # now summarize the number of each type of report
-        reports_to_submit = XML(TABLE([(r.assignments.marker_role_id, r.n) for r in recs]))
+        reports_to_submit = [(r.assignments.marker_role_id, r.n) for r in recs]
         
         # Create a link to the marker my assignments page.
         my_assignments_url = URL('my_assignments', scheme=True, host=True,
@@ -609,12 +611,12 @@ def create_pdf(record, confidential):
     
     # ID table
     label =   ['Student', 'CID', 'Course', 'Year', 'Marker', 'Marker Role']
-    content = ['{student_first_name} {student_last_name}',
-               '{student_cid}',
-               '{course_presentation}',
+    content = ['{student.student_first_name} {student.student_last_name}',
+               '{student.student_cid}',
+               '{course_presentation_id.name}',
                '{academic_year}',
                '{marker.first_name} {marker.last_name}',
-               '{marker_role}']
+               '{marker_role_id.name}']
     
     for l, c in zip(label, content):
         pdf.set_font("DejaVu", size=12, style='B')
@@ -670,11 +672,11 @@ def create_pdf(record, confidential):
     
     pdf.close()
     pdf = pdf.output(dest='S').encode('latin-1') # unicode string to bytes
-    filename = '{} {} {} {} {} {}.pdf'.format(record.course_presentation,
+    filename = '{} {} {} {} {} {}.pdf'.format(record.course_presentation_id.name,
                                             record.academic_year, 
-                                            record.student_last_name,
-                                            record.student_first_name,
-                                            record.marker_role,
+                                            record.student.student_last_name,
+                                            record.student.student_first_name,
+                                            record.marker_role_id.name,
                                             record.id)
     
     return (pdf, filename)

@@ -691,15 +691,12 @@ def write_report():
     else:
         # allow old reports to be retrieved
         db.assignments._common_filter = None
-        # Retrieve as a row to expose the render method.
-        row = db(db.assignments.id == int(security['record'])).select()
+        record = db.assignments[int(security['record'])]
         
-        if row is None:
+        if record is None:
             session.flash = 'Unknown project marking record id provided'
             redirect(URL('index'))
         
-        record = row[0]
-    
     # Access control - if the user is logged in as an admin, then
     # don't need to do any validation, otherwise use 2FA 
     
@@ -749,7 +746,10 @@ def write_report():
     form = assignment_to_sqlform(record, readonly, buttons)
         
     # process the form to handle storing the data, via a validation function
-    # that checks required fields are complete when users press submit
+    # that checks required fields are complete when users press submit. The validation
+    # method retrieves form details from the session.
+    session.form_json = record.marker_role_id.form_json
+    
     if form.process(onvalidation=submit_validation).accepted:
         
         # add the id from the record into the data (an id is needed by the form code)
@@ -921,7 +921,7 @@ def download_pdf():
             redirect(URL('index'))
     
     # what access tokens have been provided?
-    if security['staff_access_token'] is None and security['public_access_token'] is None:
+    if security['staff_access_token'] is None and security['student_access_token'] is None:
         
         session.flash = 'No access token provided for PDF download'
         redirect(URL('index'))
@@ -941,14 +941,14 @@ def download_pdf():
         else:
             confidential = True
         
-    elif security['public_access_token'] is not None:
+    elif security['student_access_token'] is not None:
             
-        if record.public_access_token != security['public_access_token']:
-            session.flash = 'Public access token invalid for PDF download'
+        if record.student.student_access_token != security['student_access_token']:
+            session.flash = 'Student access token invalid for PDF download'
             redirect(URL('index'))
         elif record.status != 'Released':
             session.flash = ("Report not yet released. Also, we'd just love to know "
-                             "how you got your hands on a valid public access token "
+                             "how you got your hands on a valid student access token "
                              "for an unreleased report.")
             redirect(URL('index'))
         else:
