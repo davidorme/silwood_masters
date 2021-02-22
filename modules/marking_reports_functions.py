@@ -396,24 +396,26 @@ def download_grades(ids):
 ## HTML Report writing functions shared by show_form and write_report
 ## --------------------------------------------------------------------------------
 
-def get_form_header(form_json, record, readonly, security=None):
+def get_form_header(record, readonly, security=None):
     """Takes a marking form definition and a marking assignment record
     and returns a standard header block for a form.
     """
     
     # Define the header block
-    header_rows =   [('Student',  '{student_first_name} {student_last_name}'),
-                     ('CID', '{student_cid}'),
-                     ('Course Presentation', '{course_presentation_id}'),
+    header_rows =   [('Student',  '{student.student_first_name} {student.student_last_name}'),
+                     ('CID', '{student.student_cid:09d}'),
+                     ('Course Presentation', '{course_presentation_id.name}'),
                      ('Academic Year', '{academic_year}'),
-                     ('Marker', '{marker}'),
-                     ('Marker Role', '{marker_role_id}'),
+                     ('Marker', '{marker.first_name} {marker.last_name}'),
+                     ('Marker Role', '{marker_role_id.name}'),
                      ('Status', '{status}')]
      
     header = [DIV(LABEL(l, _class='col-sm-3'),
                   DIV(v.format(**record), _class='col-sm-9'),
                   _class='row')
               for l, v in header_rows]
+    
+    form_json = record.marker_role_id.form_json
     
     header.insert(0, H2(form_json['title']))
     header.append(DIV(LABEL('Marking critera', _class='col-sm-3'),

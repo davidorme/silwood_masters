@@ -183,10 +183,19 @@ def new_assignment():
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
+    db.assignments.student.requires = IS_IN_DB(db, 'students.id', 
+                                              '%(student_last_name)s, %(student_first_name)s (%(course)s)')
+    
     db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', 
                                               '%(last_name)s, %(first_name)s (%(email)s)')
     
-    form = SQLFORM(db.assignments)
+    form = SQLFORM(db.assignments,
+                   fields=['student', 
+                           'marker',
+                           'course_presentation_id',
+                           'marker_role_id',
+                           'academic_year',
+                           'due_date'])
     
     if form.process().accepted:
         response.flash = 'Assignment created'
@@ -202,11 +211,7 @@ def assignments():
     if 'all' in request.vars.keys():
         db.assignments._common_filter = None
     
-    # hide some of fields used in the grid
-    db.assignments.student_first_name.readable = False
-    
-    # and edit representations
-    db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
+    # Represent status as icon
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
 
     # Link to a non-default report page and edit page. Note that this is an admin
@@ -225,20 +230,20 @@ def assignments():
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
     grid = SQLFORM.grid(db.assignments,
-                        fields = [db.assignments.student_first_name,
-                                  db.assignments.student_last_name, 
+                        fields = [db.assignments.student,
                                   db.assignments.course_presentation_id,
                                   db.assignments.marker,
                                   db.assignments.marker_role_id,
                                   db.assignments.due_date,
                                   db.assignments.status],
+                        maxtextlength=100,
                         csv=False,
                         deletable=False,
                         create=False,
                         details=False,
                         editable=False,
                         links=links,
-                        headers= {'assignments.student_last_name': 'Student'},
+                        headers= {'students.student_last_name': 'Student'},
                         selectable = [('Release to students', lambda ids: release(ids)),
                                       ('Send to markers', lambda ids: distribute(ids)),
                                       ('Download Confidential PDFs',lambda ids: zip_pdfs(ids, confidential=True)),
@@ -249,11 +254,13 @@ def assignments():
     # Edit the HTML of the web2py table, as long as a search hasn't created a set with no records
     if grid.element('div.web2py_counter').components != ['']:
         # insert a select all checkbox and the java to power it
-        grid.element('th').insert(0, CAT(LABEL(INPUT(_type='checkbox', _id='checkAll'), XML('&nbsp;'), 'All'), XML('&nbsp;')*3))
+        grid.element('th').insert(0, CAT(LABEL(INPUT(_type='checkbox', _id='checkAll'), 
+                                               XML('&nbsp;'), 'All'), XML('&nbsp;') * 3))
         grid.append(SCRIPT('''$("#checkAll").change(function () {
                                 $("[name='records']").prop('checked', $(this).prop("checked"));
                               });'''))
-        # remove the submit buttons from the button and reinsert with nicer styling at the top of the table form
+        # remove the submit buttons from the button and reinsert with nicer styling
+        # at the top of the table form
         table_start = grid.element('div.web2py_htmltable')
         buttons = (("submit_1", "Send to markers"),
                    ("submit_0", "Release to students"),
@@ -262,7 +269,7 @@ def assignments():
                    ("submit_4", "Download Grades"))
         for b in buttons:
             grid.element("[name=" +  b[0]+ "]", replace=None)
-            table_start.insert(0, INPUT(_name=b[0], _type='submit', _value=b[1], 
+            table_start.insert(0, INPUT(_name=b[0], _type='submit', _value=b[1],
                                         _style='padding:5px 15px;margin:10px;background:#6C757D;color:white'))
     
     # old records, turning off the common filter
@@ -624,11 +631,7 @@ def my_assignments():
         _next = URL(args=request.args, vars=request.vars)
         redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
     
-    # reduce the set of fields shown in the grid
-    db.assignments.student_first_name.readable = False
-    
     # and edit representations
-    db.assignments.student_last_name.represent =  lambda id, row: row.student_last_name + ', ' + row.student_first_name
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
     
     # link to a non-default new edit page
@@ -644,20 +647,20 @@ def my_assignments():
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
     grid = SQLFORM.grid(db.assignments.marker == marker.id,
-                        fields = [db.assignments.student_first_name, 
-                                  db.assignments.student_last_name,
+                        fields = [db.assignments.student,
                                   db.assignments.academic_year,
                                   db.assignments.course_presentation_id,
                                   db.assignments.marker_role_id,
                                   db.assignments.status
                               ],
+                        maxtextlength=100,
                         csv=False,
                         deletable=False,
                         create=False,
                         details=False,
                         editable=False,
                         links=links,
-                        headers= {'assignments.student_last_name': 'Student'},
+                        headers= {'students.student_last_name': 'Student'},
                         paginate=False)
     
     return dict(name=marker.first_name + " " + marker.last_name, header=header, form=grid)
@@ -695,8 +698,6 @@ def write_report():
             session.flash = 'Unknown project marking record id provided'
             redirect(URL('index'))
         
-        # Render the row to get the representation of reference fields
-        record_rendered = row.render(0)
         record = row[0]
     
     # Access control - if the user is logged in as an admin, then
@@ -735,8 +736,7 @@ def write_report():
             readonly = False
     
     # define the header block - this is for display so needs the rendered data
-    header = get_form_header(record.marker_role_id.form_json, record_rendered,
-                             readonly, security=security)
+    header = get_form_header(record, readonly, security=security)
     
     # Get the form as html
     # - provide a save and a submit button
@@ -775,7 +775,7 @@ def write_report():
     html = style_sqlform(record, form, readonly)
     
     # Set the form title
-    response.title = f"{record.student_last_name}: {record.marker_role}"
+    response.title = f"{record.student.student_last_name}: {record.marker_role_id.name}"
     
     return dict(header=CAT(admin_warn, *header), form=CAT(*html))
 
@@ -851,34 +851,37 @@ def show_form():
     # optimal.
     
     db.assignments._common_filter = None
-    marker = db.markers.insert(first_name='Sir Alfred', last_name='Marker', email='null@null')
-    record = db.assignments.insert(student_first_name='Awesome', 
-                                   student_last_name='Student', 
-                                   student_cid='00000000', 
+    marker = db.markers.insert(first_name='Sir Alfred', 
+                               last_name='Marker', 
+                               email='null@null')
+    student = db.students.insert(student_first_name='Awesome', 
+                                 student_last_name='Student', 
+                                 student_email='null@null', 
+                                 student_cid='00000000', )
+    record = db.assignments.insert(student=student,
                                    course_presentation_id=1, 
                                    academic_year=2020, 
                                    status='Not started', 
                                    marker=marker, 
                                    marker_role_id=role.id, 
-                                   student_email='null@null', 
                                    due_date='1970-01-01')
     
     # Get the new row
     rows = db(db.assignments.id == record).select()
     
     # Render the row to get the field representations and get the record itself
-    record_rendered = rows.render(0)
+    
     record = rows[0]
     
     # define the header block
-    header = get_form_header(record.marker_role_id.form_json, record_rendered, readonly=False)
+    header = get_form_header(record, readonly=False)
     
     # get the form object and style it
     form = assignment_to_sqlform(record, readonly=False)
     html = style_sqlform(record, form, readonly=False)
     
     # Set the form title
-    response.title = f"{record.student_last_name}: {record.marker_role}"
+    response.title = f"{student.student_last_name}: {record_rendered.marker_role_id}"
     
     # Rollback the inserts
     db.rollback()
