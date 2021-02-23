@@ -8,3 +8,4 @@ fpdf
 openpyxl
 simplejson
 html2text
+boxsdk[jwt]
