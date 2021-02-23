@@ -11,6 +11,7 @@ import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
                                        assignment_to_sqlform, style_sqlform, FoldingTOC)
+from box import scan_box, download_url
 
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
@@ -170,6 +171,36 @@ def marking_roles():
                         deletable=False)
     
     return dict(form=form)
+
+
+@auth.requires_membership('admin')
+def marking_files():
+    
+    # don't allow deleting, editing or detailas as this is populated automatically
+    # from the file structure
+    form = SQLFORM.grid(db.marking_files_box,
+                        fields=[db.marking_files_box.student,
+                                db.marking_files_box.academic_year,
+                                db.marking_files_box.presentation_id,
+                                db.marking_files_box.marker_role_id,
+                                db.marking_files_box.filename],
+                        maxtextlength=100,
+                        csv=False,
+                        details=False,
+                        editable=False,
+                        deletable=False)
+    
+    return dict(form=form)
+
+
+@auth.requires_membership('admin')
+def scan_files():
+    """Exposes the scan function."""
+    
+    # TODO - turn this into something that doesn't just hang around and ? uses
+    # AJAX to populate the scan. Also - maybe only scan updated files.
+    return scan_box()
+
 
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS
@@ -774,10 +805,24 @@ def write_report():
     # Style SQLFORM
     html = style_sqlform(record, form, readonly)
     
+    # Provide any available files
+    file_rows = db((db.marking_files_box.student == record.student) &
+               (db.marking_files_box.presentation_id == record.course_presentation_id) &
+               (db.marking_files_box.marker_role_id == record.marker_role_id)
+               ).select()
+    
+    if file_rows:
+        files = CAT(H4("Files"), P("The following submitted files are available:"),
+                    UL([A(f.filename, _href=download_url(f.box_id)) 
+                        for f in file_rows]))
+    else:
+        files = CAT(H4("Files"), P("No submitted files found for this assignment. Please contact ",
+                                   "the postgraduate administrator.", _style='color:red'))
+    
     # Set the form title
     response.title = f"{record.student.student_last_name}: {record.marker_role_id.name}"
     
-    return dict(header=CAT(admin_warn, *header), form=CAT(*html))
+    return dict(header=CAT(admin_warn, *header), form=CAT(*html), files=files)
 
 
 def submit_validation(form):

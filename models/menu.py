@@ -41,6 +41,8 @@ if auth.has_membership('admin'):
                                 URL('marking_reports', 'marking_roles'), []),
                             (T('View Students'), False, 
                                 URL('marking_reports', 'students'), []),
+                            (T('Scan Reports'), False, 
+                                URL('marking_reports', 'scan_files'), []),
                             (DIV(_class='dropdown-divider'), False, False, []),
                             (T('Timetable freezer'), False, 
                                 URL('timetabler', 'freezer'), []),
