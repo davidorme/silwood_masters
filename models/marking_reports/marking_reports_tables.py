@@ -79,23 +79,12 @@ db.define_table('students',
 
 db.define_table('assignments',
                 Field('student', 'reference students'), 
-                # Field('student_cid','integer', notnull=True),
-                # Field('student_first_name','string', notnull=True),
-                # Field('student_last_name','string', notnull=True),
-                # Field('student_email','string', notnull=True, requires=IS_EMAIL()),
-                # Field('course_presentation','string'),
                 Field('course_presentation_id','reference presentations'),
                 Field('academic_year','integer', notnull=True),
                 Field('marker','reference markers'),
-                # Field('marker_role','string'),
                 Field('marker_role_id','reference marking_roles'),
                 Field('assignment_data','json'),
                 Field('due_date','date', notnull=True, requires=IS_DATE()),
-                # Access and record fields
-                # Field('staff_access_token',length=64, default=uuid.uuid4,
-                #      readable=False, writable=False),
-                # Field('public_access_token',length=64, default=uuid.uuid4,
-                #      readable=False, writable=False),
                 Field('submission_date','datetime', readable=False, writable=False),
                 Field('submission_ip','string', readable=False, writable=False),
                 Field('status', requires=IS_IN_SET(list(status_dict.keys())),
@@ -103,6 +92,41 @@ db.define_table('assignments',
                 #migrate=False, fake_migrate=True,
                 # By default hide previous years,
                 common_filter = lambda query: db.assignments.academic_year >= datetime.datetime.now().year)
+
+
+# This table stores data about the files held in sharepoint that are to be provided 
+# to markers. Typically, this is thesis files to Markers, but could be any combination
+# of presentation and role. The unique id provides a permanent reference to retrieve
+# file details from the Sharepoint API
+
+# db.define_table('marking_files',
+#                 Field('unique_id', length=64),
+#                 Field('filename', 'string'),
+#                 Field('relative_url', 'string'),
+#                 Field('student_cid', 'integer'),
+#                 Field('academic_year', 'integer'),
+#                 Field('marker_role_id', 'reference marking_roles'),
+#                 Field('course_presentation_id', 'reference presentations'))
+
+# This table stores data about the files held in Box that are to be provided 
+# to markers. Typically, this is thesis files to Markers, but could be any 
+# combination of presentation and role. The directory structure is used to
+# identify the file and then the box unique id provides a permanent reference 
+# to retrieve file details.
+
+# The order here is a little bit arbitrary, but since the year and role are
+# unlikely to change, they come further down the structure
+
+# 'EEC_MSc/2020/Marker/Orme_EEC_MSc_00206010.pdf'
+
+db.define_table('marking_files_box',
+                Field('box_id', 'integer'),
+                Field('filename', 'string'),
+                Field('filesize', 'integer'),
+                Field('student', 'reference students'),
+                Field('academic_year', 'integer'),
+                Field('presentation_id', 'reference presentations'),
+                Field('marker_role_id', 'reference marking_roles'))
 
 ## -----------------------------------------------------------------------------
 ## Project proposals
