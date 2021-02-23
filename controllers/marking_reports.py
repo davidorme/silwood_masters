@@ -174,7 +174,7 @@ def marking_roles():
 
 
 @auth.requires_membership('admin')
-def marking_files():
+def submitted_files():
     
     # don't allow deleting, editing or detailas as this is populated automatically
     # from the file structure
@@ -926,7 +926,7 @@ def show_form():
     html = style_sqlform(record, form, readonly=False)
     
     # Set the form title
-    response.title = f"{student.student_last_name}: {record_rendered.marker_role_id}"
+    response.title = f"{student.student_last_name}: {record.marker_role_id.name}"
     
     # Rollback the inserts
     db.rollback()
