@@ -806,18 +806,25 @@ def write_report():
     html = style_sqlform(record, form, readonly)
     
     # Provide any available files
-    file_rows = db((db.marking_files_box.student == record.student) &
-               (db.marking_files_box.presentation_id == record.course_presentation_id) &
-               (db.marking_files_box.marker_role_id == record.marker_role_id)
-               ).select()
+    expected_files = record.marker_role_id.form_json.get('submitted_files')
+    if expected_files:
     
-    if file_rows:
-        files = CAT(H4("Files"), P("The following submitted files are available:"),
-                    UL([A(f.filename, _href=download_url(f.box_id)) 
-                        for f in file_rows]))
+        file_rows = db((db.marking_files_box.student == record.student) &
+                   (db.marking_files_box.presentation_id == record.course_presentation_id) &
+                   (db.marking_files_box.marker_role_id == record.marker_role_id)
+                   ).select()
+    
+        if file_rows:
+            files = CAT(H4("Files"), P("The following submitted files are available:"),
+                        UL([A(f.filename, _href=download_url(f.box_id)) 
+                            for f in file_rows]))
+        else:
+            files = CAT(H4("Files"), P("None of the expected submitted files "
+                                      f"({','.join(expected_files)}) are currently "
+                                       "associated with this assignment. Please contact the "
+                                       "postgraduate administrator.", _style='color:red'))
     else:
-        files = CAT(H4("Files"), P("No submitted files found for this assignment. Please contact ",
-                                   "the postgraduate administrator.", _style='color:red'))
+        files = DIV()
     
     # Set the form title
     response.title = f"{record.student.student_last_name}: {record.marker_role_id.name}"
