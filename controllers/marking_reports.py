@@ -341,12 +341,16 @@ def edit_assignment():
 @auth.requires_membership('admin')
 def load_assignments():
     
-    known_presentations = db(db.presentations).select(db.presentations.name)
-    known_presentations = set([rw.name for rw in known_presentations])
+    # Get lookups for course presentations and roles
+    known_presentations = db(db.presentations).select(db.presentations.id,
+                                                      db.presentations.name)
+    known_presentations = {rw.name: rw.id for rw in known_presentations}
     
-    role_list = db(db.marking_roles).select(db.marking_roles.name)
-    role_list = set([rw.name for rw in role_list])
+    known_roles = db(db.marking_roles).select(db.marking_roles.id,
+                                              db.marking_roles.name)
+    known_roles = {rw.name: rw.id for rw in known_roles}
     
+    # Expose the upload form
     form = FORM(DIV(DIV('Upload File:', _class='col-sm-2'),
                     DIV(INPUT(_type='file', _name='myfile', id='myfile', 
                               requires=IS_NOT_EMPTY()), _class='col-sm-6'), 
@@ -367,7 +371,7 @@ def load_assignments():
         # check the headers
         headers = data.fieldnames
         required = ['student_cid', 'student_first_name', 'student_last_name', 'student_email',
-                    'course_presentation', 'academic_year', 'marker_email', 'due_date',
+                    'course', 'course_presentation', 'academic_year', 'marker_email', 'due_date',
                     'marker_last_name', 'marker_first_name', 'marker_role']
         
         missing_headers = set(required).difference(headers)
@@ -377,6 +381,10 @@ def load_assignments():
             html = CAT(html,
                        H2('Missing fields in file'),
                        P('These fields are missing from the upload file: ', ', '.join(missing_headers)))
+            
+            # Nothing is likely to work from this point, so bail early
+            return dict(form=form, html=html, known_roles=list(known_roles.keys()), 
+                        known_presentations=list(known_presentations.keys()))
         
         # extract the contents into a big list of dictionaries to work with
         # rather than having an iterator that runs through once
@@ -386,14 +394,14 @@ def load_assignments():
         fields = {key:[item[key] for item in data] for key in headers}
         
         # - roles are recognized?
-        unknown_roles = set(fields['marker_role']).difference(role_list)
+        unknown_roles = set(fields['marker_role']).difference(known_roles.keys())
         
         if len(unknown_roles) > 0:
             html = CAT(html,
                        H4('Unknown marking roles'),
                        P('These roles are found in the file but are not recognized: '),
                        P(', '.join(unknown_roles)),
-                       P('Valid values are: ', ', '.join(role_list)))
+                       P('Valid values are: ', ', '.join(known_roles.keys())))
         
         # - course presentations are recognized?
         unknown_presentations = set(fields['course_presentation']).difference(known_presentations)
@@ -403,7 +411,7 @@ def load_assignments():
                        H4('Unknown course presentations'),
                        P('These course presentations are found in the file but are not recognized:'),
                        P(', '.join(unknown_presentations)),
-                       P('Valid values are: ', ', '.join(known_presentations)))
+                       P('Valid values are: ', ', '.join(known_presentations.keys())))
         
         # bad student emails
         bad_emails = [IS_EMAIL()(x) for x in fields['student_email']]
@@ -454,46 +462,120 @@ def load_assignments():
         names = set(fields['student_first_name'] + fields['student_last_name']+
                     fields['marker_first_name'] + fields['marker_last_name'])
         bad_names = [ x for x in names if x.isspace() or x == '' ]
+        
         if len(bad_names) > 0:
             html = CAT(html,
                        H4('Invalid student or marker names'),
-                       P('The student and marker names data contains empty strings or text just consisting of spaces'))
+                       P('The student and marker names data contains empty strings or '
+                         'text just consisting of spaces'))
+        
+        # NOW validate students and staff against the tables
+        
+        # extract unique student data as tuples 
+        students= set([(x['student_cid'],
+                        x['student_first_name'],
+                        x['student_last_name'],
+                        x['student_email'],
+                        x['course']) for x in data])
+        
+        student_id_map = {}
+        bad_student_records = []
+        
+        for this_student in students:
+            
+            if this_student[0].isdigit():
+                
+                # bad CIDs have already been trapped above
+                this_cid = int(this_student[0])
+                
+                student_record = db(db.students.student_cid == this_cid).select().first()
+                
+                if student_record is not None:
+                    if ((student_record.student_first_name != this_student[1]) &
+                        (student_record.student_last_name != this_student[2]) &
+                        (student_record.student_email != this_student[3]) &
+                        (student_record.course != this_student[4])):
+                            bad_student_records.append(this_student)
+                    else:
+                        student_id_map[this_cid] = student_record.id
+                else:
+                    student_id_map[this_cid] = db.students.insert(student_cid = this_cid,
+                                                                  student_first_name = this_student[1],
+                                                                  student_last_name = this_student[2],
+                                                                  student_email = this_student[3],
+                                                                  course = this_student[4])
+        
+        if len(bad_student_records) > 0:
+            html = CAT(html,
+                       H4('Inconsistent student records'),
+                       P('The students include existing CID numbers with incongruent names and  '
+                         'courses: ', 
+                         [f"{st[0]} ({st[1]} {st[3]}, {st[3]})"
+                          for st in bad_student_records]))
+        
+        # Staff
+        # extract unique staff entries
+        staff = set([(x['marker_first_name'],
+                      x['marker_last_name'],
+                      x['marker_email']) for x in data])
+        
+        staff_email_map = {}
+        bad_staff_records = []
+        
+        for this_staff in staff:
+            
+            staff_record = db(db.markers.email.lower() == this_staff[2].lower()).select().first()
+            
+            if staff_record is not None:
+                if ((staff_record.first_name != this_staff[0]) &
+                    (staff_record.last_name != this_staff[1])):
+                        bad_staff_records.append(this_staff)
+                else:
+                    staff_email_map[this_staff[2]] = staff_record.id
+            else:
+                
+                new_id = db.markers.insert(first_name = this_staff[0],
+                                           last_name = this_staff[1],
+                                           email=this_staff[2])
+                staff_email_map[this_staff[2]] = new_id
+        
+        if len(bad_staff_records) > 0:
+            html = CAT(html,
+                       H4('Inconsistent marker records'),
+                       P('The marker data includes incongruent marker data:', 
+                         [f"{st[0]} {st[1]}, ({st[2]})" for st in bad_staff_records]))
         
         # Any problems detected
         if html != '':
             html = CAT(H2('Errors found in the uploaded file', _style='color:darkred'),
                        P('Please edit the file to fix these problems and then repeat the upload'),
                        html)
-        else:
-            # - get sets of records by marker email
-            data.sort(key=lambda recs: recs['marker_email'])
-            marker_blocks = {k:list(recs) for k, recs in itertools.groupby(data, lambda x: x['marker_email'].lower())}
             
-            # - loop over those blocks, inserting into the marker database if 
-            #   needed and then inserting the assignments
-            for key, assignments in marker_blocks.items():
-                marker_record = db.markers(email=key)
+            # revert any database transactions
+            db.rollback()
+        else:
+            
+            for assgn in data:
                 
-                if marker_record is None:
-                    marker_record = db.markers.insert(email=key, 
-                                                      last_name=assignments[0]['marker_last_name'],
-                                                      first_name=assignments[0]['marker_first_name'])
                 
-                for a in assignments:
-                    db.assignments.insert(marker=marker_record.id,
-                                          **db.assignments._filter_fields(a))
+                db.assignments.insert(student = student_id_map[int(assgn['student_cid'])],
+                                      academic_year = int(assgn['academic_year']),
+                                      course_presentation_id = known_presentations[assgn['course_presentation']],
+                                      marker = staff_email_map[assgn['marker_email']],
+                                      marker_role_id = known_roles[assgn['marker_role']],
+                                      due_date = assgn['due_date'])
             
             # load the assignments
-            html = CAT(H2(str(len(fields['marker_email'])) + ' Assignments successfully uploaded'))
+            html = CAT(H2(str(len(data)) + ' assignments successfully uploaded'))
             
         
     else:
         
         html=''
     
-    
-    return dict(form=form, html=html, role_list=role_list, 
-                known_presentations=known_presentations)
+    return dict(form=form, html=html, known_roles=list(known_roles.keys()), 
+                known_presentations=list(known_presentations.keys()))
+
 
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS

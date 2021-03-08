@@ -27,12 +27,13 @@
          TR(TD(B('student_first_name')), TD("The student's first name")),
          TR(TD(B('student_last_name')), TD("The student's last name")),
          TR(TD(B('student_email')), TD("The student's college email address - this will be used to release marking reports to students.")),
+         TR(TD(B('course')), TD("The student's course")),
          TR(TD(B('course_presentation')), TD("This must take one of the following values: " + ', '.join(known_presentations))),
          TR(TD(B('academic_year')), TD("The academic year")),
          TR(TD(B('marker_first_name')), TD("The marker's first name")),
          TR(TD(B('marker_last_name')), TD("The marker's last name")),
          TR(TD(B('marker_email')), TD("The marker's email address")),
-         TR(TD(B('marker_role')), TD("The marking role for the assignment, which must be one of: " + ', '.join(role_list))),
+         TR(TD(B('marker_role')), TD("The marking role for the assignment, which must be one of: " + ', '.join(known_roles))),
          TR(TD(B('due_date')), TD("The due date for the assignment, in the format yyyy-mm-dd (e.g. 2016-09-01)")),
 		 _class='table')}}
 

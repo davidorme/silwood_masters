@@ -73,7 +73,7 @@ db.define_table('students',
                 Field('student_email','string', notnull=True, requires=IS_EMAIL()),
                 Field('student_access_token',length=64, default=uuid.uuid4,
                       readable=False, writable=False),
-                Field('course', 'string'),
+                Field('course', 'string', notnull=True),
                 format = '%(student_last_name)s, %(student_first_name)s ')
 
 
