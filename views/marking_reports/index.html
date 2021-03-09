@@ -4,7 +4,9 @@
 
 <p>Welcome to the project management website for Masters courses at the Silwood Park campus of Imperial College London.</p>
 
-<p>We use this website to manage Masters projects, including the advertisement of projects, distribution of project marking assignments, providing online forms for marker and supervisors to complete, and to make marking feedback available to students at the end of project assessment.</p>
+<p>We use this website to manage Masters projects, including the advertisement of projects,
+	 distribution of project marking assignments, providing online forms for marker and supervisors 
+	 to complete, and to make marking feedback available to students at the end of project assessment.</p>
 
 
 <!-- <div class='well' style='background:white;border:1px solid #dfd7ca'> -->
@@ -25,42 +27,81 @@
   <div class="tab-content">
     <div role="tabpanel" class="tab-pane active" id="markers">
       <BR><H4>Dear Markers and Supervisors</H4>
-      <p>A huge thanks for the effort you've already put in to supervising students and are about to put in marking and grading their reports. These projects are a major part of the assessment of Masters students and an an equally major part of their learning experience during the course. The time you spend supporting this is hugely appreciated by both course coordinators and students (although it may not look like that during an actual viva!).</p>
-      <p>We appreciate that you might prefer to hand write your report. However, this system allows us to:</p>
+      <p>A huge thanks for the effort you've already put in to supervising students and are about 
+		  to put in marking and grading their reports. These projects are a major part of the 
+		  assessment of Masters students and an an equally major part of their learning experience 
+		  during the course. The time you spend supporting this is hugely appreciated by both course
+		  coordinators and students (although it may not look like that during an actual viva!).</p>
+
+      <p>We appreciate that you might prefer to hand write your report. However, this system 
+		  allows us to:</p>
       <ol>
       <li>keep all project marking data together in single location;</li> 
       <li>easily keep track of marking progress across the course; and</li>
       <li>easily distribute completed reports to students as part of their course feedback.</li>
       </ol> 
+	  
       <p>When you are assigned a report to complete, the process is as follows:</p>
       <ul>
-          <li>You will receive an email containing a link to each report you have been assigned, as well as a link to this home page.</li>
-          <li>The links in the email will take you directly to the correct report form for each student. </li>
-          <li>You <strong>must not forward or share emails containing marking links</strong> - they contain security tokens providing direct access to the report. See the security section below for details.</li>       
-          <li>Once you've started a report, you can <strong>save</strong> your progress in your report and come back to it.</li>
-          <li>Once you have finished your report, you <strong>must click on the submit button</strong>.</li>
-          <li>You will not be able to edit submitted reports but you <strong>will</strong> still be able to see your completed report and download a PDF file of the confidential report.</li>
-          <li>Once the project marking and examining has been completed, a link to download a public version of the report will be sent to the student. This public report excludes private comments to course organisers and the grade you assigned.</li>
+          <li>You will receive an email containing a link to your My Assignments page.</li>
+          <li>Your My Assignments page will contain a list of your assignments along with
+			   links to take you directly to the correct report form for each student. </li>
+          <li>You <strong>should not forward or share emails containing marking links</strong> - 
+			  they contain security tokens providing access to your assignments .</li>
+          <li>For extra security, we now also need you to <strong>enter a session token</strong>. 
+			  When you first access an assignment page, you will be forwarded to a page to enter
+			  a security token, which will be emailed to you.</li>
+          <li>Once you've started a report, you can <strong>save</strong> your progress
+			   in your report and come back to it.</li>
+          <li>Once you have finished your report, you <strong>must click on the 
+			  submit button</strong>.</li>
+          <li>You will not be able to edit submitted reports but you <strong>will</strong> still
+			   be able to see your completed report and download a PDF file of the confidential
+			    report.</li>
+          <li>Once the project marking and examining has been completed, a link to download 
+			  a public version of the report will be sent to the student. This public report 
+			  excludes private comments to course organisers and the grade you assigned.</li>
       </ul>
-      <p style='color:red'>Do not share emailed links to report marking forms! See the security tab for details</p>
     </div>
 
     <div role="tabpanel" class="tab-pane" id="students">
         <BR><H4>Dear Students</H4>
-        <p>This online app provides you access to advertised projects - please have a look at the drop down menu items above.</p>
-        <p>Your supervisors and examiners will also use this app to prepare their marking reports on your projects. Once the project examination process is completed, you will be emailed a link that will allow you to download their marking reports. These reports are a bit like a reviewer's comments on a scientific paper - they will give you information on what might be needed to improve your project and what skills you need to work on in the lab. They should be constructive and positive - they may sometimes also be a bit blunt at times, but that is common in the review process!</p>
+        <p>This online app provides you access to advertised projects - please have a look at the
+			 drop down menu items above.</p>
+        <p>Your supervisors and examiners will also use this app to prepare their marking reports
+			 on your projects. You can see the forms and marking criteria at 
+			 <a href={{=URL('criteria_and_forms')}}> this page</a></p>
+			 
+		<p>Once the project examination process is completed, you will be
+			 emailed a link that will allow you to download their marking reports. These reports 
+			 are a bit like a reviewer's comments on a scientific paper - they will give you 
+			 information on what might be needed to improve your project and what skills you 
+			 need to work on in the lab. They should be constructive and positive - they may 
+			 sometimes also be a bit blunt at times, but that is common in the review process!</p>
     </div>
     <div role="tabpanel" class="tab-pane" id="security">
       <BR><H4>Security of this system</H4>
-      <p>In order to access a marking assignment, either to provide a report or to download a released report, a user needs a link that pairs an assignment record number with the correct UUID4 access token. </p>
+      <p>In order to access a marking assignment, either to provide a report or to download 
+		  a released report, a user needs a link that pairs an assignment record number with 
+		  the correct UUID4 access token. </p>
       <ul>
-          <li>These tokens have 122 random bits: there are a vast number of unique identifiers (2<sup>122</sup> &asymp; 5.3 x 10<sup>36</sup>).</li>
-          <li>They are assigned randomly and automatically when assignments are generated and are stored securely in the marking database.</li>
-          <li>There is a staff access security token that allows markers and examiners to access forms to complete.</li>
-          <li>There is also a separate, different public access token that allows students to download PDFs of released reports.</li>
-          <li>The chances of finding any correct pairing of record and UUID4 is <strong>vanishingly small</strong> and finding one for a specific report is even less likely.</li>
+          <li>These tokens have 122 random bits: there are a vast number of unique 
+			  identifiers (2<sup>122</sup> &asymp; 5.3 x 10<sup>36</sup>).</li>
+          <li>They are assigned randomly and automatically when assignments are generated 
+			  and are stored securely in the marking database.</li>
+          <li>There is a staff access security token that allows markers and examiners to 
+			  access forms to complete. These pages are additionally secured using a session
+			  token - these will be emailed to the marker when they access a marking page.
+		  </li>
+          <li>There is also a separate, different public access token that allows students 
+			  to download PDFs of released reports.</li>
+          <li>The chances of finding any correct pairing of record and UUID4 is <strong>vanishingly
+			   small</strong> and finding one for a specific report is even less likely.</li>
       </ul>
-      <p>This system allow us to distribute marking and to give students access to reports without having to have user registration, but it does mean that the links to reports in emails will allow anyone to access the report. Therefore, <b style='color:red'>you should not forward the links to anyone else.</b></p>
+      <p>This system allow us to distribute marking and to give students access to reports 
+		  without having to have user registration. We use session tokens to provide a second
+		  factor for access but, <b style='color:red'>you should not forward the links to 
+		  anyone else.</b></p>
     </div>
   </div>
 </div>

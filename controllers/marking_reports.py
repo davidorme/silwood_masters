@@ -7,6 +7,7 @@ import os
 import csv
 import itertools
 import random
+import copy
 import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
@@ -679,7 +680,9 @@ def reset_two_factor_tokens():
     
     This controller resets 2FA session tokens. It is useful in debugging but should not
     be disabled in production as it resets timeout, making it easier to brute force the
-    session token.
+    session token. This is deliberately not behind @auth.requires_membership('admin') 
+    because a logged in admin automatically has access, and this function helps 
+    troubleshoot access for non-logged in users.
     """
     
     disabled = True
@@ -701,7 +704,9 @@ def my_assignments():
     capabilities!
     """
     
-    security = request.vars
+    # work with a copy of request vars here to avoid editing the actual values, which
+    # are used in redirect _next
+    security = copy.deepcopy(request.vars)
     
     # is the marker id valid
     if security['marker'] is None:
@@ -850,11 +855,15 @@ def write_report():
     
     # Get the form as html
     # - provide a save and a submit button
-    buttons =  [TAG.BUTTON('Save', _type="submit", _class="button btn btn-default",
-                           _style='padding: 10px 15px 10px 15px;width:100px', _name='save'),
+    buttons =  [TAG.BUTTON('Save', 
+                           _type="submit", _class="button btn btn-danger",
+                           _style='width:100px',
+                           _name='save'),
                 XML('&nbsp;')*5,
-                TAG.BUTTON('Submit', _type="submit", _class="button btn btn-default",
-                               _style='padding: 10px 15px 10px 15px;width:100px', _name='submit')]
+                TAG.BUTTON('Submit',
+                           _type="submit", _class="button btn btn-danger",
+                           _style='width:100px', 
+                           _name='submit')]
     
     form = assignment_to_sqlform(record, readonly, buttons)
         
@@ -901,17 +910,38 @@ def write_report():
                         UL([A(f.filename, _href=download_url(f.box_id)) 
                             for f in file_rows]))
         else:
-            files = CAT(H4("Files"), P("None of the expected submitted files "
-                                      f"({','.join(expected_files)}) are currently "
-                                       "associated with this assignment. Please contact the "
-                                       "postgraduate administrator.", _style='color:red'))
+            files = CAT(H4("Files"), P("The expected submitted files associated with this report "
+                                      f"({','.join(expected_files)}) have not yet been uploaded. "
+                                       "We often send around marking assignments before students "
+                                       "submit coursework, so they may be coming soon. If you have "
+                                       "been told the files have been submitted and are still seeing "
+                                       "this message, please contact the postgraduate administrator."))
     else:
         files = DIV()
     
     # Set the form title
     response.title = f"{record.student.student_last_name}: {record.marker_role_id.name}"
     
-    return dict(header=CAT(admin_warn, *header), form=CAT(*html), files=files)
+    # Save reminder
+    save_and_submit = DIV(B('Reminder: '), "Do not forget to ", B('save'), " your progress and ",
+                            B("submit"), " it when it is complete, using the buttons at the bottom "
+                            "of this page. Do not navigate away from "
+                            "this page without saving your changes! Once you have saved your "
+                            "work, you can return to your My Assignments page ", 
+                            A('here', 
+                              _href=URL('my_assignments', 
+                                        vars=dict(marker=marker.id,
+                                                  marker_access_token=marker.marker_access_token))),
+                             _class="alert alert-danger", _role="alert")
+    
+    my_assignments = P(A('Back to my assignments', 
+                         _href=URL('my_assignments', 
+                                   vars=dict(marker=marker.id,
+                                             marker_access_token=marker.marker_access_token))))
+    
+    return dict(header=CAT(admin_warn, *header), 
+                save_and_submit=save_and_submit,
+                form=CAT(*html), files=files)
 
 
 def submit_validation(form):
