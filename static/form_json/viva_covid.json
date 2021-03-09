@@ -137,6 +137,14 @@
 					"nrow": 3,
 					"required": true,
 					"info": "Be sure to ask whether the student felt there were any problems with their supervision during the project.<hr>"
+				},
+				{
+					"type": "comment",
+					"variable": "covid_comments",
+					"label": "COVID-19 Impacts",
+					"nrow": 3,
+					"required": true,
+					"info": "Please ask for and report a brief statement of the academic impacts of COVID-19 on the planned research.<hr>"
 				}
 			]
 		},
