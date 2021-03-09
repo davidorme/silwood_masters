@@ -814,7 +814,10 @@ def write_report():
         if record is None:
             session.flash = 'Unknown project marking record id provided'
             redirect(URL('index'))
-        
+    
+    # Get the marker record
+    marker = db.markers(record.marker)
+    
     # Access control - if the user is logged in as an admin, then
     # don't need to do any validation, otherwise use 2FA 
     
@@ -828,10 +831,7 @@ def write_report():
     else:
         
         admin_warn = ""
-        
-        # is there a staff access token and does it match the marker records
-        marker = db.markers(record.marker)
-    
+            
         if security['staff_access_token'] is None:
             session.flash = 'No staff access token provided'
             redirect(URL('index'))

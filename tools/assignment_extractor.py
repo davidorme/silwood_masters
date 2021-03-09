@@ -1,5 +1,6 @@
 import openpyxl
 import csv
+import simplejson
 import argparse
 
 """
@@ -9,8 +10,27 @@ the upload format for the marking system
 
 """
 
-def projects_to_assignments(datafile, outfile, years = None, presentations=None):
-
+def projects_to_assignments(datafile, outfile, years = None, presentations=None, role_map=None):
+    
+    """Project Data to assignment tool
+    
+    This script provides a tool to export data from the Project Data Excel workbook
+    into the upload format used for the marking system. The tool takes the path to that
+    workbook as an input and saves assignments to a named output file.
+    
+    The tool provides options to subset the data down to particular years and course
+    presentations. It also provides a way to customise the mapping from project roles
+    (e.g. Supervisor or Marker) to assignment roles: a supervisor might just have to 
+    complete a supervisor report, but a marker might have to mark a thesis and a
+    presentation and complete a viva. This data is provided as a JSON string mapping
+    columns in the Excel sheet to an array of assignment roles. For example, to only
+    generate thesis marking assignments:
+    
+    > role_map='{"marker_1": ["Marker"], "marker_2": ["Marker"]}'
+    
+    """
+    
+    
     wb = openpyxl.load_workbook(datafile, data_only=True)
 
     # Load staff details using values, which iterates over rows and build
@@ -44,13 +64,15 @@ def projects_to_assignments(datafile, outfile, years = None, presentations=None)
             projects.append(this_project)
 
     # Compile a set of assignments
-
-    role_map = {'supervisor_1': ['Supervisor'],
-                'supervisor_2': ['Supervisor'],
-                'supervisor_3': ['Supervisor'],
-                'marker_1': ['Marker', 'Presentation', 'Viva'],
-                'marker_2': ['Marker', 'Presentation']}
-
+    if role_map is None:
+        role_map = '''{"supervisor_1": ["Supervisor"],
+                       "supervisor_2": ["Supervisor"],
+                       "supervisor_3": ["Supervisor"],
+                       "marker_1": ["Marker", "Presentation", "Viva"],
+                       "marker_2": ["Marker", "Presentation"]}'''
+    
+    role_map = simplejson.loads(role_map)
+    
     assignments = []
 
     for this_proj in projects:
@@ -78,7 +100,7 @@ def projects_to_assignments(datafile, outfile, years = None, presentations=None)
                      'marker_last_name': role_staff['last_name'], 
                      'marker_email': role_staff['email'], 
                      'marker_role': this_assign, 
-                     'due_date': '2021-03-05',
+                     'due_date': '2021-03-29',
                      'project_role': this_role})
 
     output_columns = ['student_cid', 'course', 'course_presentation', 'academic_year',
@@ -99,9 +121,8 @@ def projects_to_assignments(datafile, outfile, years = None, presentations=None)
 if __name__ == '__main__':
     
     # initiate the parser
-    parser = argparse.ArgumentParser(description =
-         'Extract assignment details from the project database Excel file for upload '
-         'to the marking system')
+    parser = argparse.ArgumentParser(description = projects_to_assignments.__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     
     parser.add_argument('datafile', help = 'Path to Excel Projects Data file')
     
@@ -116,8 +137,13 @@ if __name__ == '__main__':
     parser.add_argument('--outfile', '-o',
                         type = str, 
                         help = 'Output file for assignments')
-    
+
+    parser.add_argument('--role_map', '-r',
+                        type = str, 
+                        help = 'JSON data defining the roles for each marker')
+
     args = parser.parse_args()
     
     projects_to_assignments(datafile=args.datafile, outfile=args.outfile, 
-                            years=args.years, presentations=args.presentations)
+                            years=args.years, presentations=args.presentations,
+                            role_map=args.role_map)
