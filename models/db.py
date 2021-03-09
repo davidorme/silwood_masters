@@ -119,8 +119,8 @@ auth.settings.reset_password_requires_verification = True
 
 if configuration.get('recaptcha.use'):
     auth.settings.captcha = Recaptcha2(request,
-                                       configuration.get('recaptcha.public_key'),
-                                       configuration.get('recaptcha.private_key'))
+                                       configuration.get('recaptcha.site_key'),
+                                       configuration.get('recaptcha.secret_key'))
 
 # -------------------------------------------------------------------------  
 # read more at http://dev.w3.org/html5/markup/meta.name.html               
