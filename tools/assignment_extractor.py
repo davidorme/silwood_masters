@@ -1,6 +1,7 @@
 import openpyxl
 import csv
 import simplejson
+import datetime
 import argparse
 
 """
@@ -10,7 +11,8 @@ the upload format for the marking system
 
 """
 
-def projects_to_assignments(datafile, outfile, years = None, presentations=None, role_map=None):
+def projects_to_assignments(datafile, outfile, due_date, 
+                            years = None, presentations=None, role_map=None):
     
     """Project Data to assignment tool
     
@@ -30,9 +32,13 @@ def projects_to_assignments(datafile, outfile, years = None, presentations=None,
     
     """
     
+    try:
+        due_date_formatted = datetime.date.fromisoformat(due_date)
+    except ValueError:
+        raise RuntimeError(f'due_date ({due_date}) not an ISO formatted date (2020-01-01)')
     
     wb = openpyxl.load_workbook(datafile, data_only=True)
-
+    
     # Load staff details using values, which iterates over rows and build
     # a dictionary keyed on display name to match to staff in the project data 
 
@@ -100,7 +106,7 @@ def projects_to_assignments(datafile, outfile, years = None, presentations=None,
                      'marker_last_name': role_staff['last_name'], 
                      'marker_email': role_staff['email'], 
                      'marker_role': this_assign, 
-                     'due_date': '2021-03-29',
+                     'due_date': due_date,
                      'project_role': this_role})
 
     output_columns = ['student_cid', 'course', 'course_presentation', 'academic_year',
@@ -126,6 +132,15 @@ if __name__ == '__main__':
     
     parser.add_argument('datafile', help = 'Path to Excel Projects Data file')
     
+    
+    parser.add_argument('--outfile', '-o',
+                        type = str, 
+                        help = 'Output file for assignments')
+    
+    parser.add_argument('--due_date', '-d',
+                        type = str, 
+                        help = 'Due date for extracted assignments')
+
     parser.add_argument('--years', '-y', nargs = '+', 
                         type = int, 
                         help = 'Year(s) to extract')
@@ -133,10 +148,6 @@ if __name__ == '__main__':
     parser.add_argument('--presentations', '-p', nargs = '+', 
                         type = str, 
                         help = 'Course presentation(s) to extract')
-    
-    parser.add_argument('--outfile', '-o',
-                        type = str, 
-                        help = 'Output file for assignments')
 
     parser.add_argument('--role_map', '-r',
                         type = str, 
@@ -144,6 +155,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    projects_to_assignments(datafile=args.datafile, outfile=args.outfile, 
+    projects_to_assignments(datafile=args.datafile, outfile=args.outfile, due_date=args.due_date,
                             years=args.years, presentations=args.presentations,
                             role_map=args.role_map)
