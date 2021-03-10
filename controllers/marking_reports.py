@@ -891,7 +891,8 @@ def write_report():
         
         # TODO - Would be neater to use ajax here rather than reloading the page
         # but parking that for another day.
-        redirect(URL('write_report', vars=security))
+        redirect(URL('write_report', vars=dict(record=security.record,
+                                               staff_access_token=security.staff_access_token)))
     
     # Style SQLFORM
     html = style_sqlform(record, form, readonly)
