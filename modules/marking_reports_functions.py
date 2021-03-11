@@ -398,7 +398,7 @@ def download_grades(ids):
 ## HTML Report writing functions shared by show_form and write_report
 ## --------------------------------------------------------------------------------
 
-def get_form_header(record, readonly, security=None):
+def get_form_header(record, readonly, security=None, show_due_date=False):
     """Takes a marking form definition and a marking assignment record
     and returns a standard header block for a form.
     """
@@ -411,7 +411,10 @@ def get_form_header(record, readonly, security=None):
                      ('Marker', '{marker.first_name} {marker.last_name}'),
                      ('Marker Role', '{marker_role_id.name}'),
                      ('Status', '{status}')]
-     
+    
+    if show_due_date:
+        header_rows.append(('Due Date', '{due_date}'))
+        
     header = [DIV(LABEL(l, _class='col-sm-3'),
                   DIV(v.format(**record), _class='col-sm-9'),
                   _class='row')

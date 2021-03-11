@@ -769,6 +769,7 @@ def my_assignments():
                                   db.assignments.academic_year,
                                   db.assignments.course_presentation_id,
                                   db.assignments.marker_role_id,
+                                  db.assignments.due_date,
                                   db.assignments.status
                               ],
                         maxtextlength=100,
@@ -820,6 +821,7 @@ def write_report():
     
     # Access control - if the user is logged in as an admin, then
     # don't need to do any validation, otherwise use 2FA 
+    show_due_date = False
     
     if auth.has_membership('admin'):
         
@@ -849,9 +851,10 @@ def write_report():
             readonly = True
         else:
             readonly = False
+            show_due_date = True
     
     # define the header block - this is for display so needs the rendered data
-    header = get_form_header(record, readonly, security=security)
+    header = get_form_header(record, readonly, security=security, show_due_date=show_due_date)
     
     # Get the form as html
     # - provide a save and a submit button
