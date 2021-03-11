@@ -27,9 +27,9 @@ else:
         (T('Criteria and Forms'), False, URL('marking_reports','criteria_and_forms'), []),
         # (T('Reports'), False, configuration.get('report_drive.link'), []),
         (T('Help'), False, None, [
-            (T('Overview'), False,  URL('marking_reports', 'help'), [])])
+            (T('Overview'), False,  URL('marking_reports', 'help'), []), 
             (T('Video tutorial'), False, URL('static', 'video/marking_howto.mp4'), [])
-        ]
+        ])]
     
     response.menu.extend(marking_reports_menu)
 
