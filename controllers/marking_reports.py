@@ -578,6 +578,37 @@ def load_assignments():
                 known_presentations=list(known_presentations.keys()))
 
 
+
+def who_are_my_markers():
+    
+    # This controller will never show previous years - so does not handle 
+    # the ?all URL argument
+    
+    # Stop students knowing about or searching on the other fields
+    db.assignments.id.readable = False
+    db.assignments.academic_year.readable = False
+    db.assignments.due_date.readable = False
+    db.assignments.status.readable = False
+    
+    # create the SQLFORM grid to show the existing assignments
+    grid = SQLFORM.grid(db.assignments.marker_role_id.belongs([1,3]),
+                        fields = [db.assignments.student,
+                                  db.assignments.course_presentation_id,
+                                  db.assignments.marker,
+                                  db.assignments.marker_role_id],
+                        maxtextlength=100,
+                        csv=False,
+                        deletable=False,
+                        create=False,
+                        details=False,
+                        editable=False,
+                        headers= {'assignments.course_presentation_id': 'Course Presentation',
+                                  'assignments.marker_role_id': 'Role'},
+                        paginate = 50)
+    
+    return dict(form=grid)
+
+
 ## --------------------------------------------------------------------------------
 ## MARKING ASSIGNMENTS
 ## - MARKER FUNCTIONS 
@@ -995,6 +1026,8 @@ def criteria_and_forms():
                                  sortable=False)
     
     return dict(table=marking_roles)
+
+
 
 
 def show_form():
