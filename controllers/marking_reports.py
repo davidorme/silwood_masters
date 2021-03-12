@@ -313,13 +313,20 @@ def assignments():
 
 @auth.requires_membership('admin')
 def edit_assignment():
+    """Edit assignment details
     
+    This controller allows an administrator to edit the details of
+    an assignment - the marker/role/etc.
+    
+    """
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
     db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', 
                                               '%(last_name)s, %(first_name)s (%(email)s)')
     
+    # allow access to previous records.
+    db.assignments._common_filter = None
     record = db.assignments[request.args[0]]
     
     db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', '%(last_name)s, %(first_name)s (%(email)s)')
@@ -329,9 +336,15 @@ def edit_assignment():
     else:
         delete_ok = False
     
+    if record.status in ['Submitted', 'Released']:
+        readonly = True
+    else:
+        readonly = False
+    
     form = SQLFORM(db.assignments,
                    deletable=delete_ok,
-                   record=record)
+                   record=record,
+                   readonly=readonly)
     
     if form.process(onvalidation=submit_validation).accepted:
         redirect(URL('assignments'))
