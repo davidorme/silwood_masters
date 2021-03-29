@@ -243,9 +243,18 @@ def assignments():
     if 'all' in request.vars.keys():
         db.assignments._common_filter = None
     
+    # Look for the maximum page size
+    if 'page_max' in request.vars.keys():
+        try:
+            paginate = int(request.vars['page_max'])
+        except ValueError():
+            paginate = 50
+    else:
+        paginate = 50
+    
     # Represent status as icon
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
-
+    
     # Link to a non-default report page and edit page. Note that this is an admin
     # only page and the write_report() controller allows logged in admin access
     # so no need to pass any security credentials beyond being logged in
@@ -281,7 +290,7 @@ def assignments():
                                       ('Download Confidential PDFs',lambda ids: zip_pdfs(ids, confidential=True)),
                                       ('Download Public PDFs',lambda ids: zip_pdfs(ids)),
                                       ('Download Grades',lambda ids: download_grades(ids))],
-                        paginate = 50)
+                        paginate = paginate)
     
     # Edit the HTML of the web2py table, as long as a search hasn't created a set with no records
     if grid.element('div.web2py_counter').components != ['']:
