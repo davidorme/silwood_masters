@@ -310,7 +310,7 @@ def download_grades(ids):
     for this_role, this_max in role_max.items():
         # get the role export details
         these_fields = role_export[this_role]
-        n_fields = len(these_details)
+        n_fields = len(these_fields)
         
         for this_copy in range(this_max):
             # get the tuple contents and increment the columns
