@@ -399,7 +399,7 @@ def download_grades(ids):
             ws.cell(row = this_row, column = role_slot[2], value = rec.assignments.marker)
             
             # get the form data
-            report_data = rec.get('assignment_data')
+            report_data = rec.get('assignments.assignment_data')
             
             # Fill in the fields to be exported
             for fld, col in role_slot[3]:
