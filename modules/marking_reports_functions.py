@@ -9,6 +9,7 @@ import re
 import openpyxl
 import simplejson as json
 from collections import Counter
+from itertools import groupby
 import fpdf
 import importlib
 from tempfile import NamedTemporaryFile
