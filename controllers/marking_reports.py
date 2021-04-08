@@ -17,6 +17,7 @@ from box import scan_box, download_url
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
 from gluon.storage import Storage
+from pydal.helpers.methods import smart_query
 
 def index():
 
@@ -237,8 +238,13 @@ def new_assignment():
 
 
 @auth.requires_membership('admin')
-def assignments():
-    
+def assignments_old():
+    """
+    This version used selectable to allow admins to select rows, but this doesn't
+    play well with large numbers of records and pagination. So the new version
+    uses the grid search to get subsets and the actions then use those search
+    keywords to run the actions.
+    """
     # look for the 'all' variable to allow the system to show older records.
     if 'all' in request.vars.keys():
         db.assignments._common_filter = None
@@ -318,6 +324,88 @@ def assignments():
                    ignore_common_filters=True).count()
     
     return dict(form=grid, old_count=old_count)
+
+
+@auth.requires_membership('admin')
+def assignments():
+    
+    # look for the 'all' variable to allow the system to show older records.
+    if 'all' in request.vars.keys():
+        db.assignments._common_filter = None
+        
+    # Represent status as icon
+    db.assignments.status.represent = lambda id, row: status_dict[row.status]
+    
+    # Link to a non-default report page and edit page. Note that this is an admin
+    # only page and the write_report() controller allows logged in admin access
+    # so no need to pass any security credentials beyond being logged in
+    links = [dict(header = 'Report',
+                  body = lambda row: A('View',_class='button btn btn-secondary',
+                                       _href=URL("marking_reports", "write_report",
+                                                 vars={'record': row.id}))),
+             dict(header = 'Assignment',
+                  body = lambda row: A('Edit',_class='button btn btn-secondary',
+                                       _href=URL("marking_reports", "edit_assignment", 
+                                                 args=row.id)))]
+    
+    # create the SQLFORM grid to show the existing assignments
+    # and set up actions to be applied to selected rows - these
+    # are powered by action functions defined below
+    
+    fields = [db.assignments.student,
+              db.assignments.course_presentation_id,
+              db.assignments.academic_year,
+              db.assignments.marker,
+              db.assignments.marker_role_id,
+              db.assignments.due_date,
+              db.assignments.status]
+    
+    grid = SQLFORM.grid(db.assignments,
+                        fields = fields,
+                        maxtextlength=100,
+                        csv=False,
+                        deletable=False,
+                        create=False,
+                        details=False,
+                        editable=False,
+                        links=links,
+                        headers= {'students.student_last_name': 'Student'},
+                        paginate = 50)
+    
+    # Create a form of buttons to handle the actions
+    button_actions = (("send", "Send to markers", release, {}),
+                      ("release", "Release to students", distribute, {}),
+                      ("cpdf", "Download Confidential PDFs", zip_pdfs, {'confidential': True}),
+                      ("pdf", "Download Public PDFs", zip_pdfs, {}),
+                      ("grades", "Download Grades", download_grades, {}))
+    
+    buttons = [INPUT(_type='submit', _name=nm, _value=vl, 
+                     _class='btn btn-secondary',
+                     _style='margin: 0px 5px',
+                     _callback=URL()
+                     )
+               for nm, vl, _, _ in button_actions]
+    
+    actions = FORM(*buttons)
+    
+    if actions.process().accepted:
+        
+        # Find the action from the post vars
+        _, _, action_func, action_args = [b for b in button_actions if b[0] in request.post_vars][0]
+        
+        # Pass the keywords currently in use by the SQLFORM.grid 
+        # back into the db to get the rows they select and hence the list of ids
+        records = db(smart_query(fields, request.get_vars.keywords)).select(db.assignments.id)
+        records = [r.id for r in records]
+        
+        # Feed those into the action function
+        action_func(ids=records, **action_args)
+        
+    # old records, turning off the common filter
+    old_count = db(db.assignments.academic_year < datetime.datetime.now().year,
+                   ignore_common_filters=True).count()
+    
+    return dict(form=grid, actions=actions, old_count=old_count)
 
 
 @auth.requires_membership('admin')
