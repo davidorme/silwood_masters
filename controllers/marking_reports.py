@@ -827,7 +827,7 @@ def authenticate():
         submit['_class'] = 'btn btn-secondary' 
         
     if form.process(onsuccess=None).accepted:
-        if form.vars.authentication_code == session.tf_code:
+        if form.vars.authentication_code.strip() == session.tf_code:
             session.tf_validated = True
             redirect(_next)
 
@@ -902,9 +902,6 @@ def my_assignments():
         header = P("The table below shows your ", B("current marking assignments"),
                    ". To also see records from previous years, click ",
                    A("here", _href=URL(vars=security)))
-    
-    
-    
     
     # Two factor authentication if not an admin following a link
     if not (auth.has_membership('admin') or session.tf_validated):
