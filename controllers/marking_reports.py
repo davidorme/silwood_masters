@@ -128,9 +128,18 @@ def download():
 @auth.requires_membership('admin')
 def markers():
     
+    # Provide a link to 'my assignments' pages
+    links =  [dict(header = 'Marker assignments',
+                   body = lambda row: A('[link]', #_class='button btn btn-secondary',
+                                        _href=URL("marking_reports", "my_assignments",
+                                                  vars={'marker': row.id,
+                                                        'marker_access_token': row.marker_access_token})))]
+    
     # don't allow deleting as the referencing to project marks will 
     # drop referenced rows from marking tables
+    
     form = SQLFORM.grid(db.markers, 
+                        links=links,
                         csv=False,
                         deletable=False)
     
@@ -765,6 +774,10 @@ def authenticate():
     marker = db.markers[marker]
     _next = request.vars['_next']
     
+    # Do not run authenticate on logged in admins
+    if auth.has_membership('admin'):
+        redirect(_next)
+    
     # (Re)set if no code yet exists or timeout has expired
     if (session.tf_code is None or 
         (session.tf_timeout is not None and datetime.datetime.now() > session.tf_timeout)):
@@ -831,7 +844,7 @@ def reset_two_factor_tokens():
     troubleshoot access for non-logged in users.
     """
     
-    disabled = True
+    disabled = False
     
     if disabled:
         session.flash = 'Resetting two factor session tokens is disabled'
@@ -889,9 +902,12 @@ def my_assignments():
         header = P("The table below shows your ", B("current marking assignments"),
                    ". To also see records from previous years, click ",
                    A("here", _href=URL(vars=security)))
-        
-    # Two factor authentication
-    if not session.tf_validated:
+    
+    
+    
+    
+    # Two factor authentication if not an admin following a link
+    if not (auth.has_membership('admin') or session.tf_validated):
         _next = URL(args=request.args, vars=request.vars)
         redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
     
