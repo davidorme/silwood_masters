@@ -829,6 +829,10 @@ def authenticate():
     if form.process(onsuccess=None).accepted:
         if form.vars.authentication_code.strip() == session.tf_code:
             session.tf_validated = True
+            # Store the marker tokens in the session - this is used to add a 
+            # menu item to go my assignments.
+            session.marker = marker.id
+            session.marker_access_token = marker.marker_access_token
             redirect(_next)
 
     return dict(html=form)

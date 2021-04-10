@@ -21,15 +21,23 @@ if request.function in ['wiki', 'manage_wikicontent', 'manage_wikimedia']:
 
 else:
     
-    # Generate the 
+    # Generate the menu
     marking_reports_menu = [
         (T('Project Proposals'), False, URL('marking_reports','project_proposals'), []),
         (T('Criteria and Forms'), False, URL('marking_reports','criteria_and_forms'), []),
-        # (T('Reports'), False, configuration.get('report_drive.link'), []),
         (T('Help'), False, None, [
             (T('Overview'), False,  URL('marking_reports', 'help'), []), 
             (T('Video tutorial'), False, URL('static', 'video/marking_howto.mp4'), [])
         ])]
+    
+    # If a user has two factor authenticated their marking assignment,
+    # provide a menu link
+    if session.tf_validated:
+        my_assign = (T('My Assignments'), False, 
+                      URL('marking_reports','my_assignments', 
+                          vars=dict(marker=session.marker,
+                                    marker_access_token=session.marker_access_token)), [])
+        marking_reports_menu.append(my_assign)
     
     response.menu.extend(marking_reports_menu)
 
