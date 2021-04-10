@@ -12,6 +12,13 @@
 		  need to register on this website.</p>
 		  <hr>
 	  {{pass}}
+	  {{if request.args(0) == 'login':}}
+	  <p><strong>Do not attempt to log in to complete marking assignments.</strong> This system does not
+		  use Imperial credentials and logging in is only required for administrators, project proposals 
+		  and use of the timetabling database.
+	  </p>
+		  <hr>
+	  {{pass}}
     {{=form}}
     {{if request.args(0)=='login' and not 'register' in auth.settings.actions_disabled:}}
     <a href="{{=URL('user/register')}}">{{=T('Register')}}</a>
