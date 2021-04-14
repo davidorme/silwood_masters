@@ -8,6 +8,7 @@ import csv
 import itertools
 import random
 import copy
+from itertools import groupby, chain
 import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
@@ -420,6 +421,63 @@ def assignments():
                    ignore_common_filters=True).count()
     
     return dict(form=grid, actions=actions, old_count=old_count)
+
+
+@auth.requires_membership('admin')
+def marker_progress():
+
+    # look for the 'all' variable to allow the system to show older records.
+    if 'all' in request.vars.keys():
+        db.assignments._common_filter = None
+    
+    db.markers._format = "%(last_name)s, %(first_name)s"
+    
+    status_count = db(db.assignments).select(
+                        db.assignments.marker, 
+                        db.assignments.marker_role_id, 
+                        db.assignments.marker_role_id.count().with_alias('n'),
+                        db.assignments.status,
+                        groupby=[db.assignments.marker, 
+                                 db.assignments.status,
+                                 db.assignments.marker_role_id])
+    
+    # Render names and sort by marker
+    status_count = list(status_count.render())
+    status_count.sort(key=lambda x: x.assignments.marker)
+
+    # Get a template count (not completed, completed) by marker role
+    count_template = db(db.marking_roles).select(db.marking_roles.name)
+    count_template = {r.name: ['',''] for r in count_template}
+
+    # Build the table
+    hdr = TR(*[TH(''), *[TH(x, _colspan=2, _width='20%') for x in count_template.keys()]])
+    subhdr = TR([TH('')] + [TH(SPAN('',_class="fa fa-times-circle",
+                                  _style="color:red;font-size: 1.3em;")), 
+    
+                            TH(SPAN('',_class="fa fa-check-circle",
+                                  _style="color:green;font-size: 1.3em;"))] *  len(count_template.keys()))
+    table = [hdr, subhdr]
+    
+    # Loop over the marker data
+    for marker, data in groupby(status_count, lambda x: x.assignments.marker):
+    
+        # Fill in a copy of the count template to fix order and gaps
+        marker_counts = copy.deepcopy(count_template)
+    
+        for this_count in data:
+            details = this_count.assignments
+            marker_counts[details.marker_role_id][details.status in ['Created', 'Released']] = this_count.n
+        
+        # Style the row 
+        row = [[TD(B(v[0]), _style='background-color:salmon') if v[0] else TD(v[0], _style='color:black'), 
+                TD(v[1], _style='color:black')] 
+               for v in marker_counts.values()]
+        row = list(chain(*row))
+        
+        table.append([TD(marker)] + row)
+    
+    # Return the formatted table
+    return dict(table=TABLE(table, _border=1))
 
 
 @auth.requires_membership('admin')

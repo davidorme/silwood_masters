@@ -1,0 +1,22 @@
+{{extend 'layout.html'}}
+<style>
+	tr td{
+	   text-align: right;
+	   padding-right: 12pt;
+	}
+	th{
+	   text-align: center;
+	}
+	tr td:nth-child(1) {
+	   text-align: left;
+	}
+</style>
+
+
+
+{{=H2('Marker progress')}}
+
+
+{{=P('The table below shows counts of completed and uncompleted reports by marker')}}
+
+{{=table}}
