@@ -383,8 +383,8 @@ def assignments():
                         paginate = 50)
     
     # Create a form of buttons to handle the actions
-    button_actions = (("send", "Send to markers", release, {}),
-                      ("release", "Release to students", distribute, {}),
+    button_actions = (("send", "Send to markers", distribute, {}),
+                      ("release", "Release to students", release, {}),
                       ("cpdf", "Download Confidential PDFs", zip_pdfs, {'confidential': True}),
                       ("pdf", "Download Public PDFs", zip_pdfs, {}),
                       ("grades", "Download Grades", download_grades, {}))
