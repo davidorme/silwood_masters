@@ -362,7 +362,8 @@ def assignments():
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
     
-    fields = [db.assignments.student,
+    fields = [db.assignments.id,
+              db.assignments.student,
               db.assignments.course_presentation_id,
               db.assignments.academic_year,
               db.assignments.marker,
@@ -402,6 +403,9 @@ def assignments():
         
         # Find the action from the post vars
         _, _, action_func, action_args = [b for b in button_actions if b[0] in request.post_vars][0]
+        
+        
+        print(request.get_vars.keywords)
         
         # Pass the keywords currently in use by the SQLFORM.grid 
         # back into the db to get the rows they select and hence the list of ids
@@ -1006,6 +1010,190 @@ def my_assignments():
     return dict(name=marker.first_name + " " + marker.last_name, header=header, form=grid)
 
 
+def my_students():
+    
+    """
+    This controller allows a supervisor to access a table of students and hence
+    a link to the overall reports on their performance
+    """
+    
+    # work with a copy of request vars here to avoid editing the actual values, which
+    # are used in redirect _next
+    security = copy.deepcopy(request.vars)
+    
+    # is the marker id valid
+    if security['marker'] is None:
+        session.flash = 'No marker id provided'
+        redirect(URL('index'))
+    else:
+        # Find the marker
+        marker = db.markers(int(security['marker']))
+        
+        if marker is None:
+            session.flash = 'Unknown marker id provided'
+            redirect(URL('index'))
+    
+    # is there a matching access token
+    if security['marker_access_token'] is None:
+        session.flash = 'No marker access token provided'
+        redirect(URL('index'))
+    else:
+        access_token = security['marker_access_token']
+        
+        if marker.marker_access_token != access_token:
+            session.flash = 'Marker access token invalid'
+            redirect(URL('index'))
+    
+    # Two factor authentication if not an admin following a link
+    if not (auth.has_membership('admin') or session.tf_validated):
+        _next = URL(args=request.args, vars=request.vars)
+        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    
+    # and edit representations
+    db.assignments.status.represent = lambda id, row: status_dict[row.status]
+    
+    # link to a non-default new edit page
+    links = [dict(header = 'Report', 
+                  body = lambda row: A('View',
+                                       _class='button btn btn-secondary',
+                                       _href=URL("marking_reports", "presentation_overview", 
+                                                 vars={'marker': marker.id, 
+                                                       'marker_access_token':marker.marker_access_token,
+                                                       'cid': row.student,
+                                                       'presentation': row.course_presentation_id,
+                                                       'year': row.academic_year
+                                                       }),
+                                       _target='_blank'))]
+    
+    # This is automatically all years.
+    db.assignments._common_filter = None
+    
+    # create the SQLFORM grid to show students the marker has supervised
+    grid = SQLFORM.grid((db.assignments.marker == marker) & 
+                        (db.assignments.marker_role_id == db.marking_roles.id) & 
+                        (db.marking_roles.name == 'Supervisor'),
+                        fields = [db.assignments.student,
+                                  db.assignments.academic_year,
+                                  db.assignments.course_presentation_id
+                                  ],
+                        maxtextlength=100,
+                        csv=False,
+                        deletable=False,
+                        create=False,
+                        details=False,
+                        editable=False,
+                        links=links,
+                        headers= {'students.student_last_name': 'Student'},
+                        paginate=False)
+    
+    return dict(name=marker.first_name + " " + marker.last_name, form=grid)
+
+
+def presentation_overview():
+    
+    """
+    This controller presents a summary of the marking on a particular course
+    presentation, allowing admin and supervisors to view marking documents
+    and performances
+    """
+    
+    # work with a copy of request vars here to avoid editing the actual values, which
+    # are used in redirect _next
+    security = copy.deepcopy(request.vars)
+    
+    # is the marker id valid
+    if security['marker'] is None:
+        session.flash = 'No marker id provided'
+        redirect(URL('index'))
+    else:
+        # Find the marker
+        marker = db.markers(int(security['marker']))
+        
+        if marker is None:
+            session.flash = 'Unknown marker id provided'
+            redirect(URL('index'))
+    
+    # is there a matching access token
+    if security['marker_access_token'] is None:
+        session.flash = 'No marker access token provided'
+        redirect(URL('index'))
+    else:
+        access_token = security['marker_access_token']
+        
+        if marker.marker_access_token != access_token:
+            session.flash = 'Marker access token invalid'
+            redirect(URL('index'))
+    
+    # Two factor authentication if not an admin following a link
+    if not (auth.has_membership('admin') or session.tf_validated):
+        _next = URL(args=request.args, vars=request.vars)
+        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    
+    # and edit representations
+    db.assignments.status.represent = lambda id, row: status_dict[row.status]
+    
+    # This is automatically all years.
+    db.assignments._common_filter = None
+    
+    rows = db((db.assignments.student == security['cid']) & 
+              (db.assignments.course_presentation_id == security['presentation']) & 
+              (db.assignments.academic_year == security['year'])).select()
+
+    if rows:
+        
+        content = [(TR(TH('Marking Role'), 
+                       TH('Marker'),
+                       TH('Status'),
+                       TH('Grades'),
+                       TH('Report')))]
+        
+        # Create a summary table
+        for idx, this_row in enumerate(rows):
+            
+            # now render it to get representations of ids etc
+            rend_row = rows.render(idx)
+            
+            if this_row.status in ['Submitted', 'Released']:
+                
+                # Extract the exported grades from the row 
+                display_grades = this_row.marker_role_id.form_json['grade_export']
+                display_vals = [this_row.assignment_data[x] for x in display_grades]
+                
+                grades = [P(f'{nm}: {gr}') for nm, gr in zip(display_grades, display_vals)]
+                grades = DIV(*grades)
+                
+                # Create a link to the report
+                link = A('Link', _href=URL('write_report', 
+                                           vars={'record': this_row.id,
+                                                 'supervisor_id': marker.id,
+                                                 'staff_access_token': marker.marker_access_token}),
+                                _target='_blank')
+            else:
+                grades = 'Not completed'
+                link = "Not available"
+            
+            # Extend the content 
+            content.append((TR(TD(rend_row.marker_role_id),
+                               TD(rend_row.marker),
+                               TD(rend_row.status),
+                               TD(grades),
+                               TD(link))))
+        
+        # Use the last row to get a header block
+        header = TABLE(TR(TD('Student:'), TD(rend_row.student)),
+                       TR(TD('Course Presentation:'), TD(rend_row.course_presentation_id)),
+                       TR(TD('Academic Year:'), TD(rend_row.academic_year)),
+                       _class='table table-striped')
+                           
+        # Render the content as a table
+        content = TABLE(*content, _class='table')
+    else:
+        session.flash = 'Unknown presentation details'
+        redirect(URL('index'))
+    
+    return dict(header=header, content=content)
+
+
 def write_report():
     
     """
@@ -1051,6 +1239,28 @@ def write_report():
                           "Please do not do so lightly.", 
                           _class="alert alert-danger", _role="alert")
         readonly = False
+    
+    elif security['supervisor_id'] is not None:
+        
+        admin_warn = ""
+        
+        # Provide supervisor access to completed reports
+        supervisor = db.markers(int(security['supervisor_id']))
+        
+        if security['staff_access_token'] is None:
+            session.flash = 'No staff access token provided'
+            redirect(URL('index'))
+        
+        if supervisor.marker_access_token != security['staff_access_token']:
+            session.flash = 'Staff access token invalid'
+            redirect(URL('index'))\
+
+        if record.status not in ['Submitted','Released']:
+            session.flash = 'Marking not yet submitted'
+            redirect(URL('index'))
+        
+        readonly = True
+        
     else:
         
         admin_warn = ""
@@ -1062,17 +1272,18 @@ def write_report():
             if marker.marker_access_token != security['staff_access_token']:
                 session.flash = 'Staff access token invalid'
                 redirect(URL('index'))
-    
-        # Two factor authentication
-        if not session.tf_validated:
-            _next = URL(args=request.args, vars=request.vars)
-            redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
-    
+        
         if record.status in ['Submitted','Released']:
             readonly = True
         else:
             readonly = False
             show_due_date = True
+    
+    # Two factor authentication
+    if not (session.tf_validated or auth.has_membership('admin')):
+        _next = URL(args=request.args, vars=request.vars)
+        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    
     
     # define the header block - this is for display so needs the rendered data
     header = get_form_header(record, readonly, security=security, show_due_date=show_due_date)
@@ -1148,16 +1359,19 @@ def write_report():
     response.title = f"{record.student.student_last_name}: {record.marker_role_id.name}"
     
     # Save reminder
-    save_and_submit = DIV(B('Reminder: '), "Do not forget to ", B('save'), " your progress and ",
-                            B("submit"), " it when it is complete, using the buttons at the bottom "
-                            "of this page. Do not navigate away from "
-                            "this page without saving your changes! Once you have saved your "
-                            "work, you can return to your My Assignments page ", 
-                            A('here', 
-                              _href=URL('my_assignments', 
-                                        vars=dict(marker=marker.id,
-                                                  marker_access_token=marker.marker_access_token))),
-                             _class="alert alert-danger", _role="alert")
+    if not readonly:
+        save_and_submit = DIV(B('Reminder: '), "Do not forget to ", B('save'), " your progress and ",
+                                B("submit"), " it when it is complete, using the buttons at the bottom "
+                                "of this page. Do not navigate away from "
+                                "this page without saving your changes! Once you have saved your "
+                                "work, you can return to your My Assignments page ", 
+                                A('here', 
+                                  _href=URL('my_assignments', 
+                                            vars=dict(marker=marker.id,
+                                                      marker_access_token=marker.marker_access_token))),
+                                 _class="alert alert-danger", _role="alert")
+    else:
+        save_and_submit = DIV()
     
     my_assignments = P(A('Back to my assignments', 
                          _href=URL('my_assignments', 

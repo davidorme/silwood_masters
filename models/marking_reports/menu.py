@@ -31,13 +31,19 @@ else:
         ])]
     
     # If a user has two factor authenticated their marking assignment,
-    # provide a menu link
+    # provide a menu link to assignments and students
     if session.tf_validated:
         my_assign = (T('My Assignments'), False, 
                       URL('marking_reports','my_assignments', 
                           vars=dict(marker=session.marker,
                                     marker_access_token=session.marker_access_token)), [])
         marking_reports_menu.append(my_assign)
+        
+        my_students = (T('My Students'), False, 
+                      URL('marking_reports','my_students', 
+                          vars=dict(marker=session.marker,
+                                    marker_access_token=session.marker_access_token)), [])
+        marking_reports_menu.append(my_students)
     
     response.menu.extend(marking_reports_menu)
 
