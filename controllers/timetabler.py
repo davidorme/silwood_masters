@@ -7,6 +7,8 @@ import gluon
 import datetime
 from dateutil import parser
 import pypandoc
+import openpyxl
+from tempfile import NamedTemporaryFile
 import markdown # gluon provides MARKDOWN but lacks extensions.
 import os
 
@@ -721,6 +723,155 @@ def room_grid():
     year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
     
     return dict(year_data=year_data)
+
+
+def download_module_grid():
+    
+    """
+    Converts the module grid into an Excel spreadsheet. This is not a great
+    format for overlapping calendar events, but seems to be a pragmatic choice
+    for a grid for playing with the layout. A calendar application would be 
+    better but this is quicker to implement.
+    """
+    
+    # Extract the data for modules
+    modules = db((db.modules.is_series == False)
+                 ).select(db.modules.id,  
+                          db.modules.title, 
+                          db.modules.courses, 
+                          db.modules.is_series, 
+                          db.modules.placeholder_week, 
+                          db.modules.placeholder_n_weeks,
+                          orderby=db.modules.placeholder_week)
+    
+    # Map course ids to names (might be a way to do this in the query)
+    courses = db(db.courses).select(db.courses.id, db.courses.abbrname)
+    course_map = {rw.id: rw.abbrname for rw in courses} 
+    
+    # Pack the modules into courses
+    packing = {rw.id: [] for rw in courses}
+    
+    for ky in packing:
+        packing[ky] = {wk: [] for wk in range(1,53)}
+    
+    # Share colours across modules
+    colours = itertools.cycle(['8dd3c7','ffffb3','bebada','fb8072','80b1d3',
+                               'fdb462','b3de69','fccde5','d9d9d9'])
+    
+    for mod in modules:
+        
+        wk_range = range(mod.placeholder_week, 
+                         mod.placeholder_week + mod.placeholder_n_weeks)
+        
+        # Pack modules into weeks. There can be multiple modules per week,
+        # so a list is used to hold the modules. Modules can also span weeks 
+        # and these columns will be merged (within courses). To do this,
+        # the first week will contain a tuple (name, n_weeks, col) and then a 
+        # placeholder of None is used to 'hold' that column open in the list
+        
+        # Also need to ensure that the module is always in the same index - 
+        # you can't just append as modules can run past the end of a blocking
+        # module in an earlier index and then drop back to a lower index.
+        
+        col = next(colours)
+        
+        for crs in mod.courses:
+            for week in wk_range:
+                
+                if week == mod.placeholder_week:
+                    mod_idx = len(packing[crs][week])
+                    packing[crs][week].append((mod.title, mod.placeholder_n_weeks, col))
+                else:
+                    if not packing[crs][week]:
+                        packing[crs][week] = [None] * (mod_idx + 1)
+                    else:
+                        packing[crs][week].append(None)
+    
+    # Find the most modules in one week
+    max_mod = max((len(packing[c][w]) for c in packing for w in range(1,53)))
+    
+    # Now create the workbook instance to be populated
+    wb = openpyxl.Workbook()
+    hdrfont = openpyxl.styles.Font(bold=True)
+    mod_align = openpyxl.styles.Alignment(horizontal='general',
+                                          vertical='top',
+                                          text_rotation=0,
+                                          wrap_text=True,
+                                          shrink_to_fit=False,
+                                          indent=0)
+    
+    # name the worksheet and add a heading
+    ws = wb.active
+    ws.title = 'Module Grid'
+    ws.cell(row=1, column=1, value= f'Module grid downloaded {datetime.date.today().isoformat()}')
+    ws.cell(row=1, column=1).font = hdrfont
+    
+    # Header row
+    hdr_row = 3
+    
+    # Add week numbers
+    cell = ws.cell(row=hdr_row, column=1)
+    cell.value = 'Week'
+    cell.font = hdrfont
+    
+    for week in range(1,52):
+        cell = ws.cell(row=hdr_row + week, column=1)
+        cell.value = week
+        cell.font = hdrfont
+    
+    # Add course data
+    current_left_col = 2
+    
+    for crs_id, crs_weeks in packing.items():
+        
+        cell = ws.cell(row=hdr_row, column=current_left_col)
+        cell.value = course_map[crs_id]
+        cell.font = hdrfont
+        cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+        
+        ws.merge_cells(start_row=hdr_row, start_column=current_left_col, 
+                       end_row=hdr_row, end_column=current_left_col + max_mod - 1)
+        
+        for this_week, these_modules in crs_weeks.items():
+            
+            for mod_idx, mod_data in enumerate(these_modules):
+                
+                # Check the this module -  None placeholder or (name, n_weeks, col) for merged cells
+                if mod_data is None:
+                    pass
+                else:
+                    # unpack the components
+                    mod_name, n_weeks, mod_col = mod_data
+                    
+                    cell = ws.cell(row=hdr_row + this_week, column=current_left_col + mod_idx)
+                    cell.value = mod_name
+                    cell.alignment = mod_align
+                    cell.fill = openpyxl.styles.fills.PatternFill("solid", fgColor=mod_col)
+                    
+                    if n_weeks > 1:
+                        
+                        ws.merge_cells(start_row=hdr_row + this_week, 
+                                       start_column=current_left_col + mod_idx, 
+                                       end_row=hdr_row + this_week + n_weeks - 1, 
+                                       end_column=current_left_col + mod_idx)
+        
+        current_left_col += max_mod
+    
+    # Sizing of cells
+    for col in range(2, len(course_map) * max_mod + 2):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 15
+    
+    # Prep the payload to be returned
+    attachment = 'attachment;filename=Module_Grid_{}.xlsx'.format(datetime.date.today().isoformat())
+    
+    with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            
+            raise HTTP(200, tmp.read(),
+                       **{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                          'Content-Disposition':attachment + ';'})
+
 
 ## Admin
 
