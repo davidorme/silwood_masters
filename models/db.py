@@ -38,6 +38,9 @@ db = DAL(configuration.get('db.uri'),
          migrate_enabled=configuration.get('db.migrate'),
          check_reserved=['all'])
 
+# Use the database for sessions, rather than spamming the inodes
+session.connect(request, response, db)
+
 # Store db and config in the current object so it can be imported by modules
 from gluon import current
 current.db = db

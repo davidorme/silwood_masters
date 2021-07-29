@@ -99,11 +99,13 @@ sudo -H pip install -r requirements.txt
 sudo -H pip install ipython
 ```
 
-* The application uses the open source font DejaVu for producing PDFs using the `fpdf` package. This is a bit old and simple bit is quick and lightweight. Ubuntu often includes some of the font family in `/usr/share/fonts/truetype` but check to see if `DejaVuSansCondensed.ttf` and `DejaVuSansCondensed-Bold.ttf` are there. If not:
+* The application uses the open source font DejaVu for producing PDFs using the `fpdf` package. The package is a bit old and simple but is quick and lightweight. Ubuntu often includes some of the font family in `/usr/share/fonts/truetype` but check to see if `DejaVuSansCondensed.ttf` and `DejaVuSansCondensed-Bold.ttf` are there. If not:
 
 ```sh
 sudo apt-get install ttf-dejavu
 ```
+
+
 
 * You need to set an admin user password for web2py in order to access the web2py admin application and the admin pages for `marking_reports`. You will need to make a note of what you enter here - once it is set it is not recoverable!
 
@@ -171,3 +173,10 @@ sudo certbot --nginx -d mydomainame.com -d www.mydomainame.com
 ```
 
 * Restart the webserver as above and you should now have a secure HTTPS connection to the application. The [certbot website](https://certbot.eff.org/) has some neat tools to check whether it is working correctly.
+
+
+## Box integration
+
+The application uses Box to store student reports securely. This requires creating a Box App that provides access to the files. There are several types but JWT allows for token based access that does not require that users have a Box account of their own. So to enable this, a user with a Box account needs to set up a Box App using JWT. The app should have permission to read and download files but doesn't need any larger scope. It does need to have the advanced settings to "Generate User Access Tokens". You should also generate a new RSA key, which will automatically download a config file to allow remote access
+
+Creating this app will generate a config file for accessing the Box app remotely. , which will need to be included in the web application `private` folder and also linked in the web application `appconfig.ini`
