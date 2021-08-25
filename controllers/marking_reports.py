@@ -608,7 +608,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Unknown marking roles'),
                        P('These roles are found in the file but are not recognized: '),
-                       P(_format_error(unknown_roles))),
+                       P(_format_error(unknown_roles)),
                        P('Valid values are: ', ', '.join(known_roles.keys())))
         
         # - course presentations are recognized?
