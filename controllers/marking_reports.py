@@ -628,7 +628,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Invalid student emails'),
                        P('The following are not well formatted emails: '), 
-                       P(_format_error(set(bad_emails)))
+                       P(_format_error(set(bad_emails))))
             
         # bad marker emails
         bad_emails = [IS_EMAIL()(x) for x in fields['marker_email']]
