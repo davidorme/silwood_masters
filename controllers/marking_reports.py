@@ -577,6 +577,17 @@ def load_assignments():
         # rather than having an iterator that runs through once
         data = [row for row in data]
         
+        # Look for blank rows (all empty strings)
+        blank = [''.join(row.values()) == '' for row in data]
+        
+        if sum(blank):
+            
+            html = CAT(html,
+                       H4('Blank lines'),
+                       P(f'The input file contains {sum(blank)} blank rows.'))
+            
+            data = [row for row, bl in zip(data, blank) if not bl]
+        
         # - repackage the data into fields to do checks
         fields = {key:[item[key] for item in data] for key in headers}
         
