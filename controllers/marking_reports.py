@@ -546,6 +546,16 @@ def load_assignments():
                         ,_class='col-sm-2'),
                     _class='row'))
     
+    
+    def _format_error(lst):
+        """['', 'afdskh'] --> '"","afdskh"'
+        """
+        
+        lst = [f'"{vl}"' for vl in lst]
+        return ','.join(lst)
+        
+        
+        
     if form.accepts(request.vars):
         
         # get the data from the request, converting from uploaded bytes into StringIO
@@ -598,7 +608,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Unknown marking roles'),
                        P('These roles are found in the file but are not recognized: '),
-                       P(', '.join(unknown_roles)),
+                       P(_format_error(unknown_roles))),
                        P('Valid values are: ', ', '.join(known_roles.keys())))
         
         # - course presentations are recognized?
@@ -608,7 +618,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Unknown course presentations'),
                        P('These course presentations are found in the file but are not recognized:'),
-                       P(', '.join(unknown_presentations)),
+                       P(_format_error(unknown_presentations)),
                        P('Valid values are: ', ', '.join(known_presentations.keys())))
         
         # bad student emails
@@ -618,7 +628,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Invalid student emails'),
                        P('The following are not well formatted emails: '), 
-                       P(', '.join(set(bad_emails))))
+                       P(_format_error(set(bad_emails)))
             
         # bad marker emails
         bad_emails = [IS_EMAIL()(x) for x in fields['marker_email']]
@@ -627,7 +637,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Invalid marker emails'),
                        P('The following are not well formatted emails: '),
-                       P(', '.join(set(bad_emails))))
+                       P(_format_error(set(bad_emails))))
         
         # due dates not formatted correctly
         bad_dates = [IS_DATE()(x) for x in fields['due_date']]
@@ -636,7 +646,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Invalid due dates'),
                        P('The following are not well formatted dates: '),
-                       P(', '.join(set(bad_dates))))
+                       P(_format_error(set(bad_dates))))
         
         # non numeric years
         years = set(fields['academic_year'])
@@ -645,7 +655,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Invalid year'),
                        P('The following are not valid years: '),
-                       P(', '.join(set(bad_years))))
+                       P(_format_error(set(bad_years))))
         
         # non numeric CID
         cids = set(fields['student_cid'])
@@ -654,7 +664,7 @@ def load_assignments():
             html = CAT(html,
                        H4('Invalid student CID numbers'),
                        P('The following are not valid CIDs: '),
-                       P(', '.join(set(bad_cids))))
+                       P(_format_error(set(bad_cids))))
         
         # empty names or just whitespace
         names = set(fields['student_first_name'] + fields['student_last_name']+
@@ -707,9 +717,9 @@ def load_assignments():
             html = CAT(html,
                        H4('Inconsistent student records'),
                        P('The students include existing CID numbers with incongruent names and  '
-                         'courses: ', 
-                         [f"{st[0]} ({st[1]} {st[3]}, {st[3]})"
-                          for st in bad_student_records]))
+                         'courses: '), 
+                       P(_format_error([f"{st[0]} ({st[1]} {st[3]}, {st[3]})"
+                                        for st in bad_student_records])))
         
         # Staff
         # extract unique staff entries
@@ -740,8 +750,9 @@ def load_assignments():
         if len(bad_staff_records) > 0:
             html = CAT(html,
                        H4('Inconsistent marker records'),
-                       P('The marker data includes incongruent marker data:', 
-                         [f"{st[0]} {st[1]}, ({st[2]})" for st in bad_staff_records]))
+                       P('The marker data includes incongruent marker data:'), 
+                       P(_format_error([f"{st[0]} {st[1]}, ({st[2]})" 
+                                        for st in bad_staff_records])))
         
         # Any problems detected
         if html != '':
