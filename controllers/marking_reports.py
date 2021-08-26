@@ -13,7 +13,7 @@ import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
                                        assignment_to_sqlform, style_sqlform, FoldingTOC)
-from box import scan_box, download_url
+from box_files import scan_box, download_url
 
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
