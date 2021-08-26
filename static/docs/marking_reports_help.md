@@ -33,9 +33,9 @@ Once the project marking reports have been submitted, the two markers collaborat
 
 ## Marking details
 
-We distribute links to assessment report forms by email, which will contain a list of individual links for each student and assessment type. These links contain a security token that allows a user to access the form: **you must not share these links with  other people**. The actual reports can be found [here](REPORT_FOLDER.LINK).
+We distribute links to assessment report forms by email, which will contain a list of individual links for each student and assessment type. These links contain a security token that allows a user to access the form: **you must not share these links with  other people**. The actual reports will be linked from each this assessment form.
 
-Each link will take you to the appropriate assessment form. The form will have instructions at the top along with a link to the appropriate marking criteria. You may <strong>save</strong> your marking at any time and the link will take you back to your progress so far. When you have completed the report, press the <strong>submit</strong> button: you will be forwarded to a static version of the report that contains a link to download a PDF.
+Each link will take you to the appropriate assessment form. The form will have instructions at the top along with a link to the appropriate marking criteria and the submitted report. You may <strong>save</strong> your marking at any time and the link will take you back to your progress so far. When you have completed the report, press the <strong>submit</strong> button: you will be forwarded to a static version of the report that contains a link to download a PDF. 
 
 ## Open assessment
 

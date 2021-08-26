@@ -30,14 +30,7 @@ def help():
     
     with open(filepath, encoding="utf-8-sig") as help_file:
         
-        # OK - this is a hack. Simply reading and displaying static content from MD is
-        # straightforward but now there is a dynamic element from the config. The right
-        # way to do this would be either to write a markdown generic.view handler or
-        # move the page to HTML and use the templating. But this is quicker and maintains
-        # the MD for mostly static use.
-        
         help_doc = help_file.read()
-        help_doc = help_doc.replace('REPORT_FOLDER.LINK', configuration.get('report_drive.link'))
         help_doc = XML(markdown.markdown(help_doc))
     
     return dict(help_doc=help_doc)
