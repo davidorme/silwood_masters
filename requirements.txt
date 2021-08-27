@@ -8,4 +8,5 @@ fpdf
 openpyxl
 simplejson
 html2text
-boxsdk[jwt]
+# boxsdk[jwt]# - retired
+Office365-REST-Python-Client
