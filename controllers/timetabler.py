@@ -88,7 +88,8 @@ def courses_table():
 
 
 def college_dates_table():
-    """Presents a view of college dates. Only admins can edit, delete or add.
+    """Presents a view of college dates. Only admins can edit or add. These are 
+    not deletable because some timetabling features rely on key dates in here.
     """
     
     db.college_dates.id.readable = False
@@ -97,7 +98,8 @@ def college_dates_table():
     
     form = SQLFORM.grid(db.college_dates,
                         editable=is_admin,
-                        deletable=is_admin,
+                        details=False,
+                        deletable=False,
                         create=is_admin, 
                         csv=is_admin)
     
