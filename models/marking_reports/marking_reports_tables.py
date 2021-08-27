@@ -99,34 +99,34 @@ db.define_table('assignments',
 # of presentation and role. The unique id provides a permanent reference to retrieve
 # file details from the Sharepoint API
 
-# db.define_table('marking_files',
-#                 Field('unique_id', length=64),
-#                 Field('filename', 'string'),
-#                 Field('relative_url', 'string'),
-#                 Field('student_cid', 'integer'),
-#                 Field('academic_year', 'integer'),
-#                 Field('marker_role_id', 'reference marking_roles'),
-#                 Field('course_presentation_id', 'reference presentations'))
-
-# This table stores data about the files held in Box that are to be provided 
-# to markers. Typically, this is thesis files to Markers, but could be any 
-# combination of presentation and role. The directory structure is used to
-# identify the file and then the box unique id provides a permanent reference 
-# to retrieve file details.
-
 # The order here is a little bit arbitrary, but since the year and role are
 # unlikely to change, they come further down the structure
 
 # 'EEC_MSc/2020/Marker/Orme_EEC_MSc_00206010.pdf'
 
-db.define_table('marking_files_box',
-                Field('box_id', 'integer'),
+db.define_table('marking_files',
+                Field('unique_id', length=64),
                 Field('filename', 'string'),
-                Field('filesize', 'integer'),
-                Field('student', 'reference students'),
+                Field('relative_url', 'string'),
+                Field('student_cid', 'integer'),
                 Field('academic_year', 'integer'),
-                Field('presentation_id', 'reference presentations'),
-                Field('marker_role_id', 'reference marking_roles'))
+                Field('marker_role_id', 'reference marking_roles'),
+                Field('course_presentation_id', 'reference presentations'))
+
+# # This version of the table stores data about the files held in Box that are to be provided
+# # to markers via BOX. Typically, this is thesis files to Markers, but could be any
+# # combination of presentation and role. The directory structure is used to
+# # identify the file and then the box unique id provides a permanent reference
+# # to retrieve file details.
+#
+# db.define_table('marking_files_box',
+#                 Field('box_id', 'integer'),
+#                 Field('filename', 'string'),
+#                 Field('filesize', 'integer'),
+#                 Field('student', 'reference students'),
+#                 Field('academic_year', 'integer'),
+#                 Field('presentation_id', 'reference presentations'),
+#                 Field('marker_role_id', 'reference marking_roles'))
 
 ## -----------------------------------------------------------------------------
 ## Project proposals

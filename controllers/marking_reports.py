@@ -13,7 +13,7 @@ import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
                                        assignment_to_sqlform, style_sqlform, FoldingTOC)
-from box_files import scan_box, download_url
+import sharepoint
 
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
@@ -29,6 +29,10 @@ def help():
     filepath = os.path.join(request.folder, 'static', 'docs', 'marking_reports_help.md')
     
     with open(filepath, encoding="utf-8-sig") as help_file:
+        
+        # OK - this is a hack. Simply reading and displaying static content from MD is
+        # straightforward but now there is a dynamic element from the config. The right
+        # way to do this would be to write a markdown generic.view handler
         
         help_doc = help_file.read()
         help_doc = XML(markdown.markdown(help_doc))
@@ -183,12 +187,12 @@ def submitted_files():
     
     # don't allow deleting, editing or detailas as this is populated automatically
     # from the file structure
-    form = SQLFORM.grid(db.marking_files_box,
-                        fields=[db.marking_files_box.student,
-                                db.marking_files_box.academic_year,
-                                db.marking_files_box.presentation_id,
-                                db.marking_files_box.marker_role_id,
-                                db.marking_files_box.filename],
+    form = SQLFORM.grid(db.marking_files,
+                        fields=[db.marking_files.student_cid,
+                                db.marking_files.academic_year,
+                                db.marking_files.course_presentation_id,
+                                db.marking_files.marker_role_id,
+                                db.marking_files.filename],
                         maxtextlength=100,
                         csv=False,
                         details=False,
@@ -204,7 +208,7 @@ def scan_files():
     
     # TODO - turn this into something that doesn't just hang around and ? uses
     # AJAX to populate the scan. Also - maybe only scan updated files.
-    return scan_box()
+    return sharepoint.scan_files()
 
 
 ## --------------------------------------------------------------------------------
@@ -1351,14 +1355,16 @@ def write_report():
     expected_files = record.marker_role_id.form_json.get('submitted_files')
     if expected_files:
     
-        file_rows = db((db.marking_files_box.student == record.student) &
-                   (db.marking_files_box.presentation_id == record.course_presentation_id) &
-                   (db.marking_files_box.marker_role_id == record.marker_role_id)
-                   ).select()
+        file_rows = db((db.marking_files.student_cid == record.student) &
+                       (db.marking_files.course_presentation_id == record.course_presentation_id) &
+                       (db.marking_files.marker_role_id == record.marker_role_id)
+                       ).select()
     
         if file_rows:
-            files = CAT(H4("Files"), P("The following submitted files are available:"),
-                        UL([A(f.filename, _href=download_url(f.box_id)) 
+            files = CAT(H4("Files"), P("The following submitted files are available. These files are "
+                                       "now distributed using the College Sharepoint system so following "
+                                       "these links may require you to log in using your college credentials."),
+                        UL([A(f.filename, _href=sharepoint.download_url(f)) 
                             for f in file_rows]))
         else:
             files = CAT(H4("Files"), P("The expected submitted files associated with this report "
