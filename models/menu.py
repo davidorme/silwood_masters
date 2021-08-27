@@ -27,12 +27,17 @@ if auth.has_membership('admin'):
                      _style='margin:0px 5px')
     
     response.menu.append((T('Admin tools'), False, None, [
+                            (DIV(_class='dropdown-divider'), False, False, []),
+                            (DIV('Marking', _class='dropdown-item', 
+                                 _style='color:grey;font-variant:small-caps'), False, False, []),
                             (T('Create Marking Assignment'), False, 
                                 URL('marking_reports', 'new_assignment'), []),
                             (T('Load Marking Assignments'), False, 
                                 URL('marking_reports', 'load_assignments'), []),
                             (T('View Marking Assignments'), False, 
                                 URL('marking_reports', 'assignments'), []),
+                            (T('View Marker Progress'), False, 
+                                URL('marking_reports', 'marker_progress'), []),
                             (T('View Project Markers'), False, 
                                 URL('marking_reports', 'markers'), []),
                             (T('View Marking Presentations'), False, 
@@ -46,6 +51,10 @@ if auth.has_membership('admin'):
                             (T('Scan Files'), False, 
                                 URL('marking_reports', 'scan_files'), []),
                             (DIV(_class='dropdown-divider'), False, False, []),
+                            (DIV('Timetabler', _class='dropdown-item', 
+                                 _style='color:grey;font-variant:small-caps'), False, False, []),
+                            (T('Download timetable archive'), False, 
+                                URL('timetabler', 'archive_timetable'), []),
                             (T('Timetable freezer'), False, 
                                 URL('timetabler', 'freezer'), []),
                             (DIV(_class='dropdown-divider'), False, False, []),

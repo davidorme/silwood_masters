@@ -168,6 +168,28 @@ def modules_table():
     
     return dict(form=form)
 
+
+def archive_timetable():
+    """A controller to push out an archive file of the timetabler data.
+    """
+    
+    
+    timetabler_tables = ['locations', 'teaching_staff', 'courses', 'modules', 
+                         'events', 'college_dates', 'recurring_events']
+    
+    outfile = io.StringIO()
+    
+    for tbl in timetabler_tables:
+        
+        outfile.write(f"TABLE {tbl}\n")
+        rows = db(db[tbl]).select()
+        rows.export_to_csv_file(outfile)
+    
+    raise HTTP(200, outfile.getvalue(),
+               **{'Content-Type': 'text/plain',
+                  'Content-Disposition': 'attachment; filename=Archived_timetabler_tables.csv'})
+
+
 ## MODULE INFORMATION CONTROLLERS
 ## - information shows a form for the module level data
 ## - events provides a week calendar for event editing
