@@ -448,7 +448,7 @@ def marker_progress():
 
     # Get a template count (not completed, completed) by marker role
     count_template = db(db.marking_roles).select(db.marking_roles.name)
-    count_template = {r.name: ['',''] for r in count_template}
+    count_template = {r.name: [0,0] for r in count_template}
 
     # Build the table
     hdr = TR(*[TH(''), *[TH(x, _colspan=2, _width='20%') for x in count_template.keys()]])
@@ -467,7 +467,8 @@ def marker_progress():
     
         for this_count in data:
             details = this_count.assignments
-            marker_counts[details.marker_role_id][details.status in ['Created', 'Released']] = this_count.n
+            # Use a logical index to put completed/released in 1 and everything else in 0
+            marker_counts[details.marker_role_id][details.status in ['Completed', 'Released']] += this_count.n
         
         # Style the row 
         row = [[TD(B(v[0]), _style='background-color:salmon') if v[0] else TD(v[0], _style='color:black'), 
