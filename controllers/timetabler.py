@@ -80,7 +80,7 @@ def courses_table():
     form = SQLFORM.grid(db.courses,
                         ignore_common_filters=is_admin,
                         editable=is_admin,
-                        deletable=is_admin,
+                            deletable=is_admin,
                         create=is_admin, 
                         csv=is_admin)
     
@@ -190,7 +190,7 @@ def archive_timetable():
     
     raise HTTP(200, outfile.getvalue(),
                **{'Content-Type': 'text/plain',
-                  'Content-Disposition': 'attachment; filename=Archived_timetabler_tables.csv')
+                  'Content-Disposition': 'attachment; filename=Archived_timetabler_tables.csv'})
 
 
 ## MODULE INFORMATION CONTROLLERS
