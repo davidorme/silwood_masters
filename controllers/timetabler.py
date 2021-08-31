@@ -103,6 +103,9 @@ def college_dates_table():
                         create=is_admin, 
                         csv=is_admin)
     
+    # Clear the FIRST DAY cache in case that has been updated
+    cache.ram('FIRST_DAY', None)
+    
     return dict(form=form)
 
 
@@ -187,7 +190,7 @@ def archive_timetable():
     
     raise HTTP(200, outfile.getvalue(),
                **{'Content-Type': 'text/plain',
-                  'Content-Disposition': 'attachment; filename=Archived_timetabler_tables.csv'})
+                  'Content-Disposition': 'attachment; filename=Archived_timetabler_tables.csv')
 
 
 ## MODULE INFORMATION CONTROLLERS
