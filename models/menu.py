@@ -9,9 +9,11 @@ response.title = request.application.replace('_',' ').title()
 response.subtitle = ''
 
 response.menu = [
+    (T('Projects'), False, URL('marking_reports', 'project_proposals'), []),
     (T('Marking'), False, URL('marking_reports', 'index'), []),
     (T('Timetabler'), False, URL('timetabler', 'index'), []),
-    (T('Info'), False, URL('marking_reports', 'wiki'), [])]
+    (T('Info'), False, URL('marking_reports', 'wiki'), [])
+    ]
 
 
 if auth.has_membership('admin'):
