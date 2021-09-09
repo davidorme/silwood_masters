@@ -487,7 +487,8 @@ def edit_assignment():
     """Edit assignment details
     
     This controller allows an administrator to edit the details of
-    an assignment - the marker/role/etc.
+    an assignment - the marker/role/etc. The contents of 
+    db.assignments.assignment_data should be edited via view_assignment.
     
     """
     db.assignments.assignment_data.readable = False
@@ -516,6 +517,8 @@ def edit_assignment():
     # else:
     #     readonly = False
     
+    # Allow admins to change the status
+    db.assignments.status.writable = True
     readonly = False
     
     form = SQLFORM(db.assignments,
