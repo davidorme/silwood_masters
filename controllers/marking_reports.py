@@ -507,10 +507,16 @@ def edit_assignment():
     else:
         delete_ok = False
     
-    if record.status in ['Submitted', 'Released']:
-        readonly = True
-    else:
-        readonly = False
+    # # This code used to lock completed reports from editing. But that prevents
+    # # accidental submissions from being reopened. Even when released, editing
+    # # might be needed to correct issues.
+    
+    # if record.status in ['Submitted', 'Released']:
+    #     readonly = True
+    # else:
+    #     readonly = False
+    
+    readonly = False
     
     form = SQLFORM(db.assignments,
                    deletable=delete_ok,
