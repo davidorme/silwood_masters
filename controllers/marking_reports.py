@@ -8,6 +8,7 @@ import csv
 import itertools
 import random
 import copy
+import uuid
 from itertools import groupby, chain
 import simplejson as json
 from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
@@ -245,96 +246,13 @@ def new_assignment():
 
 
 @auth.requires_membership('admin')
-def assignments_old():
-    """
-    This version used selectable to allow admins to select rows, but this doesn't
-    play well with large numbers of records and pagination. So the new version
-    uses the grid search to get subsets and the actions then use those search
-    keywords to run the actions.
-    """
-    # look for the 'all' variable to allow the system to show older records.
-    if 'all' in request.vars.keys():
-        db.assignments._common_filter = None
-    
-    # Look for the maximum page size
-    if 'page_max' in request.vars.keys():
-        try:
-            paginate = int(request.vars['page_max'])
-        except ValueError():
-            paginate = 50
-    else:
-        paginate = 50
-    
-    # Represent status as icon
-    db.assignments.status.represent = lambda id, row: status_dict[row.status]
-    
-    # Link to a non-default report page and edit page. Note that this is an admin
-    # only page and the write_report() controller allows logged in admin access
-    # so no need to pass any security credentials beyond being logged in
-    links = [dict(header = 'Report',
-                  body = lambda row: A('View',_class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "write_report",
-                                                 vars={'record': row.id}))),
-             dict(header = 'Assignment',
-                  body = lambda row: A('Edit',_class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "edit_assignment", 
-                                                 args=row.id)))]
-    
-    # create the SQLFORM grid to show the existing assignments
-    # and set up actions to be applied to selected rows - these
-    # are powered by action functions defined below
-    grid = SQLFORM.grid(db.assignments,
-                        fields = [db.assignments.student,
-                                  db.assignments.course_presentation_id,
-                                  db.assignments.marker,
-                                  db.assignments.marker_role_id,
-                                  db.assignments.due_date,
-                                  db.assignments.status],
-                        maxtextlength=100,
-                        csv=False,
-                        deletable=False,
-                        create=False,
-                        details=False,
-                        editable=False,
-                        links=links,
-                        headers= {'students.student_last_name': 'Student'},
-                        selectable = [('Release to students', lambda ids: release(ids)),
-                                      ('Send to markers', lambda ids: distribute(ids)),
-                                      ('Download Confidential PDFs',lambda ids: zip_pdfs(ids, confidential=True)),
-                                      ('Download Public PDFs',lambda ids: zip_pdfs(ids)),
-                                      ('Download Grades',lambda ids: download_grades(ids))],
-                        paginate = paginate)
-    
-    # Edit the HTML of the web2py table, as long as a search hasn't created a set with no records
-    if grid.element('div.web2py_counter').components != ['']:
-        # insert a select all checkbox and the java to power it
-        grid.element('th').insert(0, CAT(LABEL(INPUT(_type='checkbox', _id='checkAll'), 
-                                               XML('&nbsp;'), 'All'), XML('&nbsp;') * 3))
-        grid.append(SCRIPT('''$("#checkAll").change(function () {
-                                $("[name='records']").prop('checked', $(this).prop("checked"));
-                              });'''))
-        # remove the submit buttons from the button and reinsert with nicer styling
-        # at the top of the table form
-        table_start = grid.element('div.web2py_htmltable')
-        buttons = (("submit_1", "Send to markers"),
-                   ("submit_0", "Release to students"),
-                   ("submit_2", "Download Confidential PDFs"),
-                   ("submit_3", "Download Public PDFs"),
-                   ("submit_4", "Download Grades"))
-        for b in buttons:
-            grid.element("[name=" +  b[0]+ "]", replace=None)
-            table_start.insert(0, INPUT(_name=b[0], _type='submit', _value=b[1],
-                                        _style='padding:5px 15px;margin:10px;background:#6C757D;color:white'))
-    
-    # old records, turning off the common filter
-    old_count = db(db.assignments.academic_year < datetime.datetime.now().year,
-                   ignore_common_filters=True).count()
-    
-    return dict(form=grid, old_count=old_count)
-
-
-@auth.requires_membership('admin')
 def assignments():
+    """
+    Exposes a grid table of assignments along with functions to run on queried sets
+    rows. An older version used selectable to allow admins to select rows, but that doesn't
+    play well with large numbers of records and pagination, so this uses  the grid search
+    to get subsets and then feeds the search keywords in to run the actions.
+    """
     
     # look for the 'all' variable to allow the system to show older records.
     if 'all' in request.vars.keys():
@@ -825,22 +743,19 @@ def who_are_my_markers():
 
 
 ## --------------------------------------------------------------------------------
-## MARKING ASSIGNMENTS
-## - MARKER FUNCTIONS 
-## - ALL OF THESE SHOULD USE THE 2FA MECHANISM VIA authenticate()
-##
-## THESE WEB CONTROLLERS TO HANDLE
-## - Assignments:    provides markers with an overview of all the reports they
-##                   need to complete.
-## - Report writing: provides a form to complete and then a static view for 
-##                   submitted reports. This is only accessible to staff who 
-##                   will need to have a link with the assignment record and 
-##                   a matching access token
-## - PDF download:   provides a link to pull down a generated PDF. This can 
-##                   be a confidential version including private comments and
-##                   grade or a public version for students.
-## - Show form:      Allows students to see the form layout and links to marking
-##                   criteria.
+## SECURITY AND STAFF AUTHENTICATION
+## - The staff ae _deliberately_ not all signed up in db.auth_user. We want a curated
+##   list of staff that do project supervision and marking and we also want to separate
+##   staff in marking roles from the same staff with higher privileges for admin 
+##   or timetabling.
+## - We also want a low-friction passwordless approach for adding markers - not have
+##   to rely on people signing up before we can assign project marking etc. 
+## - The security system has evolved. Initially there was a single static access token,
+##   which is not ideal. It then used a static token with an emailed 2FA code to confirm,
+##   but that is clumsy and caused some (not much) friction. It now uses a single access
+##   token but which expires - you can only get in for 60 minutes after the request.
+## - All of the security relies on the user email being secure, but so does _anything_
+##   that doesn't rely on having a second device and we're not in a position to do that.
 ## --------------------------------------------------------------------------------
 
 
@@ -950,6 +865,112 @@ def reset_two_factor_tokens():
     session.tf_validated = False
 
 
+def get_staff_link():
+    """
+    This controller creates magic links for email accounts that exist in the staff table.
+    """
+    
+    
+    # Magic links can be requested for a given email but an email has to be provided
+    requester_email = request.vars['email']
+    
+    if requester_email is None:
+        raise HTTP(404)
+    
+    # The email must exist in the staff table (and that handles malformed emails too)
+    requester_row = db(db.markers.email == requester_email).select().first()
+    
+    if requester_row is None:
+        raise HTTP(404)
+    
+    # Also, we throttle requests to only have one live link at a time
+    live_links = db((db.magic_links.staff_id == requester_row.id) &
+                              (db.magic_links.expires > datetime.datetime.now)).count()
+    
+    if live_links > 0:
+        return dict(msg='An unexpired link has already been issued for this email. '
+                             'Please check your email.')
+    
+    # Now we are in a position to create and send a new link
+    new_uuid = uuid.uuid4()
+    
+    email_dict = dict(magic_link = URL('marking_reports', 'staff', vars={'token': new_uuid},
+                                       scheme=True, host=True),
+                      first_name = requester_row.first_name)
+
+    mailer = Mail()
+    success = mailer.sendmail(subject='Silwood Masters access link',
+                              to=requester_row.email,
+                              email_template='magic_links.html',
+                              email_template_dict=email_dict)
+    
+    db.magic_links.insert(staff_id = requester_row.id,
+                          token = new_uuid)
+    
+    return dict(msg="A new access link has been created and emailed to you. "
+                    "Please follow that link to access your project and marking details")
+
+
+def authorise_staff():
+    """
+    This access controller validates a staff magic link token against the database and
+    then provides links on to project, marking and profile details. It sets the
+    authorised staff details in the session as an access control mechanism.
+    """
+    
+    # Look for magic link token
+    magic_link = request.vars['token']
+    
+    if magic_link is None:
+        raise HTTP(403)
+    
+    # Look for the provided token in the magic_links table
+    magic_link = db((db.magic_links.token == magic_link) &
+                    (db.magic_links.staff_id == db.markers.id)).select().first()
+    
+    if magic_link is None:
+        raise HTTP(403)
+    
+    # Check for expiry
+    if magic_link.magic_links.expires < datetime.datetime.now():
+        
+        raise HTTP(403, P("This access link has expired. Please ", 
+                          A("request a new one", 
+                            _src=URL('get_staff_link', vars={'email': magic_link.markers.email},
+                                     scheme=True, host=True))))
+    
+    # Store the marker details in the session to demonstrate that the link exists 
+    # and has not expired. This can then be checked by functions that require authorised
+    # access. 
+    session.magic_auth = magic_link.markers
+    
+    redirect(URL('staff'))
+
+
+def staff_authorised(callee):
+    """
+    This decorator performs a simple check to see if this session has provided
+    a valid magic_link token to access staff functionality.
+    """
+    
+    def wrapper():
+        
+        if (session.magic_auth is None) and not auth.has_membership('admin'):
+            raise HTTP(403, "403 Forbidden: Please look in your email for your personal access link to staff marking and project details")
+        else:
+            return callee()
+    
+    return wrapper
+
+
+@staff_authorised
+def staff():
+    
+    
+    return dict(msg=P("Welcome ", session.magic_auth.first_name))
+
+
+@staff_authorised
 def my_assignments():
     
     """
@@ -958,50 +979,19 @@ def my_assignments():
     capabilities!
     """
     
-    # work with a copy of request vars here to avoid editing the actual values, which
-    # are used in redirect _next
-    security = copy.deepcopy(request.vars)
-    
-    # is the marker id valid
-    if security['marker'] is None:
-        session.flash = 'No marker id provided'
-        redirect(URL('index'))
-    else:
-        # Find the marker
-        marker = db.markers(int(security['marker']))
-        
-        if marker is None:
-            session.flash = 'Unknown marker id provided'
-            redirect(URL('index'))
-    
-    # is there a matching access token
-    if security['marker_access_token'] is None:
-        session.flash = 'No marker access token provided'
-        redirect(URL('index'))
-    else:
-        access_token = security['marker_access_token']
-        
-        if marker.marker_access_token != access_token:
-            session.flash = 'Marker access token invalid'
-            redirect(URL('index'))
-    
     # Use 'all' variable in URL to toggle access to previous records
-    if 'all' in security:
-        security.pop('all')
+    if 'all' in request.vars:
         db.assignments._common_filter = None
         header = P("The table below shows all the assignments that have been assigned to you ",
                    B("across all years"),". To focus on your current marking assignments, click ",
-                   A("here", _href=URL(vars=security)))
+                   A("here", _href=URL(vars={'all': ''})))
     else:
-        security['all'] = ""
         header = P("The table below shows your ", B("current marking assignments"),
                    ". To also see records from previous years, click ",
-                   A("here", _href=URL(vars=security)))
+                   A("here", _href=URL()))
     
-    # Two factor authentication if not an admin following a link
-    if not (auth.has_membership('admin') or session.tf_validated):
-        _next = URL(args=request.args, vars=request.vars)
-        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    # Get the stored session details.
+    marker = session.magic_auth
     
     # and edit representations
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
@@ -1011,8 +1001,7 @@ def my_assignments():
                   body = lambda row: A('View',
                                        _class='button btn btn-secondary',
                                        _href=URL("marking_reports", "write_report", 
-                                                 vars={'record': row.id, 
-                                                       'staff_access_token':marker.marker_access_token}),
+                                                 vars={'record': row.id}),
                                        _target='_blank'))]
     
     # create the SQLFORM grid to show the existing assignments
@@ -1038,7 +1027,7 @@ def my_assignments():
     
     return dict(name=marker.first_name + " " + marker.last_name, header=header, form=grid)
 
-
+@staff_authorised
 def my_students():
     
     """
@@ -1046,37 +1035,7 @@ def my_students():
     a link to the overall reports on their performance
     """
     
-    # work with a copy of request vars here to avoid editing the actual values, which
-    # are used in redirect _next
-    security = copy.deepcopy(request.vars)
-    
-    # is the marker id valid
-    if security['marker'] is None:
-        session.flash = 'No marker id provided'
-        redirect(URL('index'))
-    else:
-        # Find the marker
-        marker = db.markers(int(security['marker']))
-        
-        if marker is None:
-            session.flash = 'Unknown marker id provided'
-            redirect(URL('index'))
-    
-    # is there a matching access token
-    if security['marker_access_token'] is None:
-        session.flash = 'No marker access token provided'
-        redirect(URL('index'))
-    else:
-        access_token = security['marker_access_token']
-        
-        if marker.marker_access_token != access_token:
-            session.flash = 'Marker access token invalid'
-            redirect(URL('index'))
-    
-    # Two factor authentication if not an admin following a link
-    if not (auth.has_membership('admin') or session.tf_validated):
-        _next = URL(args=request.args, vars=request.vars)
-        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    marker = session.magic_auth
     
     # and edit representations
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
@@ -1086,9 +1045,7 @@ def my_students():
                   body = lambda row: A('View',
                                        _class='button btn btn-secondary',
                                        _href=URL("marking_reports", "presentation_overview", 
-                                                 vars={'marker': marker.id, 
-                                                       'marker_access_token':marker.marker_access_token,
-                                                       'cid': row.student,
+                                                 vars={'id': row.student,
                                                        'presentation': row.course_presentation_id,
                                                        'year': row.academic_year
                                                        }),
@@ -1117,7 +1074,7 @@ def my_students():
     
     return dict(name=marker.first_name + " " + marker.last_name, form=grid)
 
-
+@staff_authorised
 def presentation_overview():
     
     """
@@ -1126,37 +1083,7 @@ def presentation_overview():
     and performances
     """
     
-    # work with a copy of request vars here to avoid editing the actual values, which
-    # are used in redirect _next
-    security = copy.deepcopy(request.vars)
-    
-    # is the marker id valid
-    if security['marker'] is None:
-        session.flash = 'No marker id provided'
-        redirect(URL('index'))
-    else:
-        # Find the marker
-        marker = db.markers(int(security['marker']))
-        
-        if marker is None:
-            session.flash = 'Unknown marker id provided'
-            redirect(URL('index'))
-    
-    # is there a matching access token
-    if security['marker_access_token'] is None:
-        session.flash = 'No marker access token provided'
-        redirect(URL('index'))
-    else:
-        access_token = security['marker_access_token']
-        
-        if marker.marker_access_token != access_token:
-            session.flash = 'Marker access token invalid'
-            redirect(URL('index'))
-    
-    # Two factor authentication if not an admin following a link
-    if not (auth.has_membership('admin') or session.tf_validated):
-        _next = URL(args=request.args, vars=request.vars)
-        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
+    marker = session.magic_auth
     
     # and edit representations
     db.assignments.status.represent = lambda id, row: status_dict[row.status]
@@ -1164,9 +1091,9 @@ def presentation_overview():
     # This is automatically all years.
     db.assignments._common_filter = None
     
-    rows = db((db.assignments.student == security['cid']) & 
-              (db.assignments.course_presentation_id == security['presentation']) & 
-              (db.assignments.academic_year == security['year'])).select()
+    rows = db((db.assignments.student == request.vars['id']) & 
+              (db.assignments.course_presentation_id == request.vars['presentation']) & 
+              (db.assignments.academic_year == request.vars['year'])).select()
 
     if rows:
         
@@ -1223,6 +1150,7 @@ def presentation_overview():
     return dict(header=header, content=content)
 
 
+@staff_authorised
 def write_report():
     
     """
@@ -1239,23 +1167,21 @@ def write_report():
     accessible as assignment_record.marking_role_id.form_json
     """
     
-    security = request.vars
-    
     # is the record id valid
-    if security['record'] is None:
+    if request.vars['record'] is None:
         session.flash = 'No project marking record id provided'
         redirect(URL('index'))
     else:
         # allow old reports to be retrieved
         db.assignments._common_filter = None
-        record = db.assignments[int(security['record'])]
+        record = db.assignments[int(request.vars['record'])]
         
         if record is None:
             session.flash = 'Unknown project marking record id provided'
             redirect(URL('index'))
     
     # Get the marker record
-    marker = db.markers(record.marker)
+    marker = session.magic_auth
     
     # Access control - if the user is logged in as an admin, then
     # don't need to do any validation, otherwise use 2FA 
@@ -1269,7 +1195,7 @@ def write_report():
                           _class="alert alert-danger", _role="alert")
         readonly = False
     
-    elif security['supervisor_id'] is not None:
+    elif request.vars['supervisor_id'] is not None:
         
         admin_warn = ""
         
@@ -1294,13 +1220,8 @@ def write_report():
         
         admin_warn = ""
             
-        if security['staff_access_token'] is None:
-            session.flash = 'No staff access token provided'
-            redirect(URL('index'))
-        else:
-            if marker.marker_access_token != security['staff_access_token']:
-                session.flash = 'Staff access token invalid'
-                redirect(URL('index'))
+        if marker.id != record.marker:
+            raise HTTP(403, '403 Forbidden: this marking is not assigned to you')
         
         if record.status in ['Submitted','Released']:
             readonly = True
@@ -1308,14 +1229,8 @@ def write_report():
             readonly = False
             show_due_date = True
     
-    # Two factor authentication
-    if not (session.tf_validated or auth.has_membership('admin')):
-        _next = URL(args=request.args, vars=request.vars)
-        redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
-    
-    
     # define the header block - this is for display so needs the rendered data
-    header = get_form_header(record, readonly, security=security, show_due_date=show_due_date)
+    header = get_form_header(record, readonly, security=marker, show_due_date=show_due_date)
     
     # Get the form as html
     # - provide a save and a submit button
@@ -1355,8 +1270,7 @@ def write_report():
         
         # TODO - Would be neater to use ajax here rather than reloading the page
         # but parking that for another day.
-        redirect(URL('write_report', vars=dict(record=security.record,
-                                               staff_access_token=security.staff_access_token)))
+        redirect(URL('write_report', vars={'record': record.id}))
     
     # Style SQLFORM
     html = style_sqlform(record, form, readonly)
@@ -1396,18 +1310,12 @@ def write_report():
                                 "of this page. Do not navigate away from "
                                 "this page without saving your changes! Once you have saved your "
                                 "work, you can return to your My Assignments page ", 
-                                A('here', 
-                                  _href=URL('my_assignments', 
-                                            vars=dict(marker=marker.id,
-                                                      marker_access_token=marker.marker_access_token))),
+                                A('here', _href=URL('my_assignments')),
                                  _class="alert alert-danger", _role="alert")
     else:
         save_and_submit = DIV()
     
-    my_assignments = P(A('Back to my assignments', 
-                         _href=URL('my_assignments', 
-                                   vars=dict(marker=marker.id,
-                                             marker_access_token=marker.marker_access_token))))
+    my_assignments = P(A('Back to my assignments', _href=URL('my_assignments')))
     
     return dict(header=CAT(admin_warn, *header), 
                 save_and_submit=save_and_submit,
@@ -1432,6 +1340,11 @@ def submit_validation(form):
                         form.errors[c['variable']] = 'Please provide comments'
                     elif c['type'] == 'select':
                         form.errors[c['variable']] = 'Please select a grade'
+
+
+
+
+
 
 
 def criteria_and_forms():
@@ -1971,3 +1884,4 @@ def reset_project_proposal_uuid():
     for r in rows:
         r.update_record(project_filled_token = str(uuid.uuid4()))
     
+
