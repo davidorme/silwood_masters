@@ -16,7 +16,7 @@ from tempfile import NamedTemporaryFile
 from html.parser import HTMLParser 
 from mailer import Mail
 
-from gluon import (current, SQLFORM, DIV, LABEL, CAT, B, P, A,
+from gluon import (current, SQLFORM, DIV, LABEL, CAT, B, P, A, SPAN,
                    URL, HTTP, BR, TABLE, H2, H4, XML, Field, IS_NULL_OR, IS_IN_SET)
 
 """
@@ -64,6 +64,23 @@ def div_checkbox_widget_wide(field, value, **attributes):
                  for td in table.elements('td') 
                      if '_disabled' not in list(td.element('input').attributes.keys())],
                _class='row')
+
+def div_checkbox_widget_list_group(field, value, **attributes):
+    
+    # This is just to repackage the checkbox widgets and allow some styling
+    # (which should be done with CSS)
+    
+    table = SQLFORM.widgets.checkboxes.widget(field, value, **attributes)
+    
+    return DIV(*[DIV(td.element('input'), SPAN(_style='padding:0px 5px;'),
+                     LABEL(td.element('label').components[0],
+                           _for=td.element('label').attributes['_for'],
+                           _style='margin:0px;'),
+                         _class='list-group-item',
+                         _style='padding:0px 20px; background:lightgrey')
+                 for td in table.elements('td')
+                     if '_disabled' not in list(td.element('input').attributes.keys())],
+                _class='list-group')
 
 ## --------------------------------------------------------------------------------
 ## LOCAL FUNCTIONS USED BY THE ASSIGNMENT PAGE TO TAKE ACTIONS ON SETS OF RECORD IDS
