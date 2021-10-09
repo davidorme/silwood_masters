@@ -1,0 +1,25 @@
+{{extend 'layout.html'}}
+
+<H2>Project proposal details</H2>
+
+<p>This form allows members of teaching staff to create and edit project proposals for the Masters
+	courses at the Silwood Park Campus of Imperial College London and at the Natural History
+	Museum. These courses vary greatly in their structure and length, so please 
+	<a href={{=URL('projects','project_overview')}}>review the course details</a> before 
+	posting a proposal.
+</p>
+
+<div class='card mb-4'>
+	<div class='card-header bg-danger text-white p-2'>
+		Accepting a project student
+	</div>
+	<div class='card-body p-2'>
+		This form also allows you to accept a project student onto a project. You will need to
+		select the student and their project presentation from the drop down menu. Some courses 
+		have <strong>more than one project</strong> so be sure to select the right one! Supervisors
+		<strong>cannot remove an accepted student</strong> - if this becomes necessary, please 
+		<a href='mailto:silwood.masters@imperial.ac.uk'>contact us</a> to explain the circumstances.
+	</div>
+</div>
+
+{{=form}}

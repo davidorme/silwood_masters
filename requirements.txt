@@ -2,7 +2,7 @@
 pypandoc
 python-dateutil
 markdown
-# Needed by marking_reports
+# Needed by marking
 # - fpdf also needs the DejaVu font files installed and configure in private/appconfig.ini
 fpdf
 openpyxl

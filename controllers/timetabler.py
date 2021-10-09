@@ -12,19 +12,10 @@ from tempfile import NamedTemporaryFile
 import markdown # gluon provides MARKDOWN but lacks extensions.
 import os
 
-def index():
+def overview():
 
     return dict()
 
-
-def help():
-    
-    filepath = os.path.join(request.folder, 'static', 'docs', 'timetabler_help.md')
-    
-    with open(filepath, encoding="utf-8-sig") as help_file:
-        help_doc = XML(markdown.markdown(help_file.read()))
-    
-    return dict(help_doc=help_doc)
 
 ## TABLE VIEW CONTROLLERS 
 ## - These can all be viewed by anyone but you have to log in to edit
@@ -478,7 +469,7 @@ def courses():
     """
     
     # update the format of teaching_staff rows for either response
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    db.teaching_staff._format = lambda row: f" {row.first_name} {row.last_name}" 
     
     # if the URL has no arguments, present a list of courses with URLs
     if len(request.args) == 0:
@@ -617,7 +608,7 @@ def course_doc():
     content = ""
     
     # update the format of teaching_staff rows
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    db.teaching_staff._format = lambda row: f" {row.first_name} {row.last_name}" 
     
     course = db.courses[course_id]
     

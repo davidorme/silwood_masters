@@ -1,0 +1,469 @@
+{{extend 'layout.html'}}
+
+<style>
+<!--table
+	{mso-displayed-decimal-separator:"\.";
+	mso-displayed-thousand-separator:"\,";}
+@page
+	{margin:1.0in .75in 1.0in .75in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;}
+.style26
+	{background:#C6EFCE;
+	mso-pattern:black none;
+	color:#006100;
+	font-size:12.0pt;
+	font-weight:400;
+	font-style:normal;
+    text-decoration:none;
+	font-family:Calibri, sans-serif;
+	mso-font-charset:0;
+	mso-style-name:Good;
+	mso-style-id:26;}
+.style0
+	{mso-number-format:General;
+	text-align:general;
+	vertical-align:bottom;
+	white-space:nowrap;
+	mso-rotate:0;
+	mso-background-source:auto;
+	mso-pattern:auto;
+	color:black;
+	font-size:12.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri, sans-serif;
+	mso-font-charset:0;
+	border:none;
+	mso-protection:locked visible;
+	mso-style-name:Normal;
+	mso-style-id:0;}
+td
+	{mso-style-parent:style0;
+	padding-top:1px;
+	padding-right:1px;
+	padding-left:1px;
+	mso-ignore:padding;
+	color:black;
+	font-size:12.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri, sans-serif;
+	mso-font-charset:0;
+	mso-number-format:General;
+	text-align:general;
+	vertical-align:bottom;
+	border:none;
+	mso-background-source:auto;
+	mso-pattern:auto;
+	mso-protection:locked visible;
+	white-space:nowrap;
+	mso-rotate:0;}
+.xl65
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border:.5pt solid windowtext;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl66
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border-top:none;
+	border-right:.5pt solid windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt solid windowtext;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl67
+	{mso-style-parent:style0;
+	color:#4F6228;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	text-align:center;
+	border:.5pt solid windowtext;
+	background:#D8E4BC;
+	mso-pattern:black none;}
+.xl68
+	{mso-style-parent:style26;
+	color:#4F6228;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border:.5pt solid windowtext;
+	background:#D8E4BC;
+	mso-pattern:black none;}
+.xl69
+	{mso-style-parent:style0;
+	font-weight:700;}
+.xl70
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border-top:.5pt solid windowtext;
+	border-right:none;
+	border-bottom:none;
+	border-left:none;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl71
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border-top:.5pt solid windowtext;
+	border-right:none;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt solid windowtext;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl72
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border-top:.5pt solid windowtext;
+	border-right:none;
+	border-bottom:.5pt solid windowtext;
+	border-left:none;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl73
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border-top:.5pt solid windowtext;
+	border-right:.5pt solid windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:none;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl74
+	{mso-style-parent:style0;
+	font-weight:700;
+	text-align:center;
+	border-top:.5pt solid windowtext;
+	border-right:none;
+	border-bottom:none;
+	border-left:.5pt solid windowtext;
+	background:#B8CCE4;
+	mso-pattern:black none;}
+.xl75
+	{mso-style-parent:style0;
+	border-top:.5pt solid windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt hairline windowtext;
+	border-left:.5pt solid windowtext;}
+.xl76
+	{mso-style-parent:style0;
+	border-top:.5pt solid windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt hairline windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl77
+	{mso-style-parent:style0;
+	border-top:.5pt solid windowtext;
+	border-right:none;
+	border-bottom:.5pt hairline windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl78
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt hairline windowtext;
+	border-left:.5pt solid windowtext;}
+.xl79
+	{mso-style-parent:style0;
+	border:.5pt hairline windowtext;}
+.xl80
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:none;
+	border-bottom:.5pt hairline windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl81
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:none;
+	border-left:.5pt hairline windowtext;}
+.xl82
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt solid windowtext;}
+.xl83
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:none;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl84
+	{mso-style-parent:style0;
+	border-top:.5pt solid windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl85
+	{mso-style-parent:style0;
+	border-top:.5pt solid windowtext;
+	border-right:.5pt solid windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl86
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt hairline windowtext;
+	border-left:none;}
+.xl87
+	{mso-style-parent:style26;
+	color:windowtext;
+	font-weight:700;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.xl88
+	{mso-style-parent:style0;
+	border-top:.5pt hairline windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl89
+	{mso-style-parent:style0;
+	border-top:none;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt solid windowtext;
+	border-left:.5pt hairline windowtext;}
+.xl90
+	{mso-style-parent:style0;
+	border-top:.5pt solid windowtext;
+	border-right:.5pt hairline windowtext;
+	border-bottom:.5pt hairline windowtext;
+	border-left:none;}
+-->
+</style>
+
+<H2>Projects at Silwood</H2>
+
+<p>Welcome to the project management website for Masters courses at the Silwood
+	Park campus of Imperial College London. This page provides an overview of the
+	courses covered and their project structures. More details of the courses can
+	be <a href=http://www.imperial.ac.uk/visit/campuses/silwood-park/prospective-students/msc-and-mres-courses/>
+	found here</a>
+
+</p>
+
+<p>The courses are the Master of Science courses in:</p>
+<ul><li>Ecology, Evolution and Conservation (EEC)</li>
+<li>Conservation Science (Con Sci),</li>
+<li>Computational Methods in Ecology and Evolution (CMEE)</li>
+<li>Ecological Applications (EA)</li>
+<li>Taxonomy and Biodiversity (NHM MSc) </li></ul>
+
+<p>and the Master of Research courses in:</p>
+<ul><li>Ecology, Evolution and Conservation (EEC MRes), </li>
+<li>Computational Methods in Ecology and Evolution (CMEE MRes)</li>
+<li>Ecosystem and Environmental Change (eeChange MRes)</li>
+<li>Tropical Forest Ecology MRes</li>
+<li>Biosystematics (NHM MRes)</li></ul>
+
+
+<p>Masters students from both Silwood and the NHM will access project proposals on this site.
+	The structure of projects varies between courses, with both project lengths and start times 
+	varying. Silwood Masters projects typically last for five months however: the CMEE MRes has 
+	a nine month project; the NHM Masters projects last for 3.5 months; and the Tropical Forest 
+	Ecology MRes has a 7 month project. The approximate timings of projects are:
+</p>
+<br>
+
+<center>
+<table border=0 cellpadding=0 cellspacing=0 width=695 style='border-collapse:
+ collapse;table-layout:fixed;width:695pt'>
+ <col width=277 style='mso-width-source:userset;mso-width-alt:11818;width:277pt'>
+ <col width=19 span=22 style='mso-width-source:userset;mso-width-alt:810;
+ width:19pt'>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl69 width=277 style='height:15.0pt;width:277pt'>MSc
+  Courses</td>
+  <td colspan=2 class=xl67 width=38 style='width:38pt'>Oct</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Nov</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Dec</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Jan</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Feb</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Mar</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Apr</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>May</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Jun</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Jul</td>
+  <td colspan=2 class=xl67 width=38 style='border-left:none;width:38pt'>Aug</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt'>Ecology, Evolution and
+  Conservation MSc</td>
+  <td class=xl75 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl77 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=10 class=xl66>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Ecological
+  Applications MSc</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl80 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=10 class=xl65>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Conservation
+  Science MSc</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl80 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=10 class=xl65>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Computational
+  Methods in Ecology and Evolution MSc</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl80 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=10 class=xl65>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Taxonomy and
+  Biodiversity MSc (NHM)</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl77 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=7 class=xl71 style='border-right:.5pt solid black'>1</td>
+  <td class=xl90 style='border-top:none'>&nbsp;</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl87 style='height:15.0pt'>MRes Courses</td>
+  <td class=xl86 style='border-top:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl81 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl88 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl88 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl88 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl89 style='border-left:none'>&nbsp;</td>
+  <td class=xl88 style='border-top:none;border-left:none'>&nbsp;</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt'>Ecology, Evolution and
+  Conservation MRes</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl80 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=10 class=xl71 style='border-right:.5pt solid black'>1</td>
+  <td colspan=10 class=xl71 style='border-right:.5pt solid black;border-left:
+  none'>2</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Computational
+  Methods in Ecology and Evolution MRes</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl76 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl77 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=18 class=xl71 style='border-right:.5pt solid black'>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Tropical
+  Forest Ecology MRes</td>
+  <td class=xl78 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl79 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl84 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl84 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl84 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl85 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=14 class=xl71 style='border-right:.5pt solid black;border-left:
+  none'>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Ecosystem and
+  Environmental Change MRes</td>
+  <td class=xl82 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl88 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl88 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl83 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td colspan=18 class=xl74 style='border-right:.5pt solid black;border-bottom:
+  .5pt solid black'>1</td>
+ </tr>
+ <tr height=15 style='height:15.0pt'>
+  <td height=15 class=xl68 style='height:15.0pt;border-top:none'>Biosystematics
+  MRes (NHM)</td>
+  <td colspan=7 class=xl65 style='border-left:none'>1</td>
+  <td colspan=7 class=xl65 style='border-left:none'>2</td>
+  <td colspan=7 class=xl65 style='border-left:none'>3</td>
+  <td class=xl75 style='border-top:none;border-left:none'>&nbsp;</td>
+ </tr>
+</table>
+</center>
+

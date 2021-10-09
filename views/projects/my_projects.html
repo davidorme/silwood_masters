@@ -1,0 +1,41 @@
+{{extend 'layout.html'}}
+
+<H2>My Projects</H2>
+
+<p>
+	This table shows all of the projects for which you are the <strong>lead supervisor</strong>. 
+	This includes both filled projects - when the student you supervised and the year will be
+	shown - and also open project proposals. Students can see all project proposals that were 
+	created within 60 days of the start of this academic year 
+	(<span class="fa fa-eye" style="font-size: 1em" ></span>).
+</p>
+<p> From this page, you have a number of options:
+	<ul>
+		
+		<li>
+		 	You can create a {{=A('completely new proposal ', 
+								  _href=URL('projects', 'project_details', scheme=True, host=True))}}.
+		</li>
+		<li>
+		 	You can <strong>edit the details of a proposal</strong> (
+			<span class="fa fa-pencil" style="font-size: 1em;color: #007bff"></span>
+			), including to accept a student on to a project.
+		</li>
+
+		<li> 
+			You can <strong>refresh an open proposal</strong> (
+			<span class="fa fa-repeat" style="font-size: 1em;color: #007bff"></span>
+			). All this does is to take a older proposal that students cannot see and 
+			update its creation date to make it visible.
+		</li>
+		
+		<li> You can <strong>clone any proposal</strong> (
+			<span class="fa fa-clone" style="font-size: 1em;color: #007bff"></span>). This will 
+			 duplicate the proposal and set today as the creation date, so it is visible. If you 
+			 clone a filled project, the clone will be reset to be an open project. 
+		</li>
+	</ul>
+</p>
+
+
+{{=form}}

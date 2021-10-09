@@ -108,7 +108,7 @@ def module_markdown(module_id, title=False, show_events=True):
     db = current.db
     
     # update the format of teaching_staff rows
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    db.teaching_staff._format = lambda row: f" {row.first_name} {row.last_name}" 
     
     module = db(db.modules.id == module_id).select()
     module = list(module.render())[0]

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# this file is released under public domain and you can use without limitations
-
 import datetime
 import io
 import os
@@ -11,9 +8,12 @@ import copy
 import uuid
 from itertools import groupby, chain
 import simplejson as json
-from marking_reports_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
+from marking_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
                                        assignment_to_sqlform, style_sqlform, FoldingTOC)
+
+from staff_auth import staff_authorised
+
 import sharepoint
 
 import markdown # gluon provides MARKDOWN but lacks extensions.
@@ -41,75 +41,6 @@ def help():
     return dict(help_doc=help_doc)
 
 
-## --------------------------------------------------------------------------------
-## Expose the wiki - see models/db.py for customisations and notes
-## --------------------------------------------------------------------------------
-
-def wiki():
-    
-    if not request.args:
-        slug = 'index'
-    else:
-        slug = request.args[0]
-    
-    # Try and get the content page
-    content_row = db(db.wikicontent.slug == slug).select().first()
-    
-    if content_row is not None:
-        # Get the main page content
-        content = XML(markdown.markdown(content_row.wikicontent, extensions=['extra']))
-        
-        # Get the ToC
-        toc_row = db(db.wikicontent.slug == content_row.toc_slug).select().first()
-        if toc_row is not None:
-            toc = XML(markdown.markdown(toc_row.wikicontent, extensions=['extra']))
-            ftoc = FoldingTOC()
-            ftoc.feed(toc)
-            toc = XML(ftoc.get_toc())
-        else:
-            toc = 'Unknown toc slug'
-    
-    else:
-        content = 'Unknown wiki slug'
-        toc = 'Unknown toc slug'
-    
-    return dict(toc=toc, content=content)
-
-
-def wikimedia():
-    """
-    Simple controller to stream a file from the wikimedia table to a client
-    """
-
-    media = db(db.wikimedia.slug == request.args[0]).select().first()
-    
-    if media is not None:
-        path = os.path.join(request.folder, 'uploads', media.mediafile)
-        response.stream(path)
-
-
-@auth.requires_membership('wiki_editor')
-def manage_wikimedia():
-    """
-    SQLFORM.grid interface to the contents of the wikimedia table
-    """
-
-    grid = SQLFORM.grid(db.wikimedia, create=True, csv=False)
-    
-    return dict(grid=grid)
-
-
-@auth.requires_membership('wiki_editor')
-def manage_wikicontent():
-    """
-    SQLFORM.grid interface to the contents of the wikicontent table
-    """
-    
-    grid = SQLFORM.grid(db.wikicontent, create=True, csv=False)
-    
-    return dict(grid=grid)
-
-
 # ---- action to server uploaded static content (required) ---
 @cache.action()
 def download():
@@ -120,53 +51,10 @@ def download():
     return response.download(request, db)
     
 
+
 ## --------------------------------------------------------------------------------
-## MARKERS DATABASE
+#  Project marking table managment
 ## --------------------------------------------------------------------------------
-
-@auth.requires_membership('admin')
-def markers():
-    
-    # Provide a link to 'my assignments' pages
-    links =  [dict(header = 'Marker assignments',
-                   body = lambda row: A('[link]', #_class='button btn btn-secondary',
-                                        _href=URL("marking_reports", "my_assignments",
-                                                  vars={'marker': row.id,
-                                                        'marker_access_token': row.marker_access_token})))]
-    
-    # don't allow deleting as the referencing to project marks will 
-    # drop referenced rows from marking tables
-    
-    form = SQLFORM.grid(db.markers, 
-                        links=links,
-                        csv=False,
-                        deletable=False)
-    
-    return dict(form=form)
-
-
-@auth.requires_membership('admin')
-def students():
-    
-    # don't allow deleting as the referencing to project marks will 
-    # drop referenced rows from marking tables
-    form = SQLFORM.grid(db.students, 
-                        csv=False,
-                        deletable=False)
-    
-    return dict(form=form)
-
-
-@auth.requires_membership('admin')
-def presentations():
-    
-    # don't allow deleting as the referencing to project marks will 
-    # drop referenced rows from marking tables
-    form = SQLFORM.grid(db.presentations, 
-                        csv=False,
-                        deletable=False)
-    
-    return dict(form=form)
 
 
 @auth.requires_membership('admin')
@@ -175,7 +63,8 @@ def marking_roles():
     # don't allow deleting as the referencing to project marks will 
     # drop referenced rows from marking tables
     form = SQLFORM.grid(db.marking_roles,
-                        fields=[db.marking_roles.name, db.marking_roles.marking_criteria,
+                        fields=[db.marking_roles.name, 
+                                db.marking_roles.marking_criteria,
                                 db.marking_roles.form_file],
                         csv=False,
                         deletable=False)
@@ -201,6 +90,11 @@ def submitted_files():
                         deletable=False)
     
     return dict(form=form)
+
+
+## --------------------------------------------------------------------------------
+## ADMIN FUNCTIONS
+## --------------------------------------------------------------------------------
 
 
 @auth.requires_membership('admin')
@@ -259,34 +153,38 @@ def assignments():
         db.assignments._common_filter = None
         
     # Represent status as icon
-    db.assignments.status.represent = lambda id, row: status_dict[row.status]
+    db.assignments.status.represent = lambda id, row: status_dict[row.assignments.status]
+    
+    # Conceal the id in the form but retain in selected fields for links.
+    # db.assignments.id.writable = False
+    db.assignments.id.readable = False
     
     # Link to a non-default report page and edit page. Note that this is an admin
     # only page and the write_report() controller allows logged in admin access
     # so no need to pass any security credentials beyond being logged in
     links = [dict(header = 'Report',
                   body = lambda row: A('View',_class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "write_report",
-                                                 vars={'record': row.id}))),
+                                       _href=URL("marking", "write_report",
+                                                 vars={'record': row.assignments.id}))),
              dict(header = 'Assignment',
                   body = lambda row: A('Edit',_class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "edit_assignment", 
-                                                 args=row.id)))]
+                                       _href=URL("marking", "edit_assignment", 
+                                                 args=row.assignments.id)))]
     
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
     
-    fields = [db.assignments.id,
-              db.assignments.student,
-              db.assignments.course_presentation_id,
-              db.assignments.academic_year,
+    fields = [db.student_presentations.student,
+              db.student_presentations.course_presentation,
+              db.student_presentations.academic_year,
+              db.assignments.id,
               db.assignments.marker,
               db.assignments.marker_role_id,
               db.assignments.due_date,
               db.assignments.status]
     
-    grid = SQLFORM.grid(db.assignments,
+    grid = SQLFORM.grid(db(db.assignments.student_presentation == db.student_presentations.id),
                         fields = fields,
                         maxtextlength=100,
                         csv=False,
@@ -336,8 +234,8 @@ def assignments():
         action_func(ids=records, **action_args)
         
     # old records, turning off the common filter
-    old_count = db(db.assignments.academic_year < datetime.datetime.now().year,
-                   ignore_common_filters=True).count()
+    old_count = None  # TODO - fix db(db.assignments.academic_year < datetime.datetime.now().year,
+                      # ignore_common_filters=True).count()
     
     return dict(form=grid, actions=actions, old_count=old_count)
 
@@ -471,15 +369,12 @@ def load_assignments():
                         ,_class='col-sm-2'),
                     _class='row'))
     
-    
     def _format_error(lst):
         """['', 'afdskh'] --> '"","afdskh"'
         """
         
         lst = [f'"{vl}"' for vl in lst]
         return ','.join(lst)
-        
-        
         
     if form.accepts(request.vars):
         
@@ -742,234 +637,6 @@ def who_are_my_markers():
     return dict(form=grid)
 
 
-## --------------------------------------------------------------------------------
-## SECURITY AND STAFF AUTHENTICATION
-## - The staff ae _deliberately_ not all signed up in db.auth_user. We want a curated
-##   list of staff that do project supervision and marking and we also want to separate
-##   staff in marking roles from the same staff with higher privileges for admin 
-##   or timetabling.
-## - We also want a low-friction passwordless approach for adding markers - not have
-##   to rely on people signing up before we can assign project marking etc. 
-## - The security system has evolved. Initially there was a single static access token,
-##   which is not ideal. It then used a static token with an emailed 2FA code to confirm,
-##   but that is clumsy and caused some (not much) friction. It now uses a single access
-##   token but which expires - you can only get in for 60 minutes after the request.
-## - All of the security relies on the user email being secure, but so does _anything_
-##   that doesn't rely on having a second device and we're not in a position to do that.
-## --------------------------------------------------------------------------------
-
-
-def authenticate():
-    """Two factor authentication by email
-    
-    This page emails a numeric code to the marker, validates it and
-    redirects to the referring page. It expects vars identifying
-    'marker' and '_next'. It uses global session variables to track
-    the authentication process and report that the per session code
-    has been successfully entered.
-    
-    To use this, another controller needs to check the value of 
-    session.tf_validated and redirect to /authenticate?marker=XX&_next=YY
-    where YY is the URL of the controller to return to.
-    """
-    
-    max_attempts = 3
-    timeout = 10
-    
-    marker = request.vars['marker']
-    marker = db.markers[marker]
-    _next = request.vars['_next']
-    
-    # Do not run authenticate on logged in admins
-    if auth.has_membership('admin'):
-        redirect(_next)
-    
-    # (Re)set if no code yet exists or timeout has expired
-    if (session.tf_code is None or 
-        (session.tf_timeout is not None and datetime.datetime.now() > session.tf_timeout)):
-            session.tf_code = str(random.randint(100000, 999999))
-            session.tf_attempts = max_attempts
-            session.tf_validated = session.tf_validated or False
-            session.tf_mailed = False
-            session.tf_timeout = None
-    
-    if not session.tf_mailed:
-        
-        # Email code to the marker.
-        email_dict = {'name': marker.first_name,
-                      'code': session.tf_code}
-        
-        mailer = Mail()
-        success = mailer.sendmail(subject='Marking report code',
-                                  to=marker.email,
-                                  email_template='marker_two_factor.html',
-                                  email_template_dict=email_dict)
-        session.tf_mailed = True
-    
-    if session.tf_attempts > 0:
-        session.tf_attempts -= 1
-        readonly=False
-        comment = CAT('Please enter the authentication code', BR(), 
-                      f'{session.tf_attempts} attempts remaining')
-    else:
-        readonly=True
-        session.tf_timeout = datetime.datetime.now() + datetime.timedelta(minutes=timeout)
-        comment = CAT('Three invalid codes entered', BR(), 
-                      f'Try again in {timeout} minutes')
-    
-    # Create a form to get the verification code - this is still shown
-    # but disabled when too many failed attempts have been made
-    form = SQLFORM.factory(
-                Field('authentication_code',
-                      label=B('Enter authentication code'),
-                      required=True,
-                      comment=comment,
-                      widget=lambda f, v: SQLFORM.widgets.string.widget(f, v, _disabled=readonly)),
-                formstyle='bootstrap3_stacked')
-    
-    if readonly:
-        submit = form.element('.btn')
-        submit['_disabled'] = True
-        submit['_class'] = 'btn btn-secondary' 
-        
-    if form.process(onsuccess=None).accepted:
-        if form.vars.authentication_code.strip() == session.tf_code:
-            session.tf_validated = True
-            # Store the marker tokens in the session - this is used to add a 
-            # menu item to go my assignments.
-            session.marker = marker.id
-            session.marker_access_token = marker.marker_access_token
-            redirect(_next)
-
-    return dict(html=form)
-
-
-def reset_two_factor_tokens():
-    """Reset 2FA tokens
-    
-    This controller resets 2FA session tokens. It is useful in debugging but should not
-    be disabled in production as it resets timeout, making it easier to brute force the
-    session token. This is deliberately not behind @auth.requires_membership('admin') 
-    because a logged in admin automatically has access, and this function helps 
-    troubleshoot access for non-logged in users.
-    """
-    
-    disabled = False
-    
-    if disabled:
-        session.flash = 'Resetting two factor session tokens is disabled'
-        redirect(URL('index'))
-    
-    session.tf_code = None
-    session.tf_attempts = None
-    session.tf_validated = False
-
-
-def get_staff_link():
-    """
-    This controller creates magic links for email accounts that exist in the staff table.
-    """
-    
-    
-    # Magic links can be requested for a given email but an email has to be provided
-    requester_email = request.vars['email']
-    
-    if requester_email is None:
-        raise HTTP(404)
-    
-    # The email must exist in the staff table (and that handles malformed emails too)
-    requester_row = db(db.markers.email == requester_email).select().first()
-    
-    if requester_row is None:
-        raise HTTP(404)
-    
-    # Also, we throttle requests to only have one live link at a time
-    live_links = db((db.magic_links.staff_id == requester_row.id) &
-                              (db.magic_links.expires > datetime.datetime.now)).count()
-    
-    if live_links > 0:
-        return dict(msg='An unexpired link has already been issued for this email. '
-                             'Please check your email.')
-    
-    # Now we are in a position to create and send a new link
-    new_uuid = uuid.uuid4()
-    
-    email_dict = dict(magic_link = URL('marking_reports', 'staff', vars={'token': new_uuid},
-                                       scheme=True, host=True),
-                      first_name = requester_row.first_name)
-
-    mailer = Mail()
-    success = mailer.sendmail(subject='Silwood Masters access link',
-                              to=requester_row.email,
-                              email_template='magic_links.html',
-                              email_template_dict=email_dict)
-    
-    db.magic_links.insert(staff_id = requester_row.id,
-                          token = new_uuid)
-    
-    return dict(msg="A new access link has been created and emailed to you. "
-                    "Please follow that link to access your project and marking details")
-
-
-def authorise_staff():
-    """
-    This access controller validates a staff magic link token against the database and
-    then provides links on to project, marking and profile details. It sets the
-    authorised staff details in the session as an access control mechanism.
-    """
-    
-    # Look for magic link token
-    magic_link = request.vars['token']
-    
-    if magic_link is None:
-        raise HTTP(403)
-    
-    # Look for the provided token in the magic_links table
-    magic_link = db((db.magic_links.token == magic_link) &
-                    (db.magic_links.staff_id == db.markers.id)).select().first()
-    
-    if magic_link is None:
-        raise HTTP(403)
-    
-    # Check for expiry
-    if magic_link.magic_links.expires < datetime.datetime.now():
-        
-        raise HTTP(403, P("This access link has expired. Please ", 
-                          A("request a new one", 
-                            _src=URL('get_staff_link', vars={'email': magic_link.markers.email},
-                                     scheme=True, host=True))))
-    
-    # Store the marker details in the session to demonstrate that the link exists 
-    # and has not expired. This can then be checked by functions that require authorised
-    # access. 
-    session.magic_auth = magic_link.markers
-    
-    redirect(URL('staff'))
-
-
-def staff_authorised(callee):
-    """
-    This decorator performs a simple check to see if this session has provided
-    a valid magic_link token to access staff functionality.
-    """
-    
-    def wrapper():
-        
-        if (session.magic_auth is None) and not auth.has_membership('admin'):
-            raise HTTP(403, "403 Forbidden: Please look in your email for your personal access link to staff marking and project details")
-        else:
-            return callee()
-    
-    return wrapper
-
-
-@staff_authorised
-def staff():
-    
-    
-    return dict(msg=P("Welcome ", session.magic_auth.first_name))
-
-
 @staff_authorised
 def my_assignments():
     
@@ -994,23 +661,24 @@ def my_assignments():
     marker = session.magic_auth
     
     # and edit representations
-    db.assignments.status.represent = lambda id, row: status_dict[row.status]
+    db.assignments.status.represent = lambda id, row: status_dict[row.assignments.status]
     
     # link to a non-default new edit page
     links = [dict(header = 'Report', 
                   body = lambda row: A('View',
                                        _class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "write_report", 
-                                                 vars={'record': row.id}),
+                                       _href=URL("marking", "write_report", 
+                                                 vars={'record': row.assignments.id}),
                                        _target='_blank'))]
     
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
-    grid = SQLFORM.grid(db.assignments.marker == marker.id,
-                        fields = [db.assignments.student,
-                                  db.assignments.academic_year,
-                                  db.assignments.course_presentation_id,
+    grid = SQLFORM.grid((db.assignments.marker == marker.id) &
+                        (db.assignments.student_presentation == db.student_presentations.id),
+                        fields = [db.student_presentations.student,
+                                  db.student_presentations.academic_year,
+                                  db.student_presentations.course_presentation,
                                   db.assignments.marker_role_id,
                                   db.assignments.due_date,
                                   db.assignments.status
@@ -1026,6 +694,7 @@ def my_assignments():
                         paginate=False)
     
     return dict(name=marker.first_name + " " + marker.last_name, header=header, form=grid)
+
 
 @staff_authorised
 def my_students():
@@ -1044,7 +713,7 @@ def my_students():
     links = [dict(header = 'Report', 
                   body = lambda row: A('View',
                                        _class='button btn btn-secondary',
-                                       _href=URL("marking_reports", "presentation_overview", 
+                                       _href=URL("marking", "presentation_overview", 
                                                  vars={'id': row.student,
                                                        'presentation': row.course_presentation_id,
                                                        'year': row.academic_year
@@ -1169,7 +838,7 @@ def write_report():
     
     # is the record id valid
     if request.vars['record'] is None:
-        session.flash = 'No project marking record id provided'
+        session.flash = 'No assignment id provided'
         redirect(URL('index'))
     else:
         # allow old reports to be retrieved
@@ -1177,7 +846,7 @@ def write_report():
         record = db.assignments[int(request.vars['record'])]
         
         if record is None:
-            session.flash = 'Unknown project marking record id provided'
+            session.flash = 'Unknown assignment id provided'
             redirect(URL('index'))
     
     # Get the marker record
@@ -1279,10 +948,12 @@ def write_report():
     expected_files = record.marker_role_id.form_json.get('submitted_files')
     if expected_files:
     
-        file_rows = db((db.marking_files.student_cid == record.student) &
-                       (db.marking_files.course_presentation_id == record.course_presentation_id) &
-                       (db.marking_files.marker_role_id == record.marker_role_id)
-                       ).select()
+        # TODO FIX
+        file_rows =  None
+        # db((db.marking_files.student == record.student) &
+        #                        (db.student_presentation == record.student_presentation) &
+        #                        (db.marking_files.marker_role_id == record.marker_role_id)
+        #               ).select()
     
         if file_rows:
             files = CAT(H4("Files"), P("The following submitted files are available. These files are "
@@ -1301,7 +972,7 @@ def write_report():
         files = DIV()
     
     # Set the form title
-    response.title = f"{record.student.student_last_name}: {record.marker_role_id.name}"
+    response.title = f"{record.student_presentation.student.student_last_name}: {record.marker_role_id.name}"
     
     # Save reminder
     if not readonly:
@@ -1360,7 +1031,7 @@ def criteria_and_forms():
 
     name = db.marking_roles.name
     name.represent = lambda value, rw: A(value, 
-                                         _href=URL('marking_reports', 'show_form', args=rw.name))
+                                         _href=URL('marking', 'show_form', args=rw.name))
     
     marking_roles = SQLFORM.grid(db.marking_roles,
                                  fields=[db.marking_roles.name, 
@@ -1396,20 +1067,23 @@ def show_form():
     # some dummy values. That needs to behave exactly like a real record
     # in order to make use of the represent and referencing on a real 
     # Row. So this uses .insert() to create actual rows but then rolls
-    # back those inserts before leaving the controller. This doesn't seem
-    # optimal.
+    # back those inserts before leaving the controller. 
+    
+    # TODO  - Fix this hack - it really doesn't seem optimal.
     
     db.assignments._common_filter = None
-    marker = db.markers.insert(first_name='Sir Alfred', 
+    marker = db.teaching_staff.insert(first_name='Sir Alfred', 
                                last_name='Marker', 
                                email='null@null')
     student = db.students.insert(student_first_name='Awesome', 
                                  student_last_name='Student', 
                                  student_email='null@null', 
-                                 student_cid='00000000', )
-    record = db.assignments.insert(student=student,
-                                   course_presentation_id=1, 
-                                   academic_year=2020, 
+                                 student_cid='00000000', 
+                                 course=3)
+    student_presentation = db.student_presentations.insert(student=student,
+                                                           academic_year=2020,
+                                                           course_presentation=31)
+    record = db.assignments.insert(student_presentation=student_presentation,
                                    status='Not started', 
                                    marker=marker, 
                                    marker_role_id=role.id, 
@@ -1515,373 +1189,3 @@ def download_pdf():
     raise HTTP(200, pdf,
                **{'Content-Type':'application/pdf',
                   'Content-Disposition':attachment + ';'})
-
-## -----------------------------------------------------------------------------
-## Project proposal handlers.
-## One view option that students can see, with a custom view function
-## One submission handler for use by staff
-## -----------------------------------------------------------------------------
-
-def project_proposals():
-    
-    """
-    Controller to serve up the contents of the proposals database as a nice
-    searchable grid.
-    """
-    
-    # Hide the internal ID numbers
-    db.project_proposals.id.readable=False
-    
-    links = [dict(header = '', 
-                  body = lambda row: A(SPAN('',_class="fa fa-info-circle", 
-                                            _style='font-size: 1.3em;',
-                                            _title='See details'),
-                                       _class="button btn btn-default", 
-                                       _href=URL("marking_reports","proposal_details", 
-                                                 args=[row.id], user_signature=True),
-                                       _style='padding: 3px 5px 3px 5px;'))]
-    
-    # show the standard grid display
-    # - restrict list display to a few key fields
-    # - sub in a custom view function for the normal details link
-    # - just give the CSV export link, which is moved from the bottom to
-    #   the search bar using in javascript in the view.
-    grid  = SQLFORM.grid(db.project_proposals,
-                         fields = [db.project_proposals.project_filled,
-                                   db.project_proposals.contact_name,
-                                   db.project_proposals.project_base,
-                                   db.project_proposals.project_title,
-                                   db.project_proposals.date_created],
-                         headers = {'project_proposals.project_filled':"Available?"},
-                         links = links,
-                         details = False,
-                         maxtextlength=250,
-                         create=False, # using a custom create form
-                         csv=False,
-                         exportclasses = dict(csv=False, json=False, html=False,
-                                              tsv=False, xml=False, 
-                                              tsv_with_hidden_cols=False),
-                         formargs={'showid':False},
-                         orderby= ~db.project_proposals.date_created)
-    
-    # edit the grid object
-    # - extract the download button and retitle it
-    # - insert it in the search menu
-    download = A('Download all', _class="btn btn-secondary btn-sm",
-                  _href=URL('project_proposals', 
-                            vars={'_export_type': 'csv_with_hidden_cols'}))
-    
-    if grid.element('.web2py_console form') is not None:
-        grid.element('.web2py_console form').append(download)
-
-    if auth.has_membership('project_proposer'):
-        download = A('New proposal', _class="btn btn-success btn-sm",
-                      _href=URL('submit_proposal'))
-        
-        if grid.element('.web2py_console form') is not None:
-            grid.element('.web2py_console form').append(download)
-        
-    
-    return(dict(grid=grid))
-
-
-def proposal_details():
-    
-    """
-    Controller to provide a nicely styled custom view of project details
-    """
-    
-    # retrieve the news post id from the page arguments passed by the button
-    # and then get the row and send it to the view
-    proposal_id = request.args(0)
-    proposal = db.project_proposals(proposal_id)
-    
-    if proposal is None:
-        session.flash = CENTER(B('Invalid project proposal number.'), _style='color: red')
-        redirect(URL('marking_reports','project_proposals'))
-    
-    # optional fields
-    if proposal.imperial_email:
-        internal = DIV(DIV(B('Imperial contact email'), _class="col-sm-3"),
-                        DIV(A(proposal.imperial_email, _href='mailto:{}'.format(proposal.imperial_email)),
-                            _class="col-sm-9"),
-                        _class='row', _style='min-height:30px')
-    else:
-        internal = DIV()
-    
-    # package up the proposal in a neat set of foldable containers
-    propview =  DIV(H3('Project proposal details'),
-                    P('Please look carefully through the proposal details below. If you are interested '
-                      'in the project then contact the supervisor, explaining why you are interested and '
-                      'any background which makes you a good fit for the project.'), 
-                    P('If this is an external project, the lead supervisor may have suggested someone at '
-                      'Imperial College or the NHM who could act as an internal supervisor and you should '
-                      'also contact them. If the project is external and no internal has been proposed '
-                      'then you ', B('must'), ' find an internal supervisor before starting the project.'),
-                    P('Please pay close attention to any extra notes on requirements (such as being able to '
-                      'drive or to speak particular languages) or the application process. There may be '
-                      'specific limitations on the project availability: if there are then they will be '
-                      'clearly shown further down the page.'),
-                    DIV(DIV(B("Project title"), _class="col-sm-3"),
-                        DIV(proposal.project_title, _class="col-sm-9"),
-                        _class='row', _style='min-height:30px'),
-                    DIV(DIV(B("Contact name"), _class="col-sm-3"),
-                        DIV(proposal.contact_name, _class="col-sm-9"),
-                        _class='row', _style='min-height:30px'),
-                    DIV(DIV(B("Contact email"), _class="col-sm-3"),
-                        DIV(A(proposal.contact_email, _href='mailto:{}'.format(proposal.contact_email)),
-                            _class="col-sm-9"),
-                        _class='row', _style='min-height:30px'),
-                    DIV(DIV(B("Project based at"), _class="col-sm-3"),
-                        DIV(proposal.project_base, _class="col-sm-9"),
-                        _class='row', _style='min-height:30px'),
-                    internal,
-                    DIV(DIV(B("Project description"), _class="col-sm-3"),
-                        DIV(XML(proposal.project_description.replace('\n', '<br />')), _class="col-sm-9"),
-                        _class='row', _style='min-height:30px'),
-                   )
-    
-    # some more optional components
-    if proposal.requirements:
-        propview += DIV(DIV(B("Additional requirements"), _class="col-sm-3"),
-                        DIV(proposal.requirements, _class="col-sm-9"),
-                        _class='row', _style='min-height:30px')
-
-    if proposal.support:
-        propview += DIV(DIV(B("Available support"), _class="col-sm-3"),
-                        DIV(proposal.support, _class="col-sm-9"),
-                        _class='row', _style='min-height:30px')
-    
-    if proposal.eligibility:
-        propview += DIV(DIV(B("Selection and eligibility"), _class="col-sm-3"),
-                        DIV(proposal.eligibility, _class="col-sm-9"),
-                        _class='row', _style='min-height:30px')
-    
-    # add the date created
-    propview += DIV(DIV(B("Date uploaded"), _class="col-sm-3"),
-                    DIV(proposal.date_created.isoformat(), _class="col-sm-9"),
-                    _class='row', _style='min-height:30px')
-
-    # if there are any limitations, add a section
-    if proposal.project_length or proposal.available_project_dates or proposal.course_restrictions:
-        limits = DIV(H3('Project proposal limitations', _style='background:lightgrey;min-height:30px'),
-                     P('The project proposer has indicated that there are some limitations to '
-                       'the availability of this project. It may only be available at certain '
-                       'times of year or suit a specific project length. It may also need '
-                       'skills taught to students on a particular course or courses.'),
-                     P('Research project proposals are usually part of an active research programme. '
-                       'If supervisors have stated limitations to a proposal, then they are unlikely '
-                       'to have any flexibility. If you are very interested in the topic but have '
-                       'problems with the stated limitations, the supervisor ',B('may'), ' still be '
-                       'happy to talk to you about other options around the proposal, but you should '
-                       'not expect that any alternative arrangements can be made.'))
-        
-        if proposal.project_length:
-            limits += DIV(DIV(B("Project length limitations"), _class="col-sm-3"),
-                          DIV(', '.join(proposal.project_length), _class="col-sm-9"),
-                          _class='row', _style='min-height:30px')
-
-        if proposal.available_project_dates:
-            limits += DIV(DIV(B("Available date limitations"), _class="col-sm-3"),
-                          DIV(', '.join(proposal.available_project_dates), _class="col-sm-9"),
-                          _class='row', _style='min-height:30px')
-
-        if proposal.course_restrictions:
-            limits += DIV(DIV(B("Suitable for"), _class="col-sm-3"),
-                          DIV(', '.join(proposal.course_restrictions), _class="col-sm-9"),
-                          _class='row', _style='min-height:30px')
-
-        propview += limits
-    
-    return dict(proposal = propview)
-
-
-@auth.requires_membership('project_proposer')
-def submit_proposal():
-    
-    form  = SQLFORM(db.project_proposals)
-    
-    # process the form
-    if form.process(onvalidation=validate_proposal).accepted:
-        
-        response.flash = CENTER(B('Project proposal submitted.'), _style='color: green')
-        
-        # email the submitter
-        row = db.project_proposals[form.vars.id]
-        email_dict = {'name': row.contact_name,
-                      'title': row.project_title,
-                      'fill_link': URL('project_filled', 
-                                       vars={'id': row.id, 'token': row.project_filled_token},
-                                       scheme=True, host=True)}
-        
-        mailer = Mail()
-        success = mailer.sendmail(subject='Project proposal submission',
-                                  to=row.contact_email,
-                                  email_template='proposal_submitted.html',
-                                  email_template_dict=email_dict)
-        del mailer
-        
-    elif form.errors:
-        
-        response.flash = CENTER(B('Problems with the form, check below.'), _style='color: red')
-        
-    else:
-        pass
-    
-    # customise the form to improve the layout
-    form.element('textarea[name=requirements]')['_rows']= 3
-    form.element('textarea[name=support]')['_rows']= 3
-    form.element('textarea[name=eligibility]')['_rows']= 3
-
-    # Create the project base selector. We're hijacking the standard widget to provide an
-    # optional "Other" text entry field, when "Other" is selected from a drop down
-    base_script = SCRIPT("""function checkvalue(val)
-                            {
-                                if(val==="Other")
-                                   document.getElementById('project_proposals_project_base_other').style.display='block';
-                                else
-                                   document.getElementById('project_proposals_project_base_other').style.display='none';
-                            }""")
-    
-    base_select = SELECT(*[OPTION(x, _value=x) for x in bases],
-                         _class="generic-widget form-control",
-                         _id="project_proposals_project_base",
-                         _name="project_base",
-                         _onchange = 'checkvalue(this.value)')
-    
-    base_other = INPUT(_class="form-control string",
-                       _id="project_proposals_project_base_other",
-                       _name="project_base_other",
-                       _type="text",
-                       _value="",
-                       _placeholder="Institution name",
-                       _style="display:none")
-    
-    form =  DIV(form.custom.begin,
-                H3('Project proposal details', _style='background:lightgrey;min-height:30px'),
-                DIV(DIV(H4("Contact name"), P("This should be name of main person to contact about the project"),
-                        form.custom.widget.contact_name, _class="col-sm-6"),
-                    DIV(H4("Contact email"), P("The email address main project contact"),
-                        form.custom.widget.contact_email, _class="col-sm-6"),
-                    _class='row'),
-                DIV(DIV(H4("Project based at"), P('Please select the organisation where the student will be '
-                        'based for the majority of the project (excluding fieldwork).'),
-                        base_script, base_select, base_other, _class="col-sm-6"),
-                    DIV(H4("Imperial email"), P("For external projects, if possible "
-                        'please provide the email of an Imperial or NHM member of staff '
-                        "who could act as an internal supervisor."),
-                        form.custom.widget.imperial_email, _class="col-sm-6"),
-                    _class='row'),
-                DIV(DIV(H4("Project title"), P('Please provide a title. Students will initially see a list '
-                        'of supervisors, project location and titles, so make it catchy!'),
-                        form.custom.widget.project_title, _class="col-sm-12"),
-                    _class='row'),
-                DIV(DIV(H4("Project description"), P('Provide a brief description of the main project aims, '
-                          'possibly including any key references'),
-                        form.custom.widget.project_description, _class="col-sm-12"),
-                    _class='row'),
-                DIV(DIV(H4("Project type"), P('Please indicate the broad research skills '
-                           'involved in this project - you can select multiple options.'),
-                        form.custom.widget.project_type, _class="col-sm-12"),
-                    _class='row'),
-                H3('Additional information', _style='background:lightgrey;min-height:30px'),
-                DIV(DIV(H4("Additional skills or experience required"), P('Most analytical skills and '
-                         'methods should be taught during the project but vital skills or experience '
-                         '(languages, driving, etc) should be given here'),
-                        form.custom.widget.requirements, _class="col-sm-12"),
-                    _class='row'),
-                DIV(DIV(H4("Support offered"), P('This is for non-academic project support - logistics or '
-                                                 'bursaries, for example'),
-                        form.custom.widget.support, _class="col-sm-12"),
-                    _class='row'),
-                DIV(DIV(H4("Eligibility notes"), P('If the project has a deadline or a '
-                        'particular selection criterion or process, please provide brief details offered'),
-                        form.custom.widget.eligibility, _class="col-sm-12"),
-                    _class='row'),
-                H3('Proposal limitations', _style='background:lightgrey;min-height:30px'),
-                P('Students from the courses above will be able to browse all of the projects listed in '
-                  'this database. Students appreciate the breadth of choice to allow them to follow their '
-                  'own interests. However, we recognise that some projects may be limited in when they '
-                  'can occur and how long they will take. Some projects may require a skillset that makes '
-                  'them well suited only to students from particular courses.'),
-                P('Use the check boxes below to indicate any limitations for this proposal. ', B('Note that ',
-                  'you only need to select options for categories that you want to limit. ', _style='color:darkred'),
-                  'If all of the options in one of these categories are fine for the project then '
-                  'save your clicking finger and leave all the boxes unchecked!'),
-                DIV(DIV(H4("Project length"), P('Indicate if the proposal is only suited to particular '
-                                                 'lengths of student projects'),
-                        form.custom.widget.project_length, _class="col-sm-12"),
-                    _class='row'),
-                DIV(DIV(H4("Available project dates"), P('Indicate if the proposal is only available at '
-                                                         'particular times of the year'),
-                        form.custom.widget.available_project_dates, _class="col-sm-12"),
-                    _class='row'),
-                DIV(DIV(H4("Course restrictions"), P('Indicate if the proposal is only suited to students '
-                                                     'with the background of particular courses'),
-                        form.custom.widget.course_restrictions, _class="col-sm-12"),
-                    _class='row'),
-                DIV(_class='row', _style='min-height:10px'),
-                form.custom.submit, form.custom.end)
-
-    return(dict(form = form))
-
-
-def validate_proposal(form):
-    
-    # Before processing the form object (which only considers fields in the table), sub the other text from 
-    # the request.vars. into the form.vars. slot.
-    if request.vars.project_base == 'Other':
-        form.vars.project_base = request.vars.project_base_other
-        #else:
-        #    form.errors.project_base('For other project bases, please provide an institution name')
-    
-    form.vars.date_created = datetime.date.today()
-
-
-def project_filled():
-    
-    """
-    Provides supervisors with a link to change a project from unfilled to filled and back. 
-    This basically only updates the display and all filled projects remain visible
-    """
-    
-    project_id = request.vars['id']
-    project_token = request.vars['token']
-    
-    msg = 'Invalid project id and or access token'
-    
-    # check both are provided
-    if project_id and project_token:
-        row = db.project_proposals[int(project_id)]
-        
-        # valid project ID?
-        if row:
-            # if the security token matches the one stored for 
-            # this project, set project_filled = True
-            if row.project_filled_token == project_token and not row.project_filled:
-                row.update_record(project_filled= True)
-                msg = 'Project successfully marked as unavailable'
-            elif row.project_filled_token == project_token and row.project_filled:
-                row.update_record(project_filled= False)
-                msg = 'Project successfully marked as available'
-
-        # currently does nothing about bad matches or inputs.
-    
-    return dict(msg=msg)
-
-
-@auth.requires_login()
-def reset_project_proposal_uuid():
-    
-    """
-    Bit of a hack really. Exposes a controller to populate the UUID field
-    of the project proposals. Could be extended to reset any of the UUID 
-    fields?
-    """
-    
-    rows = db(db.project_proposals.id > 0).select()
-    
-    for r in rows:
-        r.update_record(project_filled_token = str(uuid.uuid4()))
-    
-

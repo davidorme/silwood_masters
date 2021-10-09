@@ -41,11 +41,6 @@ db = DAL(configuration.get('db.uri'),
 # Use the database for sessions, rather than spamming the inodes
 session.connect(request, response, db)
 
-# Store db and config in the current object so it can be imported by modules
-from gluon import current
-current.db = db
-current.configuration = configuration
-
 # -------------------------------------------------------------------------
 # by default give a view/generic.extension to all actions from localhost
 # none otherwise. a pattern can be 'controller/function.extension'
@@ -104,7 +99,7 @@ class Auth_Mail(Auth):
 auth = Auth_Mail(db, 
                  host_names=configuration.get('host.names'),
                  controller='sm_admin',
-                 url_index=URL('marking_reports', 'index'))
+                 url_index=URL('projects', 'project_proposals'))
 
 # -------------------------------------------------------------------------
 # create all tables needed by auth, maybe add a list of extra fields
@@ -146,6 +141,11 @@ if configuration.get('scheduler.enabled'):
     from gluon.scheduler import Scheduler
     scheduler = Scheduler(db, heartbeat=configuration.get('scheduler.heartbeat'))
 
+# Store db, config and auth in the current object so it can be imported by modules
+from gluon import current
+current.db = db
+current.configuration = configuration
+current.auth = auth
 
 # -------------------------------------------------------------------------
 # after defining tables, uncomment below to enable auditing

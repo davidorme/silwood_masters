@@ -454,10 +454,10 @@ def get_form_header(record, readonly, security=None, show_due_date=False):
     """
     
     # Define the header block
-    header_rows =   [('Student',  '{student.student_first_name} {student.student_last_name}'),
-                     ('CID', '{student.student_cid:09d}'),
-                     ('Course Presentation', '{course_presentation_id.name}'),
-                     ('Academic Year', '{academic_year}'),
+    header_rows =   [('Student',  '{student_presentation.student.student_first_name} {student_presentation.student.student_last_name}'),
+                     ('CID', '{student_presentation.student.student_cid:09d}'),
+                     ('Course Presentation', '{student_presentation.course_presentation.name}'),
+                     ('Academic Year', '{student_presentation.academic_year}'),
                      ('Marker', '{marker.first_name} {marker.last_name}'),
                      ('Marker Role', '{marker_role_id.name}'),
                      ('Status', '{status}')]
