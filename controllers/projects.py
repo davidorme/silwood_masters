@@ -515,8 +515,6 @@ def validate_proposal(form):
     #else:
         #form.errors.project_base ='For other project bases, please provide an institution name'
     
-    print(form)
-    
     form.vars.date_created = datetime.date.today()
 
 
