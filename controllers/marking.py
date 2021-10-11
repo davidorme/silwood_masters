@@ -13,17 +13,11 @@ from marking_functions import (create_pdf, release, distribute, zip_pdfs, downlo
                                        assignment_to_sqlform, style_sqlform, FoldingTOC)
 
 from staff_auth import staff_authorised
-
 import sharepoint
-
 import markdown # gluon provides MARKDOWN but lacks extensions.
 from mailer import Mail
 from gluon.storage import Storage
 from pydal.helpers.methods import smart_query
-
-def index():
-
-    return dict()
 
 def help():
     
@@ -635,7 +629,7 @@ def who_are_my_markers():
 
 
 @staff_authorised
-def my_assignments():
+def my_marking():
     
     """
     This controller allows a marker to access a table of assignments that have been

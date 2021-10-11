@@ -44,8 +44,8 @@ else:
 
 
 
-marking_dropdown = [(T('Criteria and Forms'), False, URL('marking','criteria_and_forms'), []),
-                    (T('Overview'), False,  URL('marking', 'help'), []), 
+marking_dropdown = [(T('Overview'), False,  URL('marking', 'help'), []), 
+                    (T('Criteria and Forms'), False, URL('marking','criteria_and_forms'), []),
                     (T('Video tutorial'), False, URL('static', 'video/marking_howto.mp4'), [])]
 
 
