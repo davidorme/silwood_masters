@@ -660,11 +660,12 @@ def create_pdf(record, confidential):
     pdf.set_text_color(0, 0, 0)
     
     # ID table
-    label =   ['Student', 'CID', 'Course', 'Year', 'Marker', 'Marker Role']
-    content = ['{student.student_first_name} {student.student_last_name}',
-               '{student.student_cid}',
-               '{course_presentation_id.name}',
-               '{academic_year}',
+    label =   ['Student', 'CID', 'Course Presentation', 'Year', 'Marker', 'Marker Role']
+    content = ['{student_presentation.student.student_first_name} '  # Intentionally no comma
+               '{student_presentation.student.student_last_name}',
+               '{student_presentation.student.student_cid}',
+               '{student_presentation.course_presentation.name}',
+               '{student_presentation.academic_year}',
                '{marker.first_name} {marker.last_name}',
                '{marker_role_id.name}']
     
@@ -722,10 +723,10 @@ def create_pdf(record, confidential):
     
     pdf.close()
     pdf = pdf.output(dest='S').encode('latin-1') # unicode string to bytes
-    filename = '{} {} {} {} {} {}.pdf'.format(record.course_presentation_id.name,
-                                            record.academic_year, 
-                                            record.student.student_last_name,
-                                            record.student.student_first_name,
+    filename = '{} {} {} {} {} {}.pdf'.format(record.student_presentation.course_presentation.name,
+                                            record.student_presentation.academic_year, 
+                                            record.student_presentation.student.student_last_name,
+                                            record.student_presentation.student.student_first_name,
                                             record.marker_role_id.name,
                                             record.id)
     
