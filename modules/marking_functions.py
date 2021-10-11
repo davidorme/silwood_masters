@@ -13,7 +13,6 @@ from itertools import groupby
 import fpdf
 import importlib
 from tempfile import NamedTemporaryFile
-from html.parser import HTMLParser 
 from mailer import Mail
 
 from gluon import (current, SQLFORM, DIV, LABEL, CAT, B, P, A, SPAN,

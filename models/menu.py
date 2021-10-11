@@ -34,12 +34,13 @@ if auth.has_membership('timetabler') or auth.has_membership('admin'):
 
 
 if auth.has_membership('wiki editor') or auth.has_membership('admin'):
-    wiki_dropdown = [(T('Pages'), False, URL('wiki','manage_wikicontent'), []),
-                     (T('Media'), False, URL('wiki','manage_wikimedia'), []),
-                     (T('Editing the wiki'), False, URL('wiki','wiki', 
-                                                         args=['editing-this-wiki']), [])]
+    wiki_dropdown = (T('Wiki'), False, None, [
+                         (T('Pages'), False, URL('wiki','manage_wikicontent'), []),
+                         (T('Media'), False, URL('wiki','manage_wikimedia'), []),
+                     (  T('Editing the wiki'), False, URL('wiki','wiki', 
+                                                          args=['editing-this-wiki']), [])])
 else:
-     wiki_dropdown = []
+     wiki_dropdown =  (T('Wiki'), False, URL('wiki','wiki'), [])
 
 
 
@@ -88,7 +89,7 @@ response.menu = [
     (T('Projects'), False, None, projects_dropdown),
     (T('Marking'), False, None, marking_dropdown),
     (T('Timetabler'), False, None, timetabler_dropdown),
-    (T('Wiki'), False, None, wiki_dropdown)
+    wiki_dropdown
     ]
 
 
