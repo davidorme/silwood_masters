@@ -2,10 +2,10 @@
 <p>Dear {{=name}},</p>
 
 <p>Many thanks in advance for marking and assessing projects for the Silwood Masters programs. We 
-	use an <a href="https://silwoodmasters.info"> online system</a> to submit assessment reports 
-	and we strongly recommend that you quickly review the following:</p>
+	use an online system to submit assessment reports and we strongly recommend that you quickly 
+	review the following:</p>
 
-{{=P(A('Assessment overview and guidance', _href=URL('marking_reports', 'help', scheme=True, host=True)))}}
+{{=P(A('Assessment overview and guidance', _href=URL('marking_reports', 'overview', scheme=True, host=True)))}}
 
 <p>In particular, please pay attention to the statements on:</p>
 
@@ -17,17 +17,10 @@
 	presentation and the project viva. Please do pay attention to the different assessment types, 
 	described in the link above.</p>
 	
-<p> You view the details of marking assignments at your {{=A('My Assignments', _href=my_assignments_url)}} 
-	page, which provides an summary table, along with status icons so that you can track which
-	have been completed. You can view the marking form for each assignment from that table. The
-	marking criteria will be linked from each form along with any files to be marked as they 
-	become available.
- </p>
-
-<p>When you access your assignments or any marking forms, you will also be asked for an 
-	authentication code which will be emailed to you. This additional step will only be required
-	once per session.  However, to help keep the system secure <b style='color:red'> do not forward 
-	this email to anyone else!</b></p>
+<p> To view your marking, you will first need to submit your email address to
+	{{=A('login to the marking system ', _href=login_url)}}. You will then get an
+	email with secure links to your marking.
+</p>
 
 <p>The summary below shows the number of each kind of report that still need to be submitted:</p>
 

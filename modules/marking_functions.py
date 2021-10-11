@@ -166,27 +166,25 @@ def distribute(ids):
     # Find the uncompleted records and group by marker and role
     email = db(qry_by_select_ids & 
                (db.assignments.status.belongs(['Not started', 'Started'])) &
-               (db.assignments.marker == db.markers.id)
+               (db.assignments.marker == db.teaching_staff.id)
                ).select(db.assignments.marker,
-                        db.markers.id,
-                        db.markers.email,
-                        db.markers.first_name,
-                        db.markers.marker_access_token,
+                        db.teaching_staff.id,
+                        db.teaching_staff.email,
+                        db.teaching_staff.first_name,
                         db.assignments.marker_role_id,
                         db.assignments.marker_role_id.count().with_alias('n'),
                         groupby=(db.assignments.marker,
-                                 db.markers.id,
-                                 db.markers.email,
-                                 db.markers.first_name,
-                                 db.markers.marker_access_token,
+                                 db.teaching_staff.id,
+                                 db.teaching_staff.email,
+                                 db.teaching_staff.first_name,
                                  db.assignments.marker_role_id))
     
     # now render to text values and group by marker
     email = [e for e in email.render()]
-    email.sort(key= lambda rec: rec['markers.email'])
+    email.sort(key= lambda rec: rec['teaching_staff.email'])
     marker_blocks = {k:list(recs) 
                      for k, recs 
-                     in itertools.groupby(email, lambda x: x['markers.email'])}
+                     in itertools.groupby(email, lambda x: x['teaching_staff.email'])}
     
     # Create a mailer instance to send multiple emails using the same connection
     rec_fails = 0
@@ -200,16 +198,15 @@ def distribute(ids):
         # now summarize the number of each type of report
         reports_to_submit = [(r.assignments.marker_role_id, r.n) for r in recs]
         
-        # Create a link to the marker my assignments page.
-        my_assignments_url = URL('my_assignments', scheme=True, host=True,
-                                  vars={'marker': recs[0].markers.id, 
-                                        'marker_access_token': recs[0].markers.marker_access_token})
+        # Create a link to the login URL
+        login_url = URL('staff', 'staff_login', scheme=True, host=True,
+                                  vars={'email': marker})
         
         success = mailer.sendmail(subject='Silwood Park Masters Project Marking', 
                                   to=marker, email_template='marker_distribute.html',
-                                  email_template_dict={'name':recs[0].markers.first_name,
+                                  email_template_dict={'name':recs[0].teaching_staff.first_name,
                                                        'reports_to_submit': reports_to_submit,
-                                                       'my_assignments_url': my_assignments_url})
+                                                       'login_url': login_url})
         
         if not success:
             rec_fails += sum([r.n for r in recs])
