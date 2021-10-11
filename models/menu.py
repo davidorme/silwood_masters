@@ -135,7 +135,7 @@ if session.magic_auth is not None:
                           (T('Home'), False, 
                               URL('staff', 'home'), []),
                           (T('My marking'), False, 
-                              URL('marking', 'my_assignments'), []),
+                              URL('marking', 'my_marking'), []),
                           (T('My projects'), False, 
                               URL('projects', 'my_projects'), []),
                           (T('Create project'), False, 
