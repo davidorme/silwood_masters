@@ -112,18 +112,23 @@ def new_assignment():
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
-    db.assignments.student.requires = IS_IN_DB(db, 'students.id', 
-                                              '%(student_last_name)s, %(student_first_name)s (%(course)s)')
-    
-    db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', 
+    db.assignments.marker.requires = IS_IN_DB(db, 'teaching_staff.id',
                                               '%(last_name)s, %(first_name)s (%(email)s)')
+        
+    ps_reqr = IS_IN_DB(db,
+                       'student_presentations.id', 
+                       lambda  row: (f"{row.student.student_last_name}, " 
+                                     f"{row.student.student_first_name} ("
+                                     f"{row.course_presentation.name})"),
+                       sort=True)
+    
+    db.assignments.student_presentation.requires =ps_reqr
     
     form = SQLFORM(db.assignments,
-                   fields=['student', 
+                   fields=['student_presentation', 
                            'marker',
-                           'course_presentation_id',
                            'marker_role_id',
-                           'academic_year',
+
                            'due_date'])
     
     if form.process().accepted:
@@ -214,12 +219,12 @@ def assignments():
         # Find the action from the post vars
         _, _, action_func, action_args = [b for b in button_actions if b[0] in request.post_vars][0]
         
-        # Pass the keywords currently in use by the SQLFORM.grid 
-        # back into the db to get the rows they select and hence the list of ids
-        if request.get_vars.keywords is None:
-            qry = db.assignments
-        else:
-            qry = smart_query(fields, request.get_vars.keywords)
+        # Starting from the base query, annd any keywords currently in use by the SQLFORM.grid 
+        # back into the db to get the selected rows and hence the list of ids
+        qry = (db.assignments.student_presentation == db.student_presentations.id)
+
+        if request.get_vars.keywords is not None:
+            qry &= smart_query(fields, request.get_vars.keywords)
         
         records = db(qry).select(db.assignments.id)
         records = [r.id for r in records]
