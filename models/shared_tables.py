@@ -1,3 +1,4 @@
+import secrets
 from timetabler_functions import get_year_start_date
 
 ## -----------------------------------------------------------------------------
@@ -48,7 +49,7 @@ db.define_table('teaching_staff',
 
 db.define_table('magic_links',
                 Field('staff_id','reference teaching_staff'),
-                Field('token', length=64, default=uuid.uuid4,
+                Field('token', 'string', default=secrets.token_urlsafe(nbytes=32),
                       readable=False, writable=False),
                 Field('expires','datetime', 
                       default=datetime.datetime.now() + datetime.timedelta(minutes=60),

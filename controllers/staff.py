@@ -1,3 +1,4 @@
+import secrets
 from staff_auth import staff_authorised
 
 ## --------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ def _send_staff_link(requester_row):
     
     
     # Now we are in a position to create and send a new link
-    new_uuid = uuid.uuid4()
+    new_uuid = secrets.token_urlsafe(nbytes=32)
     
     home_link = URL('staff', 'authorise', vars={'token': new_uuid}, 
                     scheme=True, host=True)
