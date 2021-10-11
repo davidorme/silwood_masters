@@ -301,7 +301,7 @@
 					"label": "Comment",
 					"nrow": 5,
 					"placeholder": "Use this box to provide private comments if neccessary, which only staff will see",
-					"required": true
+					"required": false
 				}
 			]
 		},
