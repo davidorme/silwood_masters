@@ -147,8 +147,8 @@ if session.magic_auth is not None:
 else:
     
     response.menu.append((T('Staff '), False, URL('staff', 'home'), [
-                          (T('Request access'), False, 
-                              URL('staff', 'request_access'), []),
+                          (T('Staff Login'), False, 
+                              URL('staff', 'staff_login'), []),
                          ]))
     
     

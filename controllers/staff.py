@@ -26,9 +26,10 @@ def home():
 def checkout():
     
     session.magic_auth = None
-    redirect(URL('projects', 'project_proposals'))
+    redirect(URL('staff', 'staff_login'))
 
-def request_access():
+
+def staff_login():
     
     """
     A controller to use get_staff_link from the website rather than having to have an email
@@ -40,18 +41,23 @@ def request_access():
     form = SQLFORM.factory(Field('email_address', requires=IS_EMAIL(), 
                                  default=requester_email))
         
-    if form.process(onvalidation=request_access_validate).accepted:
+    if form.process(onvalidation=staff_login_validate).accepted:
         
-        send_staff_link(form.record)
-        # response.message('Link successfully sent.')
+        sent = _send_staff_link(form.record)
         
-        form.element('span').components.append(DIV("An access link has been emailed to this address",
+        if sent:
+            message = 'An access link has been emailed to this address'
+        else:
+            message = ('There has been a problem sending this email. Please contact us'
+                       'using the email link above.')
+        
+        form.element('span').components.append(DIV(message,
                                                    _style="padding: 5px; color: darkgreen"))
     
     return dict(form=form)
 
 
-def request_access_validate(form):
+def staff_login_validate(form):
     """
     Checks whether the token can be created
     """
@@ -79,7 +85,7 @@ def request_access_validate(form):
     form.record = requester_record
 
 
-def send_staff_link(requester_row):
+def _send_staff_link(requester_row):
     """
     This controller creates magic links for email accounts that exist in the staff table.
     """
@@ -88,8 +94,18 @@ def send_staff_link(requester_row):
     # Now we are in a position to create and send a new link
     new_uuid = uuid.uuid4()
     
-    email_dict = dict(magic_link = URL('staff', 'authorise', vars={'token': new_uuid},
-                                       scheme=True, host=True),
+    home_link = URL('staff', 'authorise', vars={'token': new_uuid}, 
+                    scheme=True, host=True)
+    myprj_link = URL('staff', 'authorise', vars={'token': new_uuid,
+                                                 '_next': 'projects/my_projects'}, 
+                     scheme=True, host=True)
+    mymrk_link = URL('staff', 'authorise', vars={'token': new_uuid,
+                                                 '_next': 'marking/my_marking'}, 
+                     scheme=True, host=True)
+    
+    email_dict = dict(home_link = home_link,
+                      myprj_link=myprj_link,
+                      mymrk_link=mymrk_link,
                       first_name = requester_row.first_name)
 
     mailer = Mail()
@@ -98,8 +114,12 @@ def send_staff_link(requester_row):
                               email_template='magic_links.html',
                               email_template_dict=email_dict)
     
-    db.magic_links.insert(staff_id = requester_row.id,
-                          token = new_uuid)
+    if not success:
+        return False
+    else:
+        db.magic_links.insert(staff_id = requester_row.id,
+                              token = new_uuid)
+        return True
 
 
 def authorise():
@@ -113,21 +133,21 @@ def authorise():
     magic_link = request.vars['token']
     
     if magic_link is None:
-        raise HTTP(403)
+        raise HTTP(403, 'notoken')
     
     # Look for the provided token in the magic_links table
     magic_link = db((db.magic_links.token == magic_link) &
                     (db.magic_links.staff_id == db.teaching_staff.id)).select().first()
     
     if magic_link is None:
-        raise HTTP(403)
+        raise HTTP(403, 'no link')
     
     # Check for expiry
     if magic_link.magic_links.expires < datetime.datetime.now():
         
         raise HTTP(403, P("This access link has expired. Please ", 
                           A("request a new one", 
-                            _src=URL('request_access', 
+                            _src=URL('staff_login', 
                                      vars={'email': magic_link.teaching_staff.email},
                                      scheme=True, host=True))))
     
@@ -136,6 +156,12 @@ def authorise():
     # access. 
     session.magic_auth = magic_link.teaching_staff
     
-    redirect(URL('staff', 'home'))
-
-
+    # Does the request say where to go next (projects etc)?
+    _next = request.vars.get('_next')
+    
+    if _next is not None:
+        _next = _next.split('/')
+        redirect(URL(*_next))
+    else:
+         redirect(URL('staff', 'home'))
+    
