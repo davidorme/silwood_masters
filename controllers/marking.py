@@ -217,9 +217,6 @@ def assignments():
         # Find the action from the post vars
         _, _, action_func, action_args = [b for b in button_actions if b[0] in request.post_vars][0]
         
-        
-        print(request.get_vars.keywords)
-        
         # Pass the keywords currently in use by the SQLFORM.grid 
         # back into the db to get the rows they select and hence the list of ids
         if request.get_vars.keywords is None:
