@@ -10,7 +10,7 @@ from itertools import groupby, chain
 import simplejson as json
 from marking_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
-                                       assignment_to_sqlform, style_sqlform, FoldingTOC)
+                                       assignment_to_sqlform, style_sqlform)
 
 from staff_auth import staff_authorised
 import sharepoint
@@ -856,8 +856,7 @@ def write_report():
     # Get the marker record
     marker = session.magic_auth
     
-    # Access control - if the user is logged in as an admin, then
-    # don't need to do any validation, otherwise use 2FA 
+    # Access control
     show_due_date = False
     
     if auth.has_membership('admin'):
@@ -1119,15 +1118,14 @@ def show_form():
 def download_pdf():
 
     """
-    General function that checks the access token and pulls in
+    General function that checks access statuses token and pulls in
     html from functions and spits back a PDF
     """
 
     # first check request variables
     # - access control needs a marking_assignment record id number
-    #   and either a matching staff_access_token to obtain the confidential 
-    #   report or a public_access_token to obtain a public one
-
+    #   and some form of validation
+    
     security = request.vars
 
     # is the record id valid
@@ -1147,30 +1145,18 @@ def download_pdf():
             session.flash = 'This report has not yet been submitted or released'
             redirect(URL('index'))
     
-    # what access tokens have been provided?
-    if security['staff_access_token'] is None and security['student_access_token'] is None:
+    if auth.has_membership('admin'):
         
-        session.flash = 'No access token provided for PDF download'
-        redirect(URL('index'))
+        confidential = True
+    
+    elif session.magic_auth is not None:
         
-    elif security['staff_access_token'] is not None:
-        
-        marker = db.markers(record.marker)
-        
-        # Two factor authentication
-        if not session.tf_validated:
-            _next = URL(args=request.args, vars=request.vars)
-            redirect(URL('authenticate', vars=dict(marker=marker.id, _next=_next)))
-        
-        if marker.marker_access_token != security['staff_access_token']:
-            session.flash = 'Staff access token invalid for PDF download'
-            redirect(URL('index'))
-        else:
-            confidential = True
-        
+        # TODO - ah, but _which_ staff
+        confidential = True
+            
     elif security['student_access_token'] is not None:
             
-        if record.student.student_access_token != security['student_access_token']:
+        if record.student_presentation.student.student_access_token != security['student_access_token']:
             session.flash = 'Student access token invalid for PDF download'
             redirect(URL('index'))
         elif record.status != 'Released':
