@@ -92,46 +92,53 @@ def release(ids):
     Local function to email reports to students. It will only email released reports.
     """
     
-    db = current.db
+    db = current.db    
     
-    # Get only submitted
-    n=0
-    email = []
-    for id in ids:
-        record = db.assignments(id)
-        if record.status in ['Submitted', 'Released']:
-            record.update_record(status='Released')
-            email.append(record)
-            n += 1
+    qry_by_select_ids = ((db.assignments.id.belongs(ids)) &
+                         (db.assignments.status.belongs(['Submitted', 'Released'])))
+    
+    db(qry_by_select_ids).update(status='Released')
+    
+    # Find students covered by these records
+    email = db(qry_by_select_ids & 
+               (db.assignments.student_presentation == db.student_presentations.id) &
+               (db.student_presentations.student == db.students.id)
+               ).select(db.students.student_email,
+                        db.students.student_first_name,
+                        db.students.student_last_name,
+                        db.students.student_access_token,
+                        db.assignments.marker,
+                        db.assignments.marker_role_id,
+                        db.assignments.id)
     
     # now group by student
-    email.sort(key=lambda rec: rec['student'])
-    student_blocks = {k:list(recs) 
+    email = [rec for rec in email.render()]
+    email.sort(key = lambda rec: rec['students'])
+    student_blocks = {k.values(): list(recs) 
                       for k, recs 
-                      in itertools.groupby(email, lambda x: x['student'])}
+                      in itertools.groupby(email, lambda x: (x['students']))}
 
     # Create a mailer instance to send multiple emails using the same connection
     fails = 0
     mailer = Mail()
     mailer.login()
     
-    for student, recs in student_blocks.items():
+    for (st_email, st_first, st_last, token), recs in student_blocks.items():
         
         # Create a set of links to the reports
         links = [CAT(P(B('Marking Role: '), 
-                       r.marker_role_id.name,
+                       r.assignments.marker_role_id,
                        B('; Marker: '), 
-                       A(r.marker.first_name, ' ', r.marker.last_name, 
+                       A(r.assignments.marker, 
                          _href=URL('download_pdf', scheme=True, host=True,
-                                   vars={'record':r.id, 
-                                         'student_access_token': r.student.student_access_token}))))
+                                   vars={'record':r.assignments.id, 
+                                         'student_access_token': token}))))
                 for r in recs]
         
         success = mailer.sendmail(subject='Your Project Marking Reports', 
-                                  to=recs[0].student.student_email, 
+                                  to=st_email, 
                                   email_template='student_release.html',
-                                  email_template_dict={'name':recs[0].student.student_first_name + 
-                                                              ' ' + recs[0].student.student_last_name,
+                                  email_template_dict={'name':f"{st_first} {st_last}",
                                                        'links':CAT(links).xml()})
         
         if not success:
@@ -142,7 +149,7 @@ def release(ids):
     
     # give some feedback
     msg = 'Emailed {} released records from {} selected rows to {} students'.format(
-            n, len(ids), len(student_blocks)-fails)
+            len(email), len(ids), len(student_blocks) - fails)
     if fails > 0:
         msg = msg + "Warning: FAILED to send {} emails. Review email log.".format(fails)
     
