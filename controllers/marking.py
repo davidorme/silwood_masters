@@ -147,12 +147,22 @@ def assignments():
     to get subsets and then feeds the search keywords in to run the actions.
     """
     
-    # look for the 'all' variable to allow the system to show older records.
+
+    # Use 'all' variable in URL to toggle access to previous records
+    qry = (db.assignments.student_presentation == db.student_presentations.id)
+    
     if 'all' in request.vars.keys():
-        ignore_common = True
+        old_new = DIV('This table is currently showing all marking assignments across all '
+                      'years. Click ', A('here', _href=URL('marking','assignments')), 
+                      ' to filter to assignments for current students.')
     else:
-        ignore_common = False
         
+        qry &= (db.student_presentations.academic_year == FIRST_DAY.year)
+        
+        old_new =  DIV('This table is currently only showing assignments for current students. '
+                      'To remove this filter and see all assignments across years, click ',
+                      A('here', _href=URL('marking','assignments', vars={'all': ''})))
+    
     # Represent status as icon
     db.assignments.status.represent = lambda id, row: status_dict[row.assignments.status]
     
@@ -185,9 +195,8 @@ def assignments():
               db.assignments.due_date,
               db.assignments.status]
     
-    grid = SQLFORM.grid(db(db.assignments.student_presentation == db.student_presentations.id),
+    grid = SQLFORM.grid(db(qry),
                            fields = fields,
-                           ignore_common_filters=ignore_common,
                            maxtextlength=100,
                            csv=False,
                            deletable=False,
@@ -231,17 +240,7 @@ def assignments():
         
         # Feed those into the action function
         action_func(ids=records, **action_args)
-        
-    # old records, turning off the common filter
-    if ignore_common:
-        old_new = DIV('This table is currently showing all marking assignments across all '
-                      'years. Click ', A('here', _href=URL('marking','assignments')), 
-                      ' to filter to assignments for current students.')
-    else:
-        old_new = DIV('This table is currently only showing assignments for current students. '
-                      'To remove this filter and see all assignments across years, click ',
-                      A('here', _href=URL('marking','assignments', vars={'all': ''})))
-    
+            
     return dict(form=grid, actions=actions, old_new=old_new)
 
 
@@ -647,19 +646,6 @@ def my_marking():
     capabilities!
     """
     
-    # Use 'all' variable in URL to toggle access to previous records
-    # look for the 'all' variable to allow the system to show older records.
-    if 'all' in request.vars.keys():
-        ignore_common = True
-        header = P("The table below shows all the assignments that have been assigned to you ",
-                   B("across all years"),". To focus on your current marking assignments, click ",
-                   A("here", _href=URL()))
-    else:
-        ignore_common = False
-        header = P("The table below shows your ", B("current marking assignments"),
-                   ". To also see records from previous years, click ",
-                   A("here", _href=URL(vars={'all': ''})))
-    
     # Get the stored session details.
     marker = session.magic_auth
     
@@ -674,11 +660,27 @@ def my_marking():
                                                  vars={'record': row.assignments.id}),
                                        _target='_blank'))]
     
+    
+    # Use 'all' variable in URL to toggle access to previous records
+    qry = ((db.assignments.marker == marker.id) &
+           (db.assignments.student_presentation == db.student_presentations.id))
+    
+    if 'all' in request.vars.keys():
+        header = P("The table below shows all the assignments that have been assigned to you ",
+                   B("across all years"),". To focus on your current marking assignments, click ",
+                   A("here", _href=URL()))
+    else:
+        
+        qry &= (db.student_presentations.academic_year == FIRST_DAY.year)
+        
+        header = P("The table below shows your ", B("current marking assignments"),
+                   ". To also see records from previous years, click ",
+                   A("here", _href=URL(vars={'all': ''})))
+    
     # create the SQLFORM grid to show the existing assignments
     # and set up actions to be applied to selected rows - these
     # are powered by action functions defined below
-    grid = SQLFORM.grid((db.assignments.marker == marker.id) &
-                        (db.assignments.student_presentation == db.student_presentations.id),
+    grid = SQLFORM.grid(qry,
                         fields = [db.student_presentations.student,
                                   db.student_presentations.academic_year,
                                   db.student_presentations.course_presentation,
@@ -687,7 +689,6 @@ def my_marking():
                                   db.assignments.status
                               ],
                         maxtextlength=100,
-                        ignore_common_filters=ignore_common,
                         csv=False,
                         deletable=False,
                         create=False,

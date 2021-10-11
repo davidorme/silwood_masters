@@ -708,7 +708,7 @@ def refresh_project():
 
 def project_allocations():
     
-    # Get presets:
+    # Get preset links to courses:
     
     coursepres = db(db.course_presentations.is_active == True).select()
     
