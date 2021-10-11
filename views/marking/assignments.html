@@ -116,11 +116,8 @@
 
 <h5>Current and old reports</h5>
 
-<p>By default, this page only shows records from the most current academic year, but you can 
-	click on <a href={{=URL('assignments2', vars=dict(request.vars, **{'all': ''}))}}>this link</a> 
-	show all records. There are {{=old_count}} reports from previous years, so these may take a 
-	while to load.
-</p>
+{{=old_new}}
+
 <hr>
 	{{=actions}}
 <hr>

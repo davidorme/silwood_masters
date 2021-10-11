@@ -102,7 +102,8 @@ db.define_table('students',
 db.define_table('student_presentations',
                 Field('student','reference students', notnull=True),
                 Field('academic_year','integer', notnull=True),
-                Field('course_presentation','reference course_presentations', notnull=True))
+                Field('course_presentation','reference course_presentations', notnull=True),
+                common_filter = lambda qry: db.student_presentations.academic_year == FIRST_DAY.year)
 
 ## -----------------------------------------------------------------------------
 # Dates

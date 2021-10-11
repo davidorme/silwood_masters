@@ -144,7 +144,9 @@ def assignments():
     
     # look for the 'all' variable to allow the system to show older records.
     if 'all' in request.vars.keys():
-        db.assignments._common_filter = None
+        ignore_common = True
+    else:
+        ignore_common = False
         
     # Represent status as icon
     db.assignments.status.represent = lambda id, row: status_dict[row.assignments.status]
@@ -179,16 +181,17 @@ def assignments():
               db.assignments.status]
     
     grid = SQLFORM.grid(db(db.assignments.student_presentation == db.student_presentations.id),
-                        fields = fields,
-                        maxtextlength=100,
-                        csv=False,
-                        deletable=False,
-                        create=False,
-                        details=False,
-                        editable=False,
-                        links=links,
-                        headers= {'students.student_last_name': 'Student'},
-                        paginate = 50)
+                           fields = fields,
+                           ignore_common_filters=ignore_common,
+                           maxtextlength=100,
+                           csv=False,
+                           deletable=False,
+                           create=False,
+                           details=False,
+                           editable=False,
+                           links=links,
+                           headers= {'students.student_last_name': 'Student'},
+                           paginate = 50)
     
     # Create a form of buttons to handle the actions
     button_actions = (("send", "Send to markers", distribute, {}),
@@ -225,19 +228,21 @@ def assignments():
         action_func(ids=records, **action_args)
         
     # old records, turning off the common filter
-    old_count = None  # TODO - fix db(db.assignments.academic_year < datetime.datetime.now().year,
-                      # ignore_common_filters=True).count()
+    if ignore_common:
+        old_new = DIV('This table is currently showing all marking assignments across all '
+                      'years. Click ', A('here', _href=URL('marking','assignments')), 
+                      ' to filter to assignments for current students.')
+    else:
+        old_new = DIV('This table is currently only showing assignments for current students. '
+                      'To remove this filter and see all assignments across years, click ',
+                      A('here', _href=URL('marking','assignments', vars={'all': ''})))
     
-    return dict(form=grid, actions=actions, old_count=old_count)
+    return dict(form=grid, actions=actions, old_new=old_new)
 
 
 @auth.requires_membership('admin')
 def marker_progress():
 
-    # look for the 'all' variable to allow the system to show older records.
-    if 'all' in request.vars.keys():
-        db.assignments._common_filter = None
-    
     db.markers._format = "%(last_name)s, %(first_name)s"
     
     status_count = db(db.assignments).select(
@@ -638,15 +643,17 @@ def my_marking():
     """
     
     # Use 'all' variable in URL to toggle access to previous records
-    if 'all' in request.vars:
-        db.assignments._common_filter = None
+    # look for the 'all' variable to allow the system to show older records.
+    if 'all' in request.vars.keys():
+        ignore_common = True
         header = P("The table below shows all the assignments that have been assigned to you ",
                    B("across all years"),". To focus on your current marking assignments, click ",
-                   A("here", _href=URL(vars={'all': ''})))
+                   A("here", _href=URL()))
     else:
+        ignore_common = False
         header = P("The table below shows your ", B("current marking assignments"),
                    ". To also see records from previous years, click ",
-                   A("here", _href=URL()))
+                   A("here", _href=URL(vars={'all': ''})))
     
     # Get the stored session details.
     marker = session.magic_auth
@@ -675,6 +682,7 @@ def my_marking():
                                   db.assignments.status
                               ],
                         maxtextlength=100,
+                        ignore_common_filters=ignore_common,
                         csv=False,
                         deletable=False,
                         create=False,
