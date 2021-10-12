@@ -1,4 +1,6 @@
 from staff_auth import staff_authorised
+from gluon.sqlhtml import ExportClass
+from io import StringIO
 
 ## -----------------------------------------------------------------------------
 ## Project proposal handlers.
@@ -63,25 +65,32 @@ def project_proposals():
                          details = False,
                          maxtextlength=250,
                          create=False, # using a custom create form
-                         csv=False,
+                         csv=True,
                          searchable=True,
-                         exportclasses = dict(csv=False, json=False, html=False,
-                                              tsv=False, xml=False, 
-                                              tsv_with_hidden_cols=False),
+                         # exportclasses =  dict(
+                         #   csv_with_hidden_cols=(ExporterCSV_hidden, 'CSV (hidden cols)', T(...))),
+                         exportclasses = dict(json=False, html=False,
+                                              tsv=False, xml=False,
+                                              tsv_with_hidden_cols=False,
+                                              csv_with_hidden_cols=False),
                          formargs={'showid':False},
-                         orderby= ~db.projects.date_created)
+                         #orderby= ~db.projects.date_created
+                         )
+    
+    # Huh exportclasses:  CSV uses represent, CSV hidden doesn't. Need a bespoke exporter to
+    # show a subset in the grid and export a bigger group with represent.
     
     # edit the grid object
     # - extract the download button and retitle it
     # - insert it in the search menu
     # TODO - restructure this option
     
-    download = A('Download all', _class="btn btn-secondary btn-sm",
-                  _href=URL('project_proposals', 
-                            vars={'_export_type': 'csv_with_hidden_cols'}))
-    
-    if grid.element('.web2py_console form') is not None:
-        grid.element('.web2py_console form').append(download)
+    # download = A('Download all', _class="btn btn-secondary btn-sm",
+    #               _href=URL('project_proposals',
+    #                         vars={'_export_type': 'csv'}))
+    #
+    # if grid.element('.web2py_console form') is not None:
+    #     grid.element('.web2py_console form').append(download)
     
     return(dict(grid=grid))
 
@@ -706,7 +715,43 @@ def refresh_project():
     redirect(URL('projects', 'project_details', vars={'record': record.id}))
 
 
+class AllocationsCSV(ExportClass):
+    """
+    This is an allocations specific export class - bit of an overkill, but offers finer 
+    control over the structure of the download file (represent, and changing column names)
+    """
+    
+    label = 'CSV'
+    file_ext = "csv"
+    content_type = "text/csv"
+
+    def __init__(self, rows):
+        ExportClass.__init__(self, rows)
+
+    def export(self):
+        if self.rows:
+            s = StringIO()
+            
+            # There is no way to rename the fields being written out, but _can_ write
+            # them to the StringIO first and then leave off the colnames in the export
+            colnames = ['student_cid', 'student_first_name', 'student_last_name',
+                        'academic_year', 'course_presentation', 'project_title',
+                        'supervisor_name', 'supervisor_roles']
+            
+            s.write(','.join(colnames) + '\n')
+            
+            self.rows.export_to_csv_file(s, represent=True, write_colnames = False)
+            return s.getvalue()
+        else:
+            return None
+
+
 def project_allocations():
+    """
+    Provides a controller to review the mapping of students to projects - showing all students
+    including students with no assigned projects. The download format for this page is expected
+    - with the addition of marker columns - as the input to load assignments.
+    """
     
     # Get preset links to courses:
     
@@ -739,14 +784,17 @@ def project_allocations():
                                               _title='Edit project'))]
     
     # Cosmetic changes to hide None for students with no projects
+    # - This is a bit hacky - could join in teaching staff and shorten some of these,
+    #   but then need to exclude noise from search again
     sup_fmt = "{row.projects.lead_supervisor.first_name} {row.projects.lead_supervisor.last_name}"
+    sup_eml = "{row.projects.lead_supervisor.email}"
     prt_fmt = "{row.projects.project_title}"
     db.projects.lead_supervisor.represent = lambda val, row: _none_to_dash(val, row, sup_fmt)
     db.projects.project_title.represent = lambda val, row: _none_to_dash(val, row, prt_fmt)
+    db.projects.id.represent = lambda val, row: _none_to_dash(val, row, sup_eml)
     
     # Hide excess fields from search
     db.students.id.readable = False
-    db.students.student_cid.readable = False
     db.students.student_email.readable = False
     db.students.course.readable = False
     db.students.academic_year.readable = False
@@ -757,29 +805,54 @@ def project_allocations():
     db.projects.requirements.readable = False
     db.projects.date_created.readable = False
     db.projects.support.readable = False
-    db.projects.id.readable = False
+    # db.projects.id.readable = False
     db.projects.project_student.readable = False
     db.student_presentations.id.readable = False
     db.student_presentations.student.readable = False
     
     # Left join - so that students with no project appear with null projects
+    # - Setting csv=False suppresses download buttons, but the exportclasses machinery
+    #   is still availabe using the URL vars _export_type and _export_filename
+    # - Bit of a hack using represent to add in supervisor email without having join 
+    #   teaching_staff in to the table - lazy really.
     form = SQLFORM.grid((db.students.id == db.student_presentations.student),
-                        fields=[db.students.student_first_name,
+                        fields=[db.students.student_cid,
+                                db.students.student_first_name,
                                 db.students.student_last_name,
                                 db.student_presentations.academic_year,
                                 db.student_presentations.course_presentation,
+                                db.projects.project_title,
                                 db.projects.lead_supervisor,
-                                db.projects.project_title
+                                db.projects.id,
                                 ],
+                        headers = {
+                                'students.student_cid': 'CID',
+                                'students.student_first_name': 'First Name',
+                                'students.student_last_name': 'Last Name',
+                                'student_presentations.academic_year': 'Year',
+                                'student_presentations.course_presentation': 'Presentation',
+                                'projects.lead_supervisor': 'Supervisor Name',
+                                'projects.id': 'Supervisor',
+                                'projects.project_title': 'Title'
+                        },
                         field_id = db.projects.id,
                         left=db.projects.on(db.student_presentations.id == db.projects.project_student),
                         deletable=False,
                         editable=False,
                         details=False,
                         links=links,
-                        exportclasses = dict(csv=False, json=False, html=False,
-                                             tsv=False, xml=False, 
-                                             tsv_with_hidden_cols=False))
+                        csv=False,
+                        exportclasses = dict(csv=(AllocationsCSV, 'CSV', T(...)),))
+    
+    # Insert a download button using the exportclasses machinery
+    download = A('Download', _class="btn btn-secondary btn-sm",
+                  _href=URL('project_allocations',
+                            vars={'_export_type': 'csv',
+                                  '_export_filename': f"project_allocations_{datetime.date.today().isoformat()}",
+                                  'keywords': '' if request.vars.keywords is None else request.vars.keywords }))
+
+    if form.element('.web2py_console form') is not None:
+        form.element('.web2py_console form').append(download)
     
     return dict(form=form, presets=presets)
 
