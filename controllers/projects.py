@@ -390,46 +390,36 @@ def project_details():
                     )
     
     # process the form
-    if form.process(onvalidation=validate_proposal).accepted:
+    if form.process(onvalidation=validate_project).accepted:
         
-        pass
+        response.flash = "Project created"
+
+    elif form.errors:
         
-        # # reset some vars
-        # form.vars.id = None
-        # form.vars.project_student = None
-        # form.vars.date_created = None
+        response.flash = "Problems"
         
-        # db.projects.insert(**form.vars)
-    
-    
     # Project base selector. The idea here is to provide some common names using a drop down
     # but allowing an Other choice that then expands a free text input
-    base_script = SCRIPT("""function checkvalue(val)
-                            {
-                                if(val==="Other")
-                                   document.getElementById('project_proposals_project_base_other'
-                                                           ).style.display='block';
-                                else
-                                   document.getElementById('project_proposals_project_base_other'
-                                                           ).style.display='none';
-                            }""")
-    
-    base_select = SELECT(*[OPTION(x, _value=x) for x in bases],
-                         _class="generic-widget form-control",
-                         _id="project_proposals_project_base",
-                         _name="project_base",
-                         _onchange = 'checkvalue(this.value)')
-    
-    base_other = INPUT(_class="form-control string",
+
+    base_select = form.element('select[name=project_base]') 
+    base_select.attributes['_onchange'] = 'check_pbase(this.value)'
+    base_select.attributes['_onload'] = 'load_pbase()'
+    base_select.parent.insert(0, SCRIPT("""
+    function check_pbase(val){
+        if(val==="Other")
+           document.getElementById('project_proposals_project_base_other'
+                                   ).style.display='block';
+        else
+           document.getElementById('project_proposals_project_base_other'
+                                   ).style.display='none';};
+    """))
+    base_select.append(INPUT(_class="form-control string",
                        _id="project_proposals_project_base_other",
                        _name="project_base_other",
                        _type="text",
                        _value="",
                        _placeholder="Institution name",
-                       _style="display:none")
-    
-    # Modifying and customizing the form to improve the layout and add fields
-    form.element('input[name=project_base]').parent[0] = CAT(base_script, base_select, base_other)
+                       _style="display:none"))
     
     form.element('textarea[name=requirements]')['_rows']= 3
     form.element('textarea[name=support]')['_rows']= 3
@@ -514,17 +504,21 @@ def project_details():
     
     return(dict(form = form))
 
-
-def validate_proposal(form):
+def validate_project(form):
     
     # Before processing the form object (which only considers fields in the table), 
-    # sub the other text from the request.vars. into the form.vars. slot.
-    if request.vars.project_base == 'Other':
-        form.vars.project_base = request.vars.project_base_other
-    #else:
-        #form.errors.project_base ='For other project bases, please provide an institution name'
+    # sub the other text from the request.vars into the form.vars slot.
     
-    form.vars.date_created = datetime.date.today()
+    if request.vars.project_base == 'Other':
+        print('I am here')
+        if request.vars.project_base_other == '':
+            form.errors.project_base ='For other project bases, please provide an institution name'
+        else:
+            form.vars.project_base = request.vars.project_base_other
+    
+    # Date created is only set when the project is first created or separately updated.
+    if form.vars.date_created is None:
+        form.vars.date_created = datetime.date.today()
 
 
 
@@ -961,3 +955,4 @@ def project_admin():
                            maxtextlength=250)
     
     return dict(form=form)
+

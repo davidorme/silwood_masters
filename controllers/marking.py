@@ -413,7 +413,6 @@ def load_assignments():
         
         # add headers showing the markers from the role map
         role_map = form.vars.role_map
-        print(role_map)
         marker_headers = list(role_map.keys())
         required += marker_headers
         missing_headers = set(required).difference(headers)
