@@ -17,30 +17,23 @@
   }
 </style>
 
-{{=H2('Load marking assignments')}}
+<h2>Load marking assignments</h2>
+
+<p>
+	Use the form below to upload a CSV file of marking assignments. The format of the file is the
+	same as the downloads from the <a href={{=URL('projects', 'project_allocations')}}> Project
+	Allocations</a> page. That format includes the lead supervisor but you will need to add
+	columns to that file containing the emails for other markers.
+</p>
+<p>The tricky bit is the <strong>mapping from markers to marking roles</strong>. Each marker may 
+	need to complete several assignments (e.g. marking a thesis and a presentation): each 
+	assignment needs a role name and a due date. The default mapping below is standard for Silwood, 
+	but can be altered. It uses the YAML format. The 'marker names' (e.g. 'marker_1') match the
+	emails in the file to each set of roles. The valid roles are: 
+	{{=', '.join(known_roles)}}.
+</p>
 
 
-{{=P('Use the form below to upload a CSV file of marking assignments. The file needs to contain columns with the following headers:')}}
-
-
-{{=TABLE(TR(TD(B('student_cid')), TD("An integer of the student's College ID number")),
-         TR(TD(B('student_first_name')), TD("The student's first name")),
-         TR(TD(B('student_last_name')), TD("The student's last name")),
-         TR(TD(B('student_email')), TD("The student's college email address - this will be used to release marking reports to students.")),
-         TR(TD(B('course')), TD("The student's course")),
-         TR(TD(B('course_presentation')), TD("This must take one of the following values: " + ', '.join(known_presentations))),
-         TR(TD(B('academic_year')), TD("The academic year")),
-         TR(TD(B('marker_first_name')), TD("The marker's first name")),
-         TR(TD(B('marker_last_name')), TD("The marker's last name")),
-         TR(TD(B('marker_email')), TD("The marker's email address")),
-         TR(TD(B('marker_role')), TD("The marking role for the assignment, which must be one of: " + ', '.join(known_roles))),
-         TR(TD(B('due_date')), TD("The due date for the assignment, in the format yyyy-mm-dd (e.g. 2016-09-01)")),
-		 _class='table')}}
-
-<p>An example upload file can be found {{=A('here', _href=URL('static', 'data/example_load_assignments.csv'))}}</p>
-
-<div class='jumbotron'>
-	{{=form}}
-</div>
+{{=form}}
 
 {{=html}}

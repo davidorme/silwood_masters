@@ -8,6 +8,7 @@ import copy
 import uuid
 from itertools import groupby, chain
 import simplejson as json
+import yaml
 from marking_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
                                        assignment_to_sqlform, style_sqlform)
@@ -115,7 +116,7 @@ def new_assignment():
     db.assignments.marker.requires = IS_IN_DB(db, 'teaching_staff.id',
                                               '%(last_name)s, %(first_name)s (%(email)s)')
         
-    ps_reqr = IS_IN_DB(db,
+    ps_reqr = IS_IN_DB(db(db.student_presentations.academic_year == FIRST_DAY.year),
                        'student_presentations.id', 
                        lambda  row: (f"{row.student.student_last_name}, " 
                                      f"{row.student.student_first_name} ("
@@ -128,7 +129,6 @@ def new_assignment():
                    fields=['student_presentation', 
                            'marker',
                            'marker_role_id',
-
                            'due_date'])
     
     if form.process().accepted:
@@ -348,38 +348,59 @@ def edit_assignment():
     return dict(form = form)
 
 
-@auth.requires_membership('admin')
+#@auth.requires_membership('admin')
 def load_assignments():
     
     # Get lookups for course presentations and roles
-    known_presentations = db(db.presentations).select(db.presentations.id,
-                                                      db.presentations.name)
-    known_presentations = {rw.name: rw.id for rw in known_presentations}
+    known_presentations = db(db.course_presentations.is_active == True, 
+                             ).select(db.course_presentations.id, 
+                                      db.course_presentations.name) 
+    known_presentations = {rw.name: rw.id for rw in known_presentations} 
     
     known_roles = db(db.marking_roles).select(db.marking_roles.id,
                                               db.marking_roles.name)
     known_roles = {rw.name: rw.id for rw in known_roles}
     
-    # Expose the upload form
-    form = FORM(DIV(DIV('Upload File:', _class='col-sm-2'),
-                    DIV(INPUT(_type='file', _name='myfile', id='myfile', 
-                              requires=IS_NOT_EMPTY()), _class='col-sm-6'), 
-                    DIV(INPUT(_type='submit',_value='Upload', _style='padding:5px 15px',
-                              _class='btn btn-primary')
-                        ,_class='col-sm-2'),
-                    _class='row'))
+    default_rolemap = """
+    marker_1:
+      - Role: Marker
+        Due: '2020-11-12'
+      - Role: Presentation
+        Due: '2020-11-12'
+      - Role: Viva
+        Due: '2020-11-12'
+    marker_2:
+      - Role: Marker
+        Due: '2020-11-12'
+      - Role: Presentation
+        Due: '2020-11-12'
+    supervisor:
+      - Role: Presentation
+        Due: '2020-11-12'
+    """
     
+    # Expose the upload form - 
+    # - uploadfield does not seem to work as expected here - the file is not written to uploads
+    #   but the upload field data is not populated.
+    form = SQLFORM.factory(
+            Field('assignments', 'upload', uploadfield='data'), 
+            Field('role_map', 'text', 
+                  default = default_rolemap,
+                  notnull=True),
+            Field('data', 'blob')
+            )
+        
     def _format_error(lst):
         """['', 'afdskh'] --> '"","afdskh"'
         """
         
         lst = [f'"{vl}"' for vl in lst]
         return ','.join(lst)
-        
-    if form.accepts(request.vars):
+    
+    if form.process(onvalidation=validate_assignments).accepted:
         
         # get the data from the request, converting from uploaded bytes into StringIO
-        data = io.StringIO(request.vars.myfile.value.decode('UTF-8-SIG'))
+        data = io.StringIO(form.vars.data.decode('UTF-8-SIG'))
         data = csv.DictReader(data)
         
         # create an html upload report as the function runs
@@ -387,10 +408,14 @@ def load_assignments():
         
         # check the headers
         headers = data.fieldnames
-        required = ['student_cid', 'student_first_name', 'student_last_name', 'student_email',
-                    'course', 'course_presentation', 'academic_year', 'marker_email', 'due_date',
-                    'marker_last_name', 'marker_first_name', 'marker_role']
+        required = ['student_cid', 'student_first_name', 'student_last_name',
+                    'course_presentation', 'academic_year']
         
+        # add headers showing the markers from the role map
+        role_map = form.vars.role_map
+        print(role_map)
+        marker_headers = list(role_map.keys())
+        required += marker_headers
         missing_headers = set(required).difference(headers)
         
         if len(missing_headers) > 0:
@@ -400,8 +425,9 @@ def load_assignments():
                        P('These fields are missing from the upload file: ', ', '.join(missing_headers)))
             
             # Nothing is likely to work from this point, so bail early
-            return dict(form=form, html=html, known_roles=list(known_roles.keys()), 
-                        known_presentations=list(known_presentations.keys()))
+            return dict(form=form, html=html, 
+                        known_roles=list(known_roles.keys()), 
+                        known_presentations=known_presentations)
         
         # extract the contents into a big list of dictionaries to work with
         # rather than having an iterator that runs through once
@@ -421,16 +447,6 @@ def load_assignments():
         # - repackage the data into fields to do checks
         fields = {key:[item[key] for item in data] for key in headers}
         
-        # - roles are recognized?
-        unknown_roles = set(fields['marker_role']).difference(known_roles.keys())
-        
-        if len(unknown_roles) > 0:
-            html = CAT(html,
-                       H4('Unknown marking roles'),
-                       P('These roles are found in the file but are not recognized: '),
-                       P(_format_error(unknown_roles)),
-                       P('Valid values are: ', ', '.join(known_roles.keys())))
-        
         # - course presentations are recognized?
         unknown_presentations = set(fields['course_presentation']).difference(known_presentations)
         
@@ -441,33 +457,19 @@ def load_assignments():
                        P(_format_error(unknown_presentations)),
                        P('Valid values are: ', ', '.join(known_presentations.keys())))
         
-        # bad student emails
-        bad_emails = [IS_EMAIL()(x) for x in fields['student_email']]
-        bad_emails = [x[0] for x in bad_emails if x[1] is not None]
-        if len(bad_emails) > 0:
-            html = CAT(html,
-                       H4('Invalid student emails'),
-                       P('The following are not well formatted emails: '), 
-                       P(_format_error(set(bad_emails))))
-            
         # bad marker emails
-        bad_emails = [IS_EMAIL()(x) for x in fields['marker_email']]
-        bad_emails = [x[0] for x in bad_emails if x[1] is not None]
+        bad_emails = []
+        
+        for mk_role in marker_headers:
+            email_check = [IS_EMAIL()(x) for x in fields[mk_role]]
+            bad_emails.extend([x[0] for x in email_check if x[1] is not None])
+        
         if len(bad_emails) > 0:
             html = CAT(html,
                        H4('Invalid marker emails'),
                        P('The following are not well formatted emails: '),
                        P(_format_error(set(bad_emails))))
-        
-        # due dates not formatted correctly
-        bad_dates = [IS_DATE()(x) for x in fields['due_date']]
-        bad_dates = [x[0] for x in bad_dates if x[1] is not None]
-        if len(bad_dates) > 0:
-            html = CAT(html,
-                       H4('Invalid due dates'),
-                       P('The following are not well formatted dates: '),
-                       P(_format_error(set(bad_dates))))
-        
+                
         # non numeric years
         years = set(fields['academic_year'])
         bad_years = [ x for x in years if not x.isdigit() ]
@@ -486,117 +488,105 @@ def load_assignments():
                        P('The following are not valid CIDs: '),
                        P(_format_error(set(bad_cids))))
         
-        # empty names or just whitespace
-        names = set(fields['student_first_name'] + fields['student_last_name']+
-                    fields['marker_first_name'] + fields['marker_last_name'])
-        bad_names = [ x for x in names if x.isspace() or x == '' ]
+        # If there are no errors to report at this point, then we can validate student and 
+        # student presentation rows, but if there are issues, then  this will fail, so bail.
+        if html != '':
+            return dict(form=form, html=html, 
+                        known_roles=list(known_roles.keys()), 
+                        known_presentations=known_presentations)
         
-        if len(bad_names) > 0:
-            html = CAT(html,
-                       H4('Invalid student or marker names'),
-                       P('The student and marker names data contains empty strings or '
-                         'text just consisting of spaces'))
-        
-        # NOW validate students and staff against the tables
-        
-        # extract unique student data as tuples 
-        students= set([(x['student_cid'],
-                        x['student_first_name'],
-                        x['student_last_name'],
-                        x['student_email'],
-                        x['course']) for x in data])
-        
-        student_id_map = {}
+        # NOW validate students presentations
         bad_student_records = []
+        bad_stpres_records = []
         
-        for this_student in students:
+        for this_student in data:
             
-            if this_student[0].isdigit():
-                
-                # bad CIDs have already been trapped above
-                this_cid = int(this_student[0])
-                
-                student_record = db(db.students.student_cid == this_cid).select().first()
-                
-                if student_record is not None:
-                    if ((student_record.student_first_name != this_student[1]) &
-                        (student_record.student_last_name != this_student[2]) &
-                        (student_record.student_email != this_student[3]) &
-                        (student_record.course != this_student[4])):
-                            bad_student_records.append(this_student)
-                    else:
-                        student_id_map[this_cid] = student_record.id
-                else:
-                    student_id_map[this_cid] = db.students.insert(student_cid = this_cid,
-                                                                  student_first_name = this_student[1],
-                                                                  student_last_name = this_student[2],
-                                                                  student_email = this_student[3],
-                                                                  course = this_student[4])
+            student_record = db((db.students.student_cid == int(this_student['student_cid'])) &
+                                (db.students.student_first_name == this_student['student_first_name']) & 
+                                (db.students.student_last_name == this_student['student_last_name'])
+                                ).select().first()
+            
+            if student_record is None:
+                bad_student_records.append(this_student)
+                continue
+            
+            stpres_record = db((db.student_presentations.student == student_record.id) &
+                               (db.student_presentations.academic_year == int(this_student['academic_year'])) &
+                               (db.student_presentations.course_presentation == 
+                                known_presentations[this_student['course_presentation']])
+                                ).select().first()
+            
+            if stpres_record is None:
+                bad_stpres_records.append(this_student)
+            else:
+                this_student['stpres_id'] = stpres_record.id
         
         if len(bad_student_records) > 0:
             html = CAT(html,
                        H4('Inconsistent student records'),
-                       P('The students include existing CID numbers with incongruent names and  '
-                         'courses: '), 
-                       P(_format_error([f"{st[0]} ({st[1]} {st[3]}, {st[3]})"
+                       P('The student data includes records with unknown CID and name combinations'), 
+                       P(_format_error([f"{st['student_cid']}' ({st['student_first_name']} "
+                                        f"{st['student_last_name']})"
                                         for st in bad_student_records])))
+
+        if len(bad_stpres_records) > 0:
+            html = CAT(html,
+                       H4('Inconsistent student presentation records'),
+                       P('The data contains unknown student presentation combinations'), 
+                       P(_format_error([f"{st['student_first_name']} {st['student_last_name']} "
+                                        f"{st['academic_year']} {st['course_presentation']}"
+                                        for st in bad_stpres_records])))
         
         # Staff
         # extract unique staff entries
-        staff = set([(x['marker_first_name'],
-                      x['marker_last_name'],
-                      x['marker_email']) for x in data])
+        staff = []
+        for mk_role in marker_headers:
+            staff.extend(fields[mk_role])
+        
+        staff = set(staff)
         
         staff_email_map = {}
         bad_staff_records = []
         
         for this_staff in staff:
             
-            staff_record = db(db.markers.email.lower() == this_staff[2].lower()).select().first()
+            staff_record = db(db.teaching_staff.email.lower() == this_staff.lower()).select().first()
             
             if staff_record is not None:
-                if ((staff_record.first_name != this_staff[0]) &
-                    (staff_record.last_name != this_staff[1])):
-                        bad_staff_records.append(this_staff)
-                else:
-                    staff_email_map[this_staff[2]] = staff_record.id
+                staff_email_map[this_staff] = staff_record.id
             else:
-                
-                new_id = db.markers.insert(first_name = this_staff[0],
-                                           last_name = this_staff[1],
-                                           email=this_staff[2])
-                staff_email_map[this_staff[2]] = new_id
+                bad_staff_records.append(this_staff)
         
         if len(bad_staff_records) > 0:
             html = CAT(html,
-                       H4('Inconsistent marker records'),
-                       P('The marker data includes incongruent marker data:'), 
-                       P(_format_error([f"{st[0]} {st[1]}, ({st[2]})" 
-                                        for st in bad_staff_records])))
+                       H4('Unknown marking staff'),
+                       P('The marker data includes unknown staff emails:'), 
+                       P(_format_error(bad_staff_records)))
         
         # Any problems detected
         if html != '':
             html = CAT(H2('Errors found in the uploaded file', _style='color:darkred'),
                        P('Please edit the file to fix these problems and then repeat the upload'),
                        html)
-            
-            # revert any database transactions
-            db.rollback()
         else:
             
-            for assgn in data:
-                
-                
-                db.assignments.insert(student = student_id_map[int(assgn['student_cid'])],
-                                      academic_year = int(assgn['academic_year']),
-                                      course_presentation_id = known_presentations[assgn['course_presentation']],
-                                      marker = staff_email_map[assgn['marker_email']],
-                                      marker_role_id = known_roles[assgn['marker_role']],
-                                      due_date = assgn['due_date'])
+            # Build a list of dicts for a bulk insert of assignments
+            assignments = []
+            
+            for this_st in data:
+                for this_mk in marker_headers:
+                    
+                    assignments.extend([{'student_presentation': this_st['stpres_id'],
+                                         'marker': staff_email_map[this_st[this_mk]],
+                                         'marker_role_id': role_id,
+                                         'due_date': ddate}
+                                         for role_id, ddate in role_map[this_mk]
+                                        ])                
+            
+            db.assignments.bulk_insert(assignments)
             
             # load the assignments
-            html = CAT(H2(str(len(data)) + ' assignments successfully uploaded'))
-            
+            html = CAT(H2(str(len(assignments)) + ' assignments successfully created'))
         
     else:
         
@@ -606,6 +596,70 @@ def load_assignments():
                 known_presentations=list(known_presentations.keys()))
 
 
+def validate_assignments(form):
+    """
+    This controller is used to validate the inputs to the form. The sense of the data
+    payload is then checked back in the controller on success
+    """
+    
+    if form.vars.assignments == b'':
+        form.errors.assignments = 'Please select a file to upload'
+    else:
+        form.vars.data = form.vars.assignments.value
+    
+    try:
+        role_map = yaml.load(form.vars.role_map, yaml.SafeLoader)
+    except yaml.YAMLError:
+        form.errors.role_map = "Could not parse role map - check the formatting"
+        return
+    
+    role_map_errors = False
+    
+    # This code validates the contents of role map and converts role names and date strings
+    # into role ids and datetime.dates
+    if not isinstance(role_map, dict):
+        role_map_errors = True
+    else:
+        
+        known_roles = db(db.marking_roles).select(db.marking_roles.id,
+                                                  db.marking_roles.name)
+        known_roles = {rw.name: rw.id for rw in known_roles}
+        
+        role_map_values = list(role_map.values())
+        
+        for vals in role_map_values:
+            
+            if not isinstance(vals, list):
+                role_map_errors = True
+            
+            for idx, vl in enumerate(vals):
+                
+                if not isinstance(vl, dict) or len(vl) != 2 or set(vl.keys()) != set(['Role', 'Due']) :
+                    role_map_errors = True
+                else:
+                    role = vl['Role']
+                    ddate = vl['Due']
+                    
+                    if not isinstance(role, str) or not role in known_roles:
+                        role_map_errors = True
+                    else:
+                        role = known_roles[role]
+                    try:
+                        ddate = datetime.date.fromisoformat(ddate)
+                    except ValueError:
+                        role_map_errors = True
+                    
+                    vl = [role, ddate]
+                
+                vals[idx] = vl
+
+    if role_map_errors:
+        form.errors.role_map = ("The role map does not have the right structure: it should list "
+                                "pairs of marking roles and isoformatted due dates for each marker field ")
+    else:
+        form.vars.role_map = role_map
+        response.flash = None
+        session.flash = None
 
 def who_are_my_markers():
     
