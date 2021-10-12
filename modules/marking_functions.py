@@ -15,8 +15,10 @@ import importlib
 from tempfile import NamedTemporaryFile
 from mailer import Mail
 
-from gluon import (current, SQLFORM, DIV, LABEL, CAT, B, P, A, SPAN,
+from gluon import (current, SQLFORM, DIV, LABEL, CAT, B, P, A, SPAN, INPUT,
                    URL, HTTP, BR, TABLE, H2, H4, XML, Field, IS_NULL_OR, IS_IN_SET)
+
+from gluon.sqlhtml import OptionsWidget
 
 """
 This module contains key functions for processing marking reports. They have been 
@@ -67,19 +69,24 @@ def div_checkbox_widget_wide(field, value, **attributes):
 def div_checkbox_widget_list_group(field, value, **attributes):
     
     # This is just to repackage the checkbox widgets and allow some styling
-    # (which should be done with CSS)
+    # (which should be done with CSS) - also adds a disabled input with the field
+    # name, which is used for display of form.errors
     
     table = SQLFORM.widgets.checkboxes.widget(field, value, **attributes)
     
-    return DIV(*[DIV(td.element('input'), SPAN(_style='padding:0px 5px;'),
-                     LABEL(td.element('label').components[0],
-                           _for=td.element('label').attributes['_for'],
-                           _style='margin:0px;'),
-                         _class='list-group-item',
-                         _style='padding:0px 20px; background:lightgrey')
-                 for td in table.elements('td')
-                     if '_disabled' not in list(td.element('input').attributes.keys())],
-                _class='list-group')
+    return CAT(DIV(*[DIV(td.element('input'), SPAN(_style='padding:0px 5px;'),
+                        LABEL(td.element('label').components[0],
+                              _for=td.element('label').attributes['_for'],
+                              _style='margin:0px;'),
+                            _class='list-group-item',
+                            _style='padding:0px 20px; background:lightgrey')
+                    for td in table.elements('td')
+                        if '_disabled' not in list(td.element('input').attributes.keys())],
+                   _class='list-group', _name=field.name),
+                INPUT(_style="display:none;",
+                      _disabled="disabled",
+                      _name=field.name,
+                      hideerror=False))
 
 ## --------------------------------------------------------------------------------
 ## LOCAL FUNCTIONS USED BY THE ASSIGNMENT PAGE TO TAKE ACTIONS ON SETS OF RECORD IDS
