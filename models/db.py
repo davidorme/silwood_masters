@@ -99,7 +99,7 @@ class Auth_Mail(Auth):
 auth = Auth_Mail(db, 
                  host_names=configuration.get('host.names'),
                  controller='sm_admin',
-                 url_index=URL('projects', 'project_proposals'))
+                 url_index=URL('projects', 'index'))
 
 # -------------------------------------------------------------------------
 # create all tables needed by auth, maybe add a list of extra fields
