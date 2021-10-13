@@ -289,8 +289,6 @@ def project_details():
     # If this form is called with the variable record, then load the existing details
     # for that record into the form
     record = request.vars.get('record')
-        
-    db.projects.date_created.writable = False
     
     # If there is a record in the request then reload those details
     if record is not None:
@@ -309,15 +307,31 @@ def project_details():
         
     else:
         buttons = ['Create']
-        
-        # Hide fields
-        db.projects.date_created.readable = False
-        
+    
     # Tailor which fields are fixed or showm
     # - Authenticated staff:
     #   - can only make projects with themselves as lead
     #   - internals do not get presented with the internal dropdown
     #   - cannot deselect project students
+    
+    # Using the fields argument to SQLFORM allows the order to be controlled,
+    # but seems to overwrite readable and writable, so need to manipulate that
+    # list instead.
+    form_fields =  ['id',
+                    'project_student',
+                    'lead_supervisor',
+                    'internal_supervisor',
+                    'other_supervisors',
+                    'project_title',
+                    'project_description',
+                    'project_base',
+                    'project_type',
+                    'requirements',
+                    'support',
+                    'eligibility',
+                    'project_length',
+                    'available_project_dates',
+                    'course_restrictions']
     
     # Format the student selection dropdown labels
     # NOTE: https://stackoverflow.com/questions/53100625/
@@ -336,9 +350,11 @@ def project_details():
         db.projects.lead_supervisor.writable = False
         
         if staff.is_internal:
-            db.projects.internal_supervisor.writable = False
-            db.projects.internal_supervisor.readable = False
-        elif record.internal_supervisor is None:
+            # db.projects.internal_supervisor.writable = False
+            # db.projects.internal_supervisor.readable = False
+            del form_fields[form_fields.index('internal_supervisor')]
+        
+        elif record is None or (record is not None and record.internal_supervisor is None):
             # Cannot select a student until an internal is agreed
             db.projects.project_student.writable = False
             db.projects.project_student.represent = lambda row: 'Students cannot be accepted for external projects until an internal supervisor has been agreed'
@@ -377,13 +393,13 @@ def project_details():
         # Lock down set project students
         db.projects.project_student.writable = False
         db.projects.project_student.represent = lambda row: repr_string(row)
-
     
     buttons = [TAG.button(val, _value=True,_type="submit", _name=val, _class="btn btn-primary")
                for val in buttons]
     
-    # Get the SQLFORM for the projects table
+    # Get the SQLFORM for the projects table, setting the field order
     form  = SQLFORM(db.projects,
+                    fields = form_fields,
                     record = record,
                     showid = False,
                     buttons = buttons
@@ -392,18 +408,22 @@ def project_details():
     # process the form
     if form.process(onvalidation=validate_project).accepted:
         
-        response.flash = "Project created"
-
+        if record is None:
+            response.flash = "Project created"
+        else:
+            response.flash = "Project updated"
+        
     elif form.errors:
         
-        response.flash = "Problems"
+        response.flash = "Incomplete details - please check the form and resubmit"
         
     # Project base selector. The idea here is to provide some common names using a drop down
     # but allowing an Other choice that then expands a free text input
 
     base_select = form.element('select[name=project_base]') 
     base_select.attributes['_onchange'] = 'check_pbase(this.value)'
-    base_select.attributes['_onload'] = 'load_pbase()'
+    # Script to hide and unhide project_base_other. The view contains a function
+    # that sets this on form load, if it loads with value Other.
     base_select.parent.insert(0, SCRIPT("""
     function check_pbase(val){
         if(val==="Other")
@@ -413,18 +433,19 @@ def project_details():
            document.getElementById('project_proposals_project_base_other'
                                    ).style.display='none';};
     """))
-    base_select.append(INPUT(_class="form-control string",
-                       _id="project_proposals_project_base_other",
-                       _name="project_base_other",
-                       _type="text",
-                       _value="",
-                       _placeholder="Institution name",
+    # Add in a concealed box for Other
+    base_select.parent.components.insert(2, INPUT(_class="form-control string", 
+                       _id="project_proposals_project_base_other", 
+                       _name="project_base_other", 
+                       _type="text", 
+                       _value="", 
+                       _placeholder="Institution name", 
                        _style="display:none"))
     
     form.element('textarea[name=requirements]')['_rows']= 3
     form.element('textarea[name=support]')['_rows']= 3
     form.element('textarea[name=eligibility]')['_rows']= 3
-    
+     
     # Dictionary of help comments for rows (Note that there is a labels option in
     # SQLFORM but only a spectacularly ugly table3cols implementation.)
     var_help = {'project_student': 
@@ -475,6 +496,7 @@ def project_details():
     for idx, form_row in enumerate(form.elements('div.form-group,row')):
         
         row_label = form_row.components[0]
+        row_input = form_row.components[1]
         
         #First element in each row is a label, except for the submit button
         if not isinstance(row_label, str) and row_label.tag == 'label':
@@ -490,17 +512,38 @@ def project_details():
                                             '_data-target': "#" + info_collapse_id}),
                                     _class='pull-right'))
             
-            # - intersperse the collapsing rows into the form components
-            help_div = DIV(DIV(DIV(_class='col-sm-3'),
-                               DIV(DIV(var_help.get(row_var), 
-                                       _class='card',
-                                       _style='padding: 0px 5px; margin-bottom:16px; color:red'),
-                                   _class='col-sm-9'),
-                               _class='form_group row'),
+            # - append the collapsing div onto the inputs, which are wrapped up in
+            # a col-sm-9 div
+            help_div = DIV(DIV(var_help.get(row_var), 
+                               _class='card',
+                               _style='padding: 0px 5px; margin-bottom:16px; color:cornflowerblue'),
                            _class='collapse',
                            _id=info_collapse_id)
             
-            form.components[0].insert(idx * 2 + 1, help_div)
+            row_input.components.append(help_div)
+    
+    # Add some dividers and text
+    row_components = form.components[0].components
+    row_ids = [f.attributes.get('_id') for f in row_components]
+    
+    row_components.insert(row_ids.index('projects_requirements__row'),
+                          DIV(DIV(B("Additional information"), P("These boxes can be used to: "
+                                  "say whether any additional skills or experience are required "
+                                  "for the project;  indicate any non-academic project support "
+                                  "that is available; and any deadlines or selection criteria "
+                                  "that might affect eligibility for a project"),
+                                  _class='col-sm-12'),
+                              _class='form-group row'))
+    
+    # Just inserted an element, so increment next index
+    row_components.insert(row_ids.index('projects_project_length__row') + 1,
+                          DIV(DIV(B("Restrictions"), P("All students will be able to see all "
+                                  "advertised projects, but you can indicate if there are strong "
+                                  "limitations to what project timings and courses are suitable."
+                                  "You do ", B("not have to select all options if there are no "
+                                  "restrictions!")),
+                                  _class='col-sm-12'),
+                              _class='form-group row'))
     
     return(dict(form = form))
 
