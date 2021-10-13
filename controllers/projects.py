@@ -553,7 +553,6 @@ def validate_project(form):
     # sub the other text from the request.vars into the form.vars slot.
     
     if request.vars.project_base == 'Other':
-        print('I am here')
         if request.vars.project_base_other == '':
             form.errors.project_base ='For other project bases, please provide an institution name'
         else:
