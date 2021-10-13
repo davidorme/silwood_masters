@@ -12,7 +12,7 @@ def project_overview():
     
     return dict()
 
-def project_proposals():
+def index():
     
     """
     Controller to serve up the contents of the proposals database as a nice
@@ -86,7 +86,7 @@ def project_proposals():
     # TODO - restructure this option
     
     # download = A('Download all', _class="btn btn-secondary btn-sm",
-    #               _href=URL('project_proposals',
+    #               _href=URL('projects','index',
     #                         vars={'_export_type': 'csv'}))
     #
     # if grid.element('.web2py_console form') is not None:
@@ -107,13 +107,13 @@ def view_project():
     
     if project_id is None:
         session.flash = CENTER(B('No project number provided.'), _style='color: red')
-        redirect(URL('projects','project_proposals'))
+        redirect(URL('projects','index'))
     
     project = db.projects(int(project_id))
     
     if project is None:
         session.flash = CENTER(B('Invalid project number.'), _style='color: red')
-        redirect(URL('projects','project_proposals'))
+        redirect(URL('projects','index'))
     
     # Filled?
     
