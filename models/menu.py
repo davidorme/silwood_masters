@@ -72,7 +72,8 @@ if auth.has_membership('admin'):
             URL('marking', 'scan_files'), [])])
 
 
-projects_dropdown = [(T('Proposals'), False, URL('projects', 'index'), []),
+projects_dropdown = [(T('Overview'), False, URL('projects', 'project_overview'), []),
+                     (T('Proposals'), False, URL('projects', 'index'), []),
                      (T('Allocations'), False,  URL('projects', 'project_allocations'), [])]
 
 
