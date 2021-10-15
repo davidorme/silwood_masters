@@ -7,15 +7,16 @@
 
     </h2>
 	  {{if request.args(0) == 'register':}}
-	  <p>Please only register for access if you are a member of staff wanting to submit project
-		  proposals or access to the timetabling or other admin functionality. Students do not
-		  need to register on this website.</p>
+	  <p>Please only register for access if you are a member of staff needing access to
+		  the timetabling or other admin functionality and <strong>not</strong> for proposing
+		  projects or marking. Students must not register on this
+		  website.</p>
 		  <hr>
 	  {{pass}}
 	  {{if request.args(0) == 'login':}}
-	  <p><strong>Do not attempt to log in to complete marking assignments.</strong> This system does not
-		  use Imperial credentials and logging in is only required for administrators, project proposals 
-		  and use of the timetabling database.
+	  <p><strong>Do not attempt to log in to complete marking assignments or manage your project 
+		  proposals.</strong> This system does not use Imperial credentials and logging in is only
+		  required for administrators and editing of the timetabling database.
 	  </p>
 		  <hr>
 	  {{pass}}
