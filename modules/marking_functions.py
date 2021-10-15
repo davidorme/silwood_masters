@@ -117,10 +117,11 @@ def release(ids):
                         db.assignments.marker_role_id,
                         db.assignments.id)
     
-    # now group by student
+    # now group by student email (can't compare rows, so use unique email)
+    # and then create groups of records using students detail tuples as keys
     email = [rec for rec in email.render()]
-    email.sort(key = lambda rec: rec['students'])
-    student_blocks = {k.values(): list(recs) 
+    email.sort(key = lambda rec: rec['students']['student_email'])
+    student_blocks = {tuple(k.values()): list(recs) 
                       for k, recs 
                       in itertools.groupby(email, lambda x: (x['students']))}
 

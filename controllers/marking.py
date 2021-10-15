@@ -348,7 +348,7 @@ def edit_assignment():
     return dict(form = form)
 
 
-#@auth.requires_membership('admin')
+@auth.requires_membership('admin')
 def load_assignments():
     
     # Get lookups for course presentations and roles
