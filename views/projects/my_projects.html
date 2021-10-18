@@ -4,37 +4,63 @@
 
 <p>
 	This table shows all of the projects for which you are the <strong>lead supervisor</strong>. 
-	This includes both filled projects - when the student you supervised and the year will be
-	shown - and also open project proposals. Students can see all project proposals that were 
-	created within 60 days of the start of this academic year 
+	This includes both <strong>filled projects</strong> - when the student you supervised and 
+	the year will be shown - and also <strong>open proposals</strong>. Students can see all project
+	proposals that were created within 60 days of the start of this academic year.
 	(<span class="fa fa-eye" style="font-size: 1em" ></span>).
 </p>
+
+<p>
+	The proposal database should show students the full range of research 
+	available through the courses. Please <strong>do not</strong> use the conceal 
+	option to manage your student numbers.
+</p>
+
 <p> From this page, you have a number of options:
-	<ul>
-		
-		<li>
+	<dl>
+		<dt>New Proposal</dt>
+		<dd>
+			<ul><li>
 		 	You can create a {{=A('completely new proposal ', 
 								  _href=URL('projects', 'project_details', scheme=True, host=True))}}.
-		</li>
-		<li>
-		 	You can <strong>edit the details of a proposal</strong> (
-			<span class="fa fa-pencil" style="font-size: 1em;color: #007bff"></span>
-			), including to accept a student on to a project.
-		</li>
+			</li></ul>
+		</dd>
 
-		<li> 
-			You can <strong>refresh an open proposal</strong> (
-			<span class="fa fa-repeat" style="font-size: 1em;color: #007bff"></span>
-			). All this does is to take a older proposal that students cannot see and 
-			update its creation date to make it visible.
-		</li>
-		
-		<li> You can <strong>clone any proposal</strong> (
+		<dt>Clone a proposal</dt>
+		<dd>
+			<ul><li>
+			You can <strong>clone any proposal</strong> (
 			<span class="fa fa-clone" style="font-size: 1em;color: #007bff"></span>). This will 
-			 duplicate the proposal and set today as the creation date, so it is visible. If you 
-			 clone a filled project, the clone will be reset to be an open project. 
-		</li>
-	</ul>
+			duplicate the proposal and make that copy visible to students. If you clone a filled
+			project, the copy will become an open proposal.
+			</li></ul>
+		</dd>
+		<dt>Open Proposals</dt>
+		<dd>
+			<ul>
+				<li>
+					You can <strong>edit the details of a proposal</strong> (
+					<span class="fa fa-pencil" style="font-size: 1em;color: #007bff"></span>
+					). This link is also used to <strong>accept a student</strong> on to a project.
+				</li>
+				<li>
+					<p>You can <strong>toggle the visibility</strong> of open proposals to 
+					readvertise open proposals from previous years (
+					<span class="fa fa-eye" style="font-size: 1em;color: green"></span>
+					). It is also possible to conceal proposals that become impossible to support (
+					<span class="fa fa-eye-slash" style="font-size: 1em;color: red"></span>
+					), for example due to equipment failure or travel restrictions. </p>
+				</li>
+			</ul>
+		</dd>
+		<dt>Filled Proposals</dt>
+		<dd>
+			<ul><li>
+			You can <strong>update the title and descriptions of filled projects</strong> to reflect changes in 
+			the research that a student is following. The student cannot update these details.
+			</li></ul>
+		</dd>
+	</dl>
 </p>
 
 

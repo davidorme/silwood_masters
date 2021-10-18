@@ -23,12 +23,6 @@ def index():
     db.projects.id.readable=False
     db.projects.project_student.readable = False
     
-    # DEV - Add a secret switch to show older projects
-    date_created = request.vars.get('date_created')
-    
-    if date_created is None:
-        date_created = FIRST_DAY - datetime.timedelta(days=60)    
-    
     # Show available status as an icon
     filled_icons = {True: SPAN(_class='fa fa-users',
                                _style='color:green;font-size: 1.3em;',
@@ -53,7 +47,8 @@ def index():
     # - sub in a custom view function for the normal details link
     # - just give the CSV export link, which is moved from the bottom to
     #   the search bar using in javascript in the view.
-    grid  = SQLFORM.grid((db.projects.date_created > date_created),
+    grid  = SQLFORM.grid(((db.projects.date_created > (FIRST_DAY - datetime.timedelta(days=60))) &
+                          (db.projects.concealed == False)),
                          fields = [db.projects.project_student,
                                    db.projects.lead_supervisor,
                                    db.projects.project_base,
@@ -68,7 +63,7 @@ def index():
                          csv=True,
                          searchable=True,
                          # exportclasses =  dict(
-                         #   csv_with_hidden_cols=(ExporterCSV_hidden, 'CSV (hidden cols)', T(...))),
+                         #   csv_with_hidden_cols=(ExporterCSV_hidden, 'CSV (hidden cols)',T(...))),
                          exportclasses = dict(json=False, html=False,
                                               tsv=False, xml=False,
                                               tsv_with_hidden_cols=False,
@@ -581,18 +576,28 @@ def my_projects():
     # Hide ID and date_created but used to create a link.
     db.projects.id.readable = False
     db.projects.date_created.readable = False
+    db.projects.concealed.readable = False
     
-    # Allow open old projects to be refreshed
-    def _refresh(row):
+    # Allow open projects to be concealed or revealed
+    def _reveal_open(row):
         
-        if ((row.student_presentations.student is None) and
-            (row.projects.date_created < (FIRST_DAY - datetime.timedelta(days=60)))):
+        if (row.student_presentations.student is None):
             
-            return CENTER(A(SPAN('', _class="fa fa-repeat", 
-                              _style='font-size: 1.3em;',
-                              _title='Refresh'),
+            if ((row.projects.date_created < (FIRST_DAY - datetime.timedelta(days=60))) or
+                (row.projects.concealed)):
+                
+                icn = SPAN('', _class="fa fa-eye", 
+                           _style='font-size: 1.3em;color: green',
+                           _title='Refresh')
+            else:
+
+                icn = SPAN('', _class="fa fa-eye-slash", 
+                           _style='font-size: 1.3em;color:red',
+                           _title='Conceal')
+                
+            return CENTER(A(icn,
                     _class="button btn btn-default", 
-                    _href=URL("projects","refresh_project", 
+                    _href=URL("projects","reveal_project", 
                               vars={'record':row.projects.id}),
                     _style='padding: 3px 5px 3px 5px;'))
         else:
@@ -615,15 +620,18 @@ def my_projects():
     # Show visibility
     def _visible(row):
         
-        if row.projects.date_created > (FIRST_DAY - datetime.timedelta(days=60)):
+        if ((row.projects.date_created <= (FIRST_DAY - datetime.timedelta(days=60))) or
+            (row.projects.concealed)):
             
+            return CENTER(SPAN('', _class="fa fa-eye-slash", 
+                              _style='font-size: 1.3em;color: grey',
+                              _title='Not visible'))
+        else:
+        
             return CENTER(SPAN('', _class="fa fa-eye", 
                               _style='font-size: 1.3em;',
                               _title='Visible'))
-        else:
-            return CENTER(SPAN('', _class="fa fa-eye-slash", 
-                              _style='font-size: 1.3em;color: grey',
-                              _title='Hidden'))
+
     
     links = [dict(header = 'Visible', 
                   body = lambda row: _visible(row)),
@@ -635,8 +643,8 @@ def my_projects():
                                        _href=URL("projects","project_details", 
                                                  vars={'record':row.projects.id}),
                                        _style='padding: 3px 5px 3px 5px;')),
-             dict(header = 'Refresh', 
-                  body = lambda row: _refresh(row)),
+             dict(header = 'Toggle', 
+                  body = lambda row: _reveal_open(row)),
              dict(header = 'Clone', 
                   body = lambda row: _clone(row))]
     
@@ -659,7 +667,9 @@ def my_projects():
                                    db.student_presentations.academic_year,
                                    db.student_presentations.course_presentation,
                                    db.projects.project_title,
-                                   db.projects.date_created],
+                                   db.projects.date_created,
+                                   db.projects.concealed
+                                   ],
                            left = db.student_presentations.on(db.student_presentations.id 
                                                               == db.projects.project_student),
                            orderby= ('("student_presentations"."academic_year" IS NOT NULL) ASC, '
@@ -715,10 +725,10 @@ def clone_project():
 
 
 @staff_authorised
-def refresh_project():
+def reveal_project():
     """
-    This controller allows an authorised staff member to update the creation date of an open
-    project.
+    This controller allows an authorised staff member to control which open projects are 
+    visible to the students.
     """
     
     # Get the authenticated staff details (None if admin logged in)
@@ -741,14 +751,17 @@ def refresh_project():
     if not auth.has_membership('admin') and record.lead_supervisor != staff.id:
         raise HTTP(403, 'You are not the project lead supervisor .')
     
-    # Update the creation date
+    # - Only open projects
     if record.project_student is not None:
-        raise HTTP(403, 'Cannot refresh a filled project.')
+        raise HTTP(403, 'Cannot reveal or conceal a filled project.')
     
+    # Update the project depending on the status
+    if record.concealed or record.date_created < (FIRST_DAY - datetime.timedelta(days=60)):
+        record.update_record(date_created=datetime.date.today(), concealed=False)
+    else:
+        record.update_record(concealed=True)
     
-    record.update_record(date_created=datetime.date.today())
-    
-    redirect(URL('projects', 'project_details', vars={'record': record.id}))
+    redirect(URL('projects', 'my_projects'))
 
 
 class AllocationsCSV(ExportClass):

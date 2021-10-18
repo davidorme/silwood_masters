@@ -59,4 +59,5 @@ db.define_table('projects',
                 Field('requirements', 'text'),
                 Field('support', 'text'),
                 Field('eligibility', 'text'),
-                Field('date_created', 'date'))
+                Field('date_created', 'date'),
+                Field('concealed', 'boolean', default=False, required=True))
