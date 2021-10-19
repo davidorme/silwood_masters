@@ -1,6 +1,7 @@
 from staff_auth import staff_authorised
 from gluon.sqlhtml import ExportClass
 from io import StringIO
+import secrets
 
 ## -----------------------------------------------------------------------------
 ## Project proposal handlers.
@@ -284,11 +285,17 @@ def project_details():
     """
     This form allows an authorised staff member to submit a project proposal to the database or 
     edit an existing proposal. The authorised staff member is  automatically the lead supervisor. 
-    For external supervisors (defined in the teaching_staff table), there is the opportunity to
-    add an internal supervisor. This should not be mandatory until a project is filled.
+    
+    For external supervisors (defined in the teaching_staff table):
+        * an internal supervisor is needed but this does not need to be 
+          set when the project is created,
+        * the internal will be notified and has to approve their selection,
+        * only then can a student be accepted onto the project.
     
     For logged in Admin users, the lead supervisor field is not locked, to allow projects to
     be added with any marker as lead.
+    
+    TODO - maybe split this into two forms: internal vs external, simplifies logic.
     """
     
     # Get the authenticated staff details (None if admin logged in)
@@ -322,6 +329,9 @@ def project_details():
     #   - internals do not get presented with the internal dropdown
     #   - cannot deselect project students
     
+    readonly = False
+    external_msg = DIV()
+    
     # Using the fields argument to SQLFORM allows the order to be controlled,
     # but seems to overwrite readable and writable, so need to manipulate that
     # list instead.
@@ -349,25 +359,53 @@ def project_details():
                  f"{row.student.student_first_name} ("
                  f"{row.course_presentation.name})")
     
+    # Put in constraints
+    
     if not auth.has_membership('admin'):
         
         if record is not None and record.lead_supervisor != staff.id:
             raise HTTP(404, 'No access permitted to projects lead by other staff.')
         
+        # Only admins can change lead supervisor
         db.projects.lead_supervisor.default = staff.id
         db.projects.lead_supervisor.writable = False
         
         if staff.is_internal:
-            # db.projects.internal_supervisor.writable = False
-            # db.projects.internal_supervisor.readable = False
+
+            # Internals do not need an internal!
             del form_fields[form_fields.index('internal_supervisor')]
-        
-        elif record is None or (record is not None and record.internal_supervisor is None):
-            # Cannot select a student until an internal is agreed
-            db.projects.project_student.writable = False
-            db.projects.project_student.represent = lambda row: 'Students cannot be accepted for external projects until an internal supervisor has been agreed'
+            
+        else:
+            
+            # Externals need to pick an internal before a student, and cannot change the project
+            # while an internal approval is pending.
+            
+            external_msg = CAT("As an ", B("external supervisor"), ", please do read through this guidance on ",
+                               A("advertising external projects", 
+                                 _href=URL('projects','external_projects')),
+                               ". In particular, you cannot accept a prospective student until the "
+                               "project has been discussed with and accepted by an internal supervisor. "
+                               "You should expect prospective students to take a lead in finding an "
+                               "internal, but you will have to nominate the internal here and they will "
+                               "be automatically emailed to confirm. ")
+            
+            if (record is None) or ((record is not None) and (record.internal_approval_date is None)):
+            
+                # Externals cannot select a student until an internal is agreed
+                db.projects.project_student.writable = False
+                db.projects.project_student.represent = lambda row: ('Students cannot be accepted '
+                            ' for external projects until an internal supervisor has been agreed')
+                
+                if (record.internal_supervisor is not None):
+                    readonly = True
+                    external_msg = CAT(external_msg, B('This form has been locked until the '
+                                                       'nominated internal supervisor confirms'))
+            else:
+                # Cannot remove an agreed internal
+                db.projects.internal_supervisor.writable = False
     
-    if record is None or record.project_student is  None:
+    # What students are available to pick if needed
+    if record is None or record.project_student is None:
         
         # find a list of current students that have not already been assigned a project
         qry = db((db.student_presentations.academic_year == FIRST_DAY.year) & 
@@ -405,54 +443,98 @@ def project_details():
     buttons = [TAG.button(val, _value=True,_type="submit", _name=val, _class="btn btn-primary")
                for val in buttons]
     
-    # Get the SQLFORM for the projects table, setting the field order
+    # Get the SQLFORM for the projects table, setting the field order. The previous value
+    # of internal supervisor is passed into the form as a hidden field, to detect whether
+    # it is being changed.
+    print(readonly)
     form  = SQLFORM(db.projects,
+                    readonly=readonly,
                     fields = form_fields,
                     record = record,
                     showid = False,
-                    buttons = buttons
+                    buttons = buttons,
+                    hidden = {'previous_internal': None if record is None else record.internal_supervisor}
                     )
     
     # process the form
     if form.process(onvalidation=validate_project).accepted:
         
         if record is None:
-            response.flash = "Project created"
+            flash_msg = "Project created"
         else:
-            response.flash = "Project updated"
+            flash_msg = "Project updated"
+        
+        if form.internal_being_set:
+            
+            flash_msg += ". The specified internal has been contacted to confirm their participation."
+            
+            # Get and store a web token
+            token = secrets.token_urlsafe(nbytes=32)
+            record.update_record(internal_approval_token=token)
+            
+            # Populate an email dictionary
+            internal = db.teaching_staff[form.vars.internal_supervisor]
+            lead_sup = f"{staff.first_name} {staff.last_name}"
+            proj_url = URL('projects', 'view_project', vars={'id': record.id}, 
+                           scheme=True, host=True)
+            agree_url = URL('projects', 'internal_nomination', 
+                            vars={'id': record.id,
+                                  'token': token,
+                                  'agree':''},
+                            scheme=True, host=True)
+            disagree_url = URL('projects', 'internal_nomination', 
+                                vars={'id': record.id,
+                                      'token': token,
+                                      'agree':''},
+                                scheme=True, host=True)
+            
+            # Send an approval email
+            mailer = Mail()
+            success = mailer.sendmail(subject='Silwood Masters internal supervisor nomination',
+                                      to=internal.email,
+                                      cc=staff.email,
+                                      email_template='internal_nomination.html',
+                                      email_template_dict={'first_name': internal.first_name,
+                                                           'title': record.project_title,
+                                                           'lead_supervisor': lead_sup,
+                                                           'proj_url': proj_url,
+                                                           'agree_url': agree_url,
+                                                           'disagree_url': disagree_url})
+        
+        response.flash = flash_msg
         
     elif form.errors:
         
         response.flash = "Incomplete details - please check the form and resubmit"
         
-    # Project base selector. The idea here is to provide some common names using a drop down
-    # but allowing an Other choice that then expands a free text input
-
-    base_select = form.element('select[name=project_base]') 
-    base_select.attributes['_onchange'] = 'check_pbase(this.value)'
-    # Script to hide and unhide project_base_other. The view contains a function
-    # that sets this on form load, if it loads with value Other.
-    base_select.parent.insert(0, SCRIPT("""
-    function check_pbase(val){
-        if(val==="Other")
-           document.getElementById('project_proposals_project_base_other'
-                                   ).style.display='block';
-        else
-           document.getElementById('project_proposals_project_base_other'
-                                   ).style.display='none';};
-    """))
-    # Add in a concealed box for Other
-    base_select.parent.components.insert(2, INPUT(_class="form-control string", 
-                       _id="project_proposals_project_base_other", 
-                       _name="project_base_other", 
-                       _type="text", 
-                       _value="", 
-                       _placeholder="Institution name", 
-                       _style="display:none"))
+    if not readonly:
+        # Project base selector. The idea here is to provide some common names using a drop down
+        # but allowing an Other choice that then expands a free text input
+        base_select = form.element('select[name=project_base]') 
+        base_select.attributes['_onchange'] = 'check_pbase(this.value)'
+        # Script to hide and unhide project_base_other. The view contains a function
+        # that sets this on form load, if it loads with value Other.
+        base_select.parent.insert(0, SCRIPT("""
+        function check_pbase(val){
+            if(val==="Other")
+               document.getElementById('project_proposals_project_base_other'
+                                       ).style.display='block';
+            else
+               document.getElementById('project_proposals_project_base_other'
+                                       ).style.display='none';};
+        """))
+        # Add in a concealed box for Other
+        base_select.parent.components.insert(2, INPUT(_class="form-control string", 
+                           _id="project_proposals_project_base_other", 
+                           _name="project_base_other", 
+                           _type="text", 
+                           _value="", 
+                           _placeholder="Institution name", 
+                           _style="display:none"))
     
-    form.element('textarea[name=requirements]')['_rows']= 3
-    form.element('textarea[name=support]')['_rows']= 3
-    form.element('textarea[name=eligibility]')['_rows']= 3
+        form.element('textarea[name=requirements]')['_rows']= 3
+        form.element('textarea[name=support]')['_rows']= 3
+        form.element('textarea[name=eligibility]')['_rows']= 3
      
     # Dictionary of help comments for rows (Note that there is a labels option in
     # SQLFORM but only a spectacularly ugly table3cols implementation.)
@@ -553,7 +635,7 @@ def project_details():
                                   _class='col-sm-12'),
                               _class='form-group row'))
     
-    return(dict(form = form))
+    return(dict(form = form, external_msg=external_msg))
 
 def validate_project(form):
     
@@ -569,7 +651,15 @@ def validate_project(form):
     # Date created is only set when the project is first created or separately updated.
     if form.vars.date_created is None:
         form.vars.date_created = datetime.date.today()
-
+    
+    # Detect if the internal supervisor has been set - the hidden variable
+    # in request.vars.previous_internal shows the old value as '' or 'int', 
+    # the form contains the new value
+    
+    if (request.vars.previous_internal == '') and (form.vars.internal_supervisor is not None):
+        form.internal_being_set = True
+    else:
+        form.internal_being_set = False
 
 
 def _none_to_dash(val, row, fmt, none_val="----"):
@@ -1022,4 +1112,41 @@ def project_admin():
                            maxtextlength=250)
     
     return dict(form=form)
+
+
+def internal_nomination():
+    """
+    This controller is not restricted - it acts as a service to allow internal supervisors
+    to formally agree to act as internal for a project and operates using a secure token.
+    """
+    
+    recid = request.vars.id
+    token = request.vars.token
+    
+    # Need a token and record id
+    if recid is None or token is None:
+        raise HTTP(404)
+    
+    record = db.projects[recid]
+    
+    # Unknown record
+    if record is None:
+        raise HTTP(404)
+    
+    # Token must match
+    if record.internal_approval_token != token:
+        raise HTTP(404)
+    
+    if 'agree' in request.vars:
+    
+        record.update_record(internal_approval_date = datetime.datetime.now())
+    
+    elif 'disagree' in request.vars:
+        
+        record.update_record(internal_supervisor = None,
+                             internal_approval_token = None)
+    else:
+        raise HTTP(404)
+    
+    redirect(URL('projects', 'view_project', vars={'id': record.id}))
 
