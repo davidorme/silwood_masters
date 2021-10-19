@@ -80,7 +80,7 @@ class Mail:
         
         self.logged_in = None
 
-    def sendmail(self, to, subject, email_template=None, email_template_dict=None, text=None):
+    def sendmail(self, to, subject, cc=None, email_template=None, email_template_dict=None, text=None):
         """
         This sends an html body text to a recipient, including a text representation.
         If the Mail instance hasn't already been logged in, then it will log in
@@ -104,6 +104,14 @@ class Mail:
         message["From"] = self.send_address
         message["To"] = to
         message["Subject"] = subject
+        
+        # Handle cc's
+        if cc is not None:
+            if isinstance(cc, str):
+                cc = [cc]
+            
+            message['CC'] = cc
+            to = [to] + cc
         
         # Get a rendered message as both text/plain and text/html, using message
         # as the content if provided
