@@ -73,6 +73,7 @@ if auth.has_membership('admin'):
 
 
 projects_dropdown = [(T('Overview'), False, URL('projects', 'project_overview'), []),
+                     (T('External projects'), False, URL('projects', 'external_projects'), []),
                      (T('Proposals'), False, URL('projects', 'index'), []),
                      (T('Allocations'), False,  URL('projects', 'project_allocations'), [])]
 

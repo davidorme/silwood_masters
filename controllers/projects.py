@@ -12,6 +12,10 @@ def project_overview():
     
     return dict()
 
+def external_projects():
+    
+    return dict()
+
 def index():
     
     """
