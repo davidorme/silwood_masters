@@ -24,12 +24,19 @@ def index():
     db.projects.project_student.readable = False
     
     # Show available status as an icon
-    filled_icons = {True: SPAN(_class='fa fa-users',
+    filled_icons = {True: CENTER(SPAN(_class='fa fa-users',
                                _style='color:green;font-size: 1.3em;',
-                               _title='Available'),
-                    False: SPAN(_class='fa fa-user', 
+                               _title='Available')),
+                    False: CENTER(SPAN(_class='fa fa-user', 
                                 _style='color:red;font-size: 1.3em;',
-                                _title='Filled')}
+                                _title='Filled'))}
+    
+    intext_icons = {True: CENTER(SPAN(_class='fa fa-home',
+                               _style='color:grey;font-size: 1.3em;',
+                               _title='Available')),
+                    False: CENTER(SPAN(_class='fa fa-external-link', 
+                                _style='color:grey;font-size: 1.3em;',
+                                _title='Filled'))}
     
     links = [dict(header = 'Info', 
                   body = lambda row: A(SPAN('',_class="fa fa-info-circle", 
@@ -39,8 +46,10 @@ def index():
                                        _href=URL("projects","view_project", 
                                                  vars={'id': row.id}, user_signature=True),
                                        _style='padding: 3px 5px 3px 5px;')),
-            dict(header = 'Open', 
-                 body = lambda row: filled_icons[row.project_student is None])]
+             dict(header = 'Internal', 
+                  body = lambda row: intext_icons[row.lead_supervisor.is_internal]),
+             dict(header = 'Open', 
+                  body = lambda row: filled_icons[row.project_student is None])]
     
     # show the standard grid display
     # - restrict list display to a few key fields
@@ -631,7 +640,6 @@ def my_projects():
             return CENTER(SPAN('', _class="fa fa-eye", 
                               _style='font-size: 1.3em;',
                               _title='Visible'))
-
     
     links = [dict(header = 'Visible', 
                   body = lambda row: _visible(row)),
