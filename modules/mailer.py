@@ -110,7 +110,7 @@ class Mail:
             if isinstance(cc, str):
                 cc = [cc]
             
-            message['CC'] = cc
+            message['CC'] = ','.join(cc)
             to = [to] + cc
         
         # Get a rendered message as both text/plain and text/html, using message
