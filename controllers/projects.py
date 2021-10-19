@@ -446,7 +446,7 @@ def project_details():
     # Get the SQLFORM for the projects table, setting the field order. The previous value
     # of internal supervisor is passed into the form as a hidden field, to detect whether
     # it is being changed.
-    print(readonly)
+    
     form  = SQLFORM(db.projects,
                     readonly=readonly,
                     fields = form_fields,
