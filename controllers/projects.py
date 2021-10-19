@@ -396,7 +396,7 @@ def project_details():
                 db.projects.project_student.represent = lambda row: ('Students cannot be accepted '
                             ' for external projects until an internal supervisor has been agreed')
                 
-                if (record.internal_supervisor is not None):
+                if not ((record is None) or (record.internal_supervisor is None)):
                     readonly = True
                     external_msg = CAT(external_msg, B('This form has been locked until the '
                                                        'nominated internal supervisor confirms'))
@@ -461,6 +461,7 @@ def project_details():
         
         if record is None:
             flash_msg = "Project created"
+            record = db.projects[form.vars.id]
         else:
             flash_msg = "Project updated"
         
@@ -488,11 +489,10 @@ def project_details():
                                       'agree':''},
                                 scheme=True, host=True)
             
-            # Send an approval email
+            # Send an approval email - do not cc approval links to external!
             mailer = Mail()
             success = mailer.sendmail(subject='Silwood Masters internal supervisor nomination',
                                       to=internal.email,
-                                      cc=staff.email,
                                       email_template='internal_nomination.html',
                                       email_template_dict={'first_name': internal.first_name,
                                                            'title': record.project_title,
@@ -501,7 +501,9 @@ def project_details():
                                                            'agree_url': agree_url,
                                                            'disagree_url': disagree_url})
         
-        response.flash = flash_msg
+        # Force a reload to update display
+        session.flash = flash_msg
+        redirect(URL('projects','project_details', vars={'id': record.id}))
         
     elif form.errors:
         
