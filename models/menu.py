@@ -84,7 +84,10 @@ if auth.has_membership('admin'):
         (DIV('Admin Tools', _class='dropdown-item', 
              _style='color:grey;font-variant:small-caps'), False, False, []),
         (T('Project Admin'), False, 
-            URL('projects', 'project_admin'), [])])
+            URL('projects', 'project_admin'), []),
+        (T('Create Project'), False, 
+            URL('projects', 'project_details'), []),
+            ])
 
 
 response.menu = [
