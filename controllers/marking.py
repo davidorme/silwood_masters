@@ -1139,7 +1139,7 @@ def show_form():
                                  course=3)
     student_presentation = db.student_presentations.insert(student=student,
                                                            academic_year=2020,
-                                                           course_presentation=31)
+                                                           course_presentation=1)
     record = db.assignments.insert(student_presentation=student_presentation,
                                    status='Not started', 
                                    marker=marker, 

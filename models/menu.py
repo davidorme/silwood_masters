@@ -75,7 +75,8 @@ if auth.has_membership('admin'):
 projects_dropdown = [(T('Overview'), False, URL('projects', 'project_overview'), []),
                      (T('External projects'), False, URL('projects', 'external_projects'), []),
                      (T('Proposals'), False, URL('projects', 'index'), []),
-                     (T('Allocations'), False,  URL('projects', 'project_allocations'), [])]
+                     (T('Allocations'), False,  URL('projects', 'project_allocations'), []),
+                     (T('Proposing projects'), False,  URL('staff', 'proposing_projects'), []),]
 
 
 if auth.has_membership('admin'):
@@ -153,8 +154,8 @@ if session.magic_auth is not None:
 else:
     
     response.menu.append((T('Staff '), False, URL('staff', 'home'), [
+                          (T('Proposing projects'), False, 
+                              URL('staff', 'proposing_projects'), []),
                           (T('Staff Login'), False, 
                               URL('staff', 'staff_login'), []),
                          ]))
-    
-    

@@ -7,10 +7,20 @@
 
     </h2>
 	  {{if request.args(0) == 'register':}}
-	  <p>Please only register for access if you are a member of staff needing access to
-		  the timetabling or other admin functionality and <strong>not</strong> for proposing
-		  projects or marking. Students must not register on this
-		  website.</p>
+	  
+      <H3>Project and marking access </H3>
+      <p>
+      If you want to propose Masters projects then please go to 
+      {{=A('this page', _href=URL('staff','proposing_projects'))}}.
+      </p>
+      
+      <H3>Admin access</H3>
+      <p>
+        Please only register for access from this page if you are a member of
+        staff needing access to the timetabling or other admin functionality and
+        <strong>not</strong> for proposing projects or marking. Students must
+        not register on this website.
+      </p>
 		  <hr>
 	  {{pass}}
 	  {{if request.args(0) == 'login':}}

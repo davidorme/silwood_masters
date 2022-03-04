@@ -166,3 +166,33 @@ def authorise():
     else:
          redirect(URL('staff', 'home'))
     
+
+def proposing_projects():
+    """Presents a view of teaching staff
+
+    TODO - overlaps with manage/teaching_staff but readonly and cutdown.
+    """
+        
+    links = [dict(header = 'Supervision', 
+                  body = lambda row: SPAN('', 
+                                          _class= "fa fa-check-circle " if row.can_supervise else "fa fa-times-circle", 
+                                          _style='font-size: 1.3em;color:' + 'green' if row.can_supervise else 'grey',
+                                          _title='Approved' if row.can_supervise else 'Not yet approved'))]
+    
+    db.teaching_staff.can_supervise.readable = False
+
+    form = SQLFORM.grid(db.teaching_staff.can_supervise == True,
+                        fields = [db.teaching_staff.first_name,
+                                  db.teaching_staff.last_name,
+                                  db.teaching_staff.institution,
+                                  db.teaching_staff.can_supervise],
+                        # db.teaching_staff.email,
+                        links=links,
+                        details=False,
+                        editable=False,
+                        create=False,
+                        deletable=False,
+                        csv=False)
+    
+    return dict(form=form)
+
