@@ -1,0 +1,32 @@
+{{extend 'layout.html'}}
+
+<h1>Proposing projects</h1>
+
+<p>
+	In order to propose and supervise Masters projects, you will need to both in
+	our list of teaching staff and have current approval to supervise projects.
+	We use your email to login in to project proposal and marking pages, so if
+	you are an approved supervisor, simply enter your email 
+    {{=A('on this login page', _href=URL('staff','staff_login'))}}.
+</p>
+
+<p>
+    If you cannot login then:
+	<ol>
+	 <li>
+		you may not be on the list of teaching staff,
+	</li>
+	<li> 
+		you are on the list but we have an outdated email address, or
+	</li>
+	<li>
+		you have not yet been approved as a supervisor.
+	</li>
+	</ol>
+
+    The table below shows currently approved supervisors. If you are not on this
+    list and want to propose and supervise projects, then please <a
+    href='mailto:silwood.masters@imperial.ac.uk'>email us</a>.
+</p>
+
+{{=form}}
