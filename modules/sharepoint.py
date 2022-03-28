@@ -120,8 +120,8 @@ def scan_files():
     
     # Now do checking on the results:
     # Load presentations, marker roles and student ids, substituting underscores for spaces
-    presentations = db(db.presentations).select(db.presentations.name, 
-                                                db.presentations.id).as_list()
+    presentations = db(db.course_presentations).select(db.course_presentations.name, 
+                                                       db.course_presentations.id).as_list()
     presentation_lookup = {dt['name'].replace(' ', '_'): dt['id'] 
                            for dt in presentations}
 
