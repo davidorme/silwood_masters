@@ -375,7 +375,7 @@ def load_assignments():
       - Role: Presentation
         Due: '2020-11-12'
     supervisor:
-      - Role: Presentation
+      - Role: Supervisor
         Due: '2020-11-12'
     """
     
