@@ -228,9 +228,12 @@ def assignments():
         # Find the action from the post vars
         _, _, action_func, action_args = [b for b in button_actions if b[0] in request.post_vars][0]
         
-        # Starting from the base query, annd any keywords currently in use by the SQLFORM.grid 
+        # Starting from the base query, add any keywords currently in use by the SQLFORM.grid 
         # back into the db to get the selected rows and hence the list of ids
-        qry = (db.assignments.student_presentation == db.student_presentations.id)
+        qry = (db.assignments.student_presentation == db.student_presentations.id) 
+        
+        if not 'all' in request.vars.keys():
+            qry &= (db.student_presentations.academic_year == FIRST_DAY.year)
 
         if request.get_vars.keywords is not None:
             qry &= smart_query(fields, request.get_vars.keywords)
