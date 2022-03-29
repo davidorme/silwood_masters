@@ -1,4 +1,4 @@
-import datetime as dt
+import datetime
 import io
 import os
 import csv
@@ -644,7 +644,7 @@ def validate_assignments(form):
                     else:
                         role = known_roles[role]
                     try:
-                        ddate = dt.date.fromisoformat(ddate)
+                        ddate = datetime.datetime.strptime(ddate, '%Y-%m-%d').date()
                     except ValueError:
                         role_map_errors = True
                     
@@ -991,7 +991,7 @@ def write_report():
             session.flash = 'Report submitted'
             record.update_record(assignment_data = data,
                                  status='Submitted',
-                                 submission_date = dt.datetime.now(),
+                                 submission_date = datetime.datetime.now(),
                                  submission_ip = request.client)
         
         # TODO - Would be neater to use ajax here rather than reloading the page
