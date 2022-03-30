@@ -474,8 +474,9 @@ def project_details():
             record.update_record(internal_approval_token=token)
             
             # Populate an email dictionary
+            lead = db.teaching_staff[form.vars.lead_supervisor]
             internal = db.teaching_staff[form.vars.internal_supervisor]
-            lead_sup = f"{staff.first_name} {staff.last_name}"
+            lead_sup = f"{lead.first_name} {lead.last_name}"
             proj_url = URL('projects', 'view_project', vars={'id': record.id}, 
                            scheme=True, host=True)
             agree_url = URL('projects', 'internal_nomination', 
