@@ -73,11 +73,11 @@ def submitted_files():
     # don't allow deleting, editing or detailas as this is populated automatically
     # from the file structure
     form = SQLFORM.grid((db.marking_files.student == db.student_presentations.id) &
-                        (db.student_presentations.student == db.student.id),               
-                        fields=[db.student.student_cid,
-                                db.student.student_first_name,
-                                db.student.student_last_name,
-                                db.student.academic_year,
+                        (db.student_presentations.student == db.students.id),               
+                        fields=[db.students.student_cid,
+                                db.students.student_first_name,
+                                db.students.student_last_name,
+                                db.students.academic_year,
                                 db.student_presentation.course_presentation,
                                 db.marking_files.filename,
                                 db.marking_files.marker_role_id],
