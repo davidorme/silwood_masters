@@ -937,25 +937,25 @@ def project_allocations():
                                               _style='font-size: 1.3em;color: grey',
                                               _title='Edit project'))]
     
-    if auth.has_membership('admin'):
-        # Add links to presentation overview
-        pres_link = [dict(header = 'Details', 
-                     body = lambda row: A(SPAN('',_class="fa fa-info-circle", 
-                                                _style='font-size: 1.3em;',
-                                                _title='Edit project'),
-                                        _class="button btn btn-default", 
-                                        _href=URL("marking","presentation_overview", 
-                                                    vars={'id': row.assignments.student,
-                                                          'presentation': row.assignments.course_presentation,
-                                                          'year': row.assignments.academic_year}),
-                                        _style='padding: 3px 5px 3px 5px;')
-                                        if row.projects.id is not None else 
-                                        SPAN('',_class="fa fa-times-circle", 
-                                                _style='font-size: 1.3em;color: grey',
-                                                _title='Edit project'))]
+    # if auth.has_membership('admin'):
+    #     # Add links to presentation overview
+    #     pres_link = [dict(header = 'Details', 
+    #                  body = lambda row: A(SPAN('',_class="fa fa-info-circle", 
+    #                                             _style='font-size: 1.3em;',
+    #                                             _title='Edit project'),
+    #                                     _class="button btn btn-default", 
+    #                                     _href=URL("marking","presentation_overview", 
+    #                                                 vars={'id': row.assignments.student,
+    #                                                       'presentation': row.assignments.course_presentation,
+    #                                                       'year': row.assignments.academic_year}),
+    #                                     _style='padding: 3px 5px 3px 5px;')
+    #                                     if row.projects.id is not None else 
+    #                                     SPAN('',_class="fa fa-times-circle", 
+    #                                             _style='font-size: 1.3em;color: grey',
+    #                                             _title='Edit project'))]
     
 
-        links.append(pres_link)
+    #     links.extend(pres_link)
 
     # Cosmetic changes to hide None for students with no projects
     # - This is a bit hacky - could join in teaching staff and shorten some of these,
