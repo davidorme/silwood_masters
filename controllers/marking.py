@@ -316,14 +316,12 @@ def edit_assignment():
     db.assignments.assignment_data.readable = False
     db.assignments.assignment_data.writable = False
     
-    db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', 
-                                              '%(last_name)s, %(first_name)s (%(email)s)')
-    
     # allow access to previous records.
     db.assignments._common_filter = None
     record = db.assignments[request.args[0]]
     
-    db.assignments.marker.requires = IS_IN_DB(db, 'markers.id', '%(last_name)s, %(first_name)s (%(email)s)')
+    db.assignments.marker.requires = IS_IN_DB(db, 'teaching_staff.id', 
+                                             '%(last_name)s, %(first_name)s (%(email)s)')
     
     if record.status in ['Created', 'Not started']:
         delete_ok = True
