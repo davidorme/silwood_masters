@@ -1010,13 +1010,8 @@ def write_report():
     # Provide any available files
     expected_files = record.marker_role_id.form_json.get('submitted_files')
     if expected_files:
-    
-        # TODO FIX
-        file_rows =  None
-        # db((db.marking_files.student == record.student) &
-        #                        (db.student_presentation == record.student_presentation) &
-        #                        (db.marking_files.marker_role_id == record.marker_role_id)
-        #               ).select()
+        
+        file_rows = db(db.marking_files.student == record.student_presentation).select()
     
         if file_rows:
             files = CAT(H4("Files"), P("The following submitted files are available. These files are "

@@ -132,6 +132,10 @@ def scan_files():
     students = db(db.students).select(db.students.id, db.students.student_cid).as_list()
     student_lookup = {dt['student_cid']: dt['id'] for dt in students}
 
+    student_presentations = db(db.student_presentations).select().as_list()
+    student_presentation_lookup = {(dt['student'], dt['academic_year'], dt['course_presentation']): dt['id'] 
+                                   for dt in student_presentations}
+ 
     # Insert what is available
     problems = []
     
@@ -152,7 +156,8 @@ def scan_files():
         
         # Report errors
         these_problems = []
-               
+        
+        # Check the data
         if (this_file['course_presentation_id'] is None):
             these_problems.append("Unknown presentation")
 
@@ -165,14 +170,23 @@ def scan_files():
         if this_file['student_cid'] is None:
             these_problems.append("Unknown CID")
         
+        # Now look for the combination that defines the student presentation.
+        pres_key = (this_file['student_cid'], 
+                    this_file['academic_year'], 
+                    this_file['course_presentation_id'])
+        
+        this_file['student'] =  student_presentation_lookup.get(pres_key)
+
+        if this_file['student'] is None:
+            these_problems.append("Combination of student, year and course presentation not found")
+
         if these_problems:
             problems.append(LI(f"{this_path}", BR(), ','.join(these_problems)))
-        
-
-        # Update or insert on what is found. The box id should be persistent, so moving files
-        # around should just update the records rather than creating new ones.
-        db.marking_files.update_or_insert(db.marking_files.unique_id == this_file['unique_id'],
-                                          **this_file)
+        else:
+            # Update or insert on what is found. The box id should be persistent, so moving files
+            # around should just update the records rather than creating new ones.
+            db.marking_files.update_or_insert(db.marking_files.unique_id == this_file['unique_id'],
+                                             **this_file)
     
     # Reporting
     report = P(f'Found {len(file_data)} files')
