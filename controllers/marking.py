@@ -78,7 +78,7 @@ def submitted_files():
                                 db.students.student_first_name,
                                 db.students.student_last_name,
                                 db.students.academic_year,
-                                db.student_presentation.course_presentation,
+                                db.student_presentations.course_presentation,
                                 db.marking_files.filename,
                                 db.marking_files.marker_role_id],
                         maxtextlength=100,
