@@ -764,9 +764,9 @@ def query_report_marker_grades(record, pdf=False):
     # the table, so reset that here to ensure that status can be read
     db.assignments.status.represent = None
     
-    report_grades = db((db.assignments.student == record.student) &
-                       (db.assignments.course_presentation_id == record.course_presentation_id) &
-                       (db.assignments.academic_year == record.academic_year) &
+    report_grades = db((db.assignments.student_presentation == db.student_presentations.id) &
+                       (db.student_presentations.student == record.student) &
+                       (db.course_presentations.id == db.student_presentations.course_presentation) &
                        (db.assignments.marker_role_id == db.marking_roles.id) &
                        (db.marking_roles.name== 'Marker')
                        ).select(
