@@ -286,18 +286,20 @@ def download_grades(ids):
     db = current.db
     
     # Extract the data for the assignments to be collated
-    records = db(db.assignments.id.belongs(ids) &
-                 (db.assignments.student == db.students.id)).select(
-                 db.students.student_cid,
-                 db.students.student_last_name,
-                 db.students.student_first_name,
-                 db.assignments.course_presentation_id,
-                 db.assignments.academic_year,
-                 db.assignments.marker_role_id,
-                 db.assignments.marker,
-                 db.assignments.assignment_data,
-                 orderby=(db.assignments.course_presentation_id,
-                          db.students.student_cid))
+    records = db((db.assignments.id.belongs(ids)) &
+                 (db.assignments.student_presentation == db.student_presentations.id) &
+                 (db.student_presentations.student == db.students.id)
+                 ).select(
+                    db.students.student_cid,
+                    db.students.student_last_name,
+                    db.students.student_first_name,
+                    db.student_presentations.course_presentation,
+                    db.student_presentations.academic_year,
+                    db.assignments.marker_role_id,
+                    db.assignments.marker,
+                    db.assignments.assignment_data,
+                    orderby=(db.student_presentations.course_presentation,
+                             db.students.student_cid))
     
     # Find the set of marking roles in the selected data and then 
     # get the set of exported details for each role
@@ -410,8 +412,8 @@ def download_grades(ids):
         ws.cell(row=this_row, column=1, value=first.students.student_cid)
         ws.cell(row=this_row, column=2, value=first.students.student_last_name)
         ws.cell(row=this_row, column=3, value=first.students.student_first_name)
-        ws.cell(row=this_row, column=4, value=first.assignments.course_presentation_id)
-        ws.cell(row=this_row, column=5, value=first.assignments.academic_year)
+        ws.cell(row=this_row, column=4, value=first.student_presentations.course_presentation)
+        ws.cell(row=this_row, column=5, value=first.student_presentations.academic_year)
         
         # Copy the field map for this student
         this_map = field_map.copy()
