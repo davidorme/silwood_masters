@@ -776,22 +776,26 @@ def my_students():
                   body = lambda row: A('View',
                                        _class='button btn btn-secondary',
                                        _href=URL("marking", "presentation_overview", 
-                                                 vars={'id': row.student,
-                                                       'presentation': row.course_presentation_id,
-                                                       'year': row.academic_year
-                                                       }),
+                                                 vars={'id': row.student_presentations.id}),
                                        _target='_blank'))]
     
     # This is automatically all years.
     db.assignments._common_filter = None
     
+    # student_presentation used in links but do not display
+    db.student_presentations.id.readable = False
+
     # create the SQLFORM grid to show students the marker has supervised
     grid = SQLFORM.grid((db.assignments.marker == marker) & 
                         (db.assignments.marker_role_id == db.marking_roles.id) & 
-                        (db.marking_roles.name == 'Supervisor'),
-                        fields = [db.assignments.student,
-                                  db.assignments.academic_year,
-                                  db.assignments.course_presentation_id
+                        (db.marking_roles.name == 'Supervisor') &
+                        (db.assignments.student_presentation == db.student_presentations.id) &
+                        (db.student_presentations.student == db.students.id),
+                        fields = [db.students.student_first_name,
+                                  db.students.student_last_name,
+                                  db.student_presentations.academic_year,
+                                  db.student_presentations.course_presentation,
+                                  db.student_presentations.id
                                   ],
                         maxtextlength=100,
                         csv=False,
@@ -800,7 +804,8 @@ def my_students():
                         details=False,
                         editable=False,
                         links=links,
-                        headers= {'students.student_last_name': 'Student'},
+                        headers= {'students.student_last_name': 'Last Name',
+                                  'students.student_first_name': 'First Name'},
                         paginate=False)
     
     return dict(name=marker.first_name + " " + marker.last_name, form=grid)
@@ -822,12 +827,18 @@ def presentation_overview():
     # This is automatically all years.
     db.assignments._common_filter = None
     
-    rows = db((db.assignments.student == request.vars['id']) & 
-              (db.assignments.course_presentation_id == request.vars['presentation']) & 
-              (db.assignments.academic_year == request.vars['year'])).select()
+    # Get the presentation ID
+    presentation_id = int(request.vars['id'])
+    presentation =  db(db.student_presentations.id == presentation_id).select()
+
+    if presentation is None:
+        session.flash = 'Unknown presentation details'
+        redirect(URL('index'))
+        
+    # Get any assignment rows associated with the presentation id
+    rows = db(db.assignments.student_presentation == presentation_id).select()
 
     if rows:
-        
         content = [(TR(TH('Marking Role'), 
                        TH('Marker'),
                        TH('Status'),
@@ -849,11 +860,15 @@ def presentation_overview():
                 grades = [P(f'{nm}: {gr}') for nm, gr in zip(display_grades, display_vals)]
                 grades = DIV(*grades)
                 
-                # Create a link to the report
-                link = A('Link', _href=URL('write_report', 
-                                           vars={'record': this_row.id,
-                                                 'supervisor_id': marker.id,
-                                                 'staff_access_token': marker.marker_access_token}),
+                # Create a link to the report - for supervisors
+                if auth.has_membership('admin'):
+                    link_vars = {'record': this_row.id}
+                else:
+                    link_vars = {'record': this_row.id,
+                                 #'supervisor_id': marker.id,
+                                 }
+
+                link = A('Link', _href=URL('write_report', vars=link_vars),
                                 _target='_blank')
             else:
                 grades = 'Not completed'
@@ -865,19 +880,28 @@ def presentation_overview():
                                TD(rend_row.status),
                                TD(grades),
                                TD(link))))
-        
-        # Use the last row to get a header block
-        header = TABLE(TR(TD('Student:'), TD(rend_row.student)),
-                       TR(TD('Course Presentation:'), TD(rend_row.course_presentation_id)),
-                       TR(TD('Academic Year:'), TD(rend_row.academic_year)),
-                       _class='table table-striped')
-                           
-        # Render the content as a table
-        content = TABLE(*content, _class='table')
     else:
-        session.flash = 'Unknown presentation details'
-        redirect(URL('index'))
+        content = []
     
+    # Get student and other details
+    student = db.students[presentation[0].student]
+    presentation = presentation.render(0)
+
+    hdr_rows = [TR(TD('Student:'), TD(f"{student.student_first_name} {student.student_last_name}")),
+                TR(TD('Course Presentation:'), TD(presentation.course_presentation)),
+                TR(TD('Academic Year:'), TD(presentation.academic_year))]
+    
+    project = db(db.projects.project_student == presentation_id).select()
+
+    if project is not None:
+        project = project.render(0)
+        hdr_rows.extend([TR(TD('Project Supervisor:'), TD(project.lead_supervisor))])
+        hdr_rows.extend([TR(TD('Project Title:'), TD(project.project_title))])
+
+    # Render the header and assignments as tables
+    header = TABLE(*hdr_rows, _class='table table-striped')
+    content = TABLE(*content, _class='table')
+
     return dict(header=header, content=content)
 
 
@@ -915,8 +939,13 @@ def write_report():
     marker = session.magic_auth
     
     # Access control
+    # - Admins can read/write always
+    # - Markers can read/write until submitted/released and then read only.
+    # - Other staff can read _once_ submitted/released (supervisors, mainly, but
+    #   any logged in staff with a link to a given assigment id can view.)
     show_due_date = False
-    
+    admin_warn = ""
+
     if auth.has_membership('admin'):
         
         admin_warn =  DIV(B('Reminder: '), "Logged in administrators have the ability to ",
@@ -924,41 +953,23 @@ def write_report():
                           "Please do not do so lightly.", 
                           _class="alert alert-danger", _role="alert")
         readonly = False
-    
-    elif request.vars['supervisor_id'] is not None:
-        
-        admin_warn = ""
-        
-        # Provide supervisor access to completed reports
-        supervisor = db.markers(int(security['supervisor_id']))
-        
-        if security['staff_access_token'] is None:
-            session.flash = 'No staff access token provided'
-            redirect(URL('index'))
-        
-        if supervisor.marker_access_token != security['staff_access_token']:
-            session.flash = 'Staff access token invalid'
-            redirect(URL('index'))\
 
-        if record.status not in ['Submitted','Released']:
-            session.flash = 'Marking not yet submitted'
-            redirect(URL('index'))
-        
+    elif record.status in ['Submitted','Released']:
         readonly = True
-        
-    else:
-        
-        admin_warn = ""
-            
-        if marker.id != record.marker:
-            raise HTTP(403, '403 Forbidden: this marking is not assigned to you')
-        
-        if record.status in ['Submitted','Released']:
-            readonly = True
-        else:
+        admin_warn = DIV(B('Reminder: '), 
+                            "Staff are able to read completed grading reports but these "
+                            "include confidential grades and comments that must not be "
+                            "shared with students.",
+                            _class="alert alert-danger", _role="alert")
+ 
+    elif marker.id == record.marker:
             readonly = False
             show_due_date = True
-    
+    else:
+        session.flash = 'Marking not yet submitted - marker access only'
+        redirect(URL('index'))            
+
+
     # define the header block - this is for display so needs the rendered data
     header = get_form_header(record, readonly, security=marker, show_due_date=show_due_date)
     
