@@ -103,10 +103,14 @@ def _send_staff_link(requester_row):
     mymrk_link = URL('staff', 'authorise', vars={'token': new_uuid,
                                                  '_next': 'marking/my_marking'}, 
                      scheme=True, host=True)
+    mystd_link = URL('staff', 'authorise', vars={'token': new_uuid,
+                                                 '_next': 'marking/my_students'}, 
+                     scheme=True, host=True)
     
     email_dict = dict(home_link = home_link,
                       myprj_link=myprj_link,
                       mymrk_link=mymrk_link,
+                      mystd_link=mystd_link,
                       first_name = requester_row.first_name)
 
     mailer = Mail()
