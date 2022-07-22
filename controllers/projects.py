@@ -1,3 +1,4 @@
+import datetime
 from staff_auth import staff_authorised
 from gluon.sqlhtml import ExportClass
 from io import StringIO
@@ -61,7 +62,11 @@ def index():
     # - sub in a custom view function for the normal details link
     # - just give the CSV export link, which is moved from the bottom to
     #   the search bar using in javascript in the view.
-    grid  = SQLFORM.grid(((db.projects.date_created > PROJECT_ROLLOVER_DAY) &
+    # - display projects in a one year window from PROJECT_ROLLOVER_DAY
+    last_prd = PROJECT_ROLLOVER_DAY - datetime.timedelta(year = 1)
+
+    grid  = SQLFORM.grid(((db.projects.date_created >= last_prd) &
+                          (db.projects.date_created < PROJECT_ROLLOVER_DAY) &
                           (db.projects.concealed == False)),
                          fields = [db.projects.project_student,
                                    db.projects.lead_supervisor,
