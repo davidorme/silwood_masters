@@ -1,5 +1,6 @@
 import secrets
 from timetabler_functions import get_year_start_date
+from marking_functions import get_project_rollover_date, div_checkbox_widget_list_group
 
 ## -----------------------------------------------------------------------------
 # Email log
@@ -106,9 +107,10 @@ db.define_table('student_presentations',
 
 ## -----------------------------------------------------------------------------
 # Dates
-# - Primarily used by timetabler but also need to define the start of term for 
-#   identifying recent project proposals. Bit of a sledgehammer/nut, but the FIRST_DAY
-#   global variable is already used for timetabling and is the correct thing to use.
+# - Primarily used by timetabler but used to define three global variables:
+#     FIRST_DAY: timetabler first day of autumn term
+#     PROJECT_ROLLOVER_DAY: when do current projects and marking become last year's
+#     CURRENT_PROJECT_YEAR: what is the academic year.
 ## -----------------------------------------------------------------------------
 
 # TODO blocking events and repeating events (Weds pm and Seminars)
@@ -135,12 +137,20 @@ db.define_table('recurring_events',
 db.define_table('freezer',
                 Field('is_frozen', 'boolean', default=False))
 
-# Cache the academic year
-FIRST_DAY = cache.ram('first_day', lambda : get_year_start_date(), None)
+# Calculate the global time variables - don't cache these as the update should be
+# immediate when they change and the functions aren't complex. Ideally something should
+# watch the relevant entries in the college dates table and update the cache when they
+# are changed.
+
+FIRST_DAY = get_year_start_date()
+PROJECT_ROLLOVER_DAY = get_project_rollover_date()
+
+# Use the rollover day to get the current project year: 2021 - 2022 students have an
+# academic year of 2021 and will have a project rollover day in Sept 2022.
+CURRENT_PROJECT_YEAR = (PROJECT_ROLLOVER_DAY.year - 1)
+
+# Store FIRST_DAY  so it can be accessed in modules/timetabler_functions.py
 current.FIRST_DAY = FIRST_DAY
-
-from marking_functions import (div_checkbox_widget_list_group)
-
 
 ## Turn on signed tables
 db._common_fields.append(auth.signature)

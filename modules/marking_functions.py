@@ -31,6 +31,25 @@ should speed up response times.
 ## GLOBAL FUNCTIONS
 ## --------------------------------------------------------------------------------
 
+
+
+def get_project_rollover_date():
+    """Get the project rollover date, defaulting to October 1st next year"""    
+    db = current.db
+    project_rollover = db(
+        db.college_dates.name == 'Project Rollover Date'
+        ).select().first()
+    
+    if project_rollover is not None:
+        return project_rollover.event_startdate
+    else:
+        today = datetime.date.today()
+        if today.month > 9:
+            return datetime.date(today.year + 1, 10, 1)
+        else:
+            return datetime.date(today.year, 10, 1)
+
+
 def div_radio_widget(field, value, **attributes):
     # provides a horizontal radio button rubric
     table=SQLFORM.widgets.radio.widget(field, value, **attributes)

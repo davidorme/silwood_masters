@@ -119,7 +119,7 @@ def new_assignment():
     db.assignments.marker.requires = IS_IN_DB(db, 'teaching_staff.id',
                                               '%(last_name)s, %(first_name)s (%(email)s)')
         
-    ps_reqr = IS_IN_DB(db(db.student_presentations.academic_year == FIRST_DAY.year),
+    ps_reqr = IS_IN_DB(db(db.student_presentations.academic_year == CURRENT_PROJECT_YEAR),
                        'student_presentations.id', 
                        lambda  row: (f"{row.student.student_last_name}, " 
                                      f"{row.student.student_first_name} ("
@@ -160,7 +160,7 @@ def assignments():
                       ' to filter to assignments for current students.')
     else:
         
-        qry &= (db.student_presentations.academic_year == FIRST_DAY.year)
+        qry &= (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR)
         
         old_new =  DIV('This table is currently only showing assignments for current students. '
                       'To remove this filter and see all assignments across years, click ',
@@ -236,7 +236,7 @@ def assignments():
         qry = (db.assignments.student_presentation == db.student_presentations.id) 
         
         if not 'all' in request.vars.keys():
-            qry &= (db.student_presentations.academic_year == FIRST_DAY.year)
+            qry &= (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR)
 
         if request.get_vars.keywords is not None:
             qry &= smart_query(fields, request.get_vars.keywords)
@@ -728,7 +728,7 @@ def my_marking():
                    A("here", _href=URL()))
     else:
         
-        qry &= (db.student_presentations.academic_year == FIRST_DAY.year)
+        qry &= (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR)
         
         header = P("The table below shows your ", B("current marking assignments"),
                    ". To also see records from previous years, click ",

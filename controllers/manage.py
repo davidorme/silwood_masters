@@ -216,7 +216,7 @@ def load_students():
                 for stpres in active_pres_map[each_student['course']]:
                     db.student_presentations.insert(student=st_id,
                                                     course_presentation=stpres,
-                                                    academic_year=FIRST_DAY.year)
+                                                    academic_year=CURRENT_PROJECT_YEAR)
             
             # load the assignments
             html = CAT(H2(str(len(data)) + ' students successfully uploaded'))

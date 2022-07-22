@@ -61,7 +61,7 @@ def index():
     # - sub in a custom view function for the normal details link
     # - just give the CSV export link, which is moved from the bottom to
     #   the search bar using in javascript in the view.
-    grid  = SQLFORM.grid(((db.projects.date_created > (FIRST_DAY - datetime.timedelta(days=60))) &
+    grid  = SQLFORM.grid(((db.projects.date_created > PROJECT_ROLLOVER_DAY) &
                           (db.projects.concealed == False)),
                          fields = [db.projects.project_student,
                                    db.projects.lead_supervisor,
@@ -408,7 +408,7 @@ def project_details():
     if record is None or record.project_student is None:
         
         # find a list of current students that have not already been assigned a project
-        qry = db((db.student_presentations.academic_year == FIRST_DAY.year) & 
+        qry = db((db.student_presentations.academic_year == CURRENT_PROJECT_YEAR) & 
                  (db.projects.project_student == None))
         left = db.projects.on(db.student_presentations.id == db.projects.project_student)
     
@@ -689,7 +689,7 @@ def my_projects():
         
         if (row.student_presentations.student is None):
             
-            if ((row.projects.date_created < (FIRST_DAY - datetime.timedelta(days=60))) or
+            if ((row.projects.date_created < PROJECT_ROLLOVER_DAY) or
                 (row.projects.concealed)):
                 
                 icn = SPAN('', _class="fa fa-eye", 
@@ -726,7 +726,7 @@ def my_projects():
     # Show visibility
     def _visible(row):
         
-        if ((row.projects.date_created <= (FIRST_DAY - datetime.timedelta(days=60))) or
+        if ((row.projects.date_created < PROJECT_ROLLOVER_DAY) or
             (row.projects.concealed)):
             
             return CENTER(SPAN('', _class="fa fa-eye-slash", 
@@ -861,7 +861,7 @@ def reveal_project():
         raise HTTP(403, 'Cannot reveal or conceal a filled project.')
     
     # Update the project depending on the status
-    if record.concealed or record.date_created < (FIRST_DAY - datetime.timedelta(days=60)):
+    if record.concealed or record.date_created < PROJECT_ROLLOVER_DAY:
         record.update_record(date_created=datetime.date.today(), concealed=False)
     else:
         record.update_record(concealed=True)
@@ -912,7 +912,7 @@ def project_allocations():
     coursepres = db(db.course_presentations.is_active == True).select()
     
     coursepres = [(rw.name, f'student_presentations.course_presentation="{rw.id}" and '
-                            f'student_presentations.academic_year="{FIRST_DAY.year}"')
+                            f'student_presentations.academic_year="{CURRENT_PROJECT_YEAR}"')
                   for rw in coursepres]
     
     coursepres = [A(vl[0], _href=URL('projects', 'project_allocations',
@@ -1046,7 +1046,7 @@ def project_admin():
     def _refresh(row):
         
         if ((row.student_presentations.student is None) and
-            (row.projects.date_created < (FIRST_DAY - datetime.timedelta(days=60)))):
+            (row.projects.date_created < PROJECT_ROLLOVER_DAY)):
             
             return CENTER(A(SPAN('', _class="fa fa-repeat", 
                               _style='font-size: 1.3em;',
@@ -1075,7 +1075,7 @@ def project_admin():
     # Show visibility
     def _visible(row):
         
-        if row.projects.date_created > (FIRST_DAY - datetime.timedelta(days=60)):
+        if row.projects.date_created >= PROJECT_ROLLOVER_DAY:
             
             return CENTER(SPAN('', _class="fa fa-eye", 
                               _style='font-size: 1.3em;',
