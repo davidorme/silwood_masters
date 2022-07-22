@@ -63,7 +63,7 @@ def index():
     # - just give the CSV export link, which is moved from the bottom to
     #   the search bar using in javascript in the view.
     # - display projects in a one year window from PROJECT_ROLLOVER_DAY
-    last_prd = PROJECT_ROLLOVER_DAY - datetime.timedelta(year = 1)
+    last_prd = PROJECT_ROLLOVER_DAY - datetime.timedelta(days = 366)
 
     grid  = SQLFORM.grid(((db.projects.date_created >= last_prd) &
                           (db.projects.date_created < PROJECT_ROLLOVER_DAY) &
