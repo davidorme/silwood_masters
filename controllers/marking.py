@@ -12,6 +12,7 @@ import yaml
 from marking_functions import (create_pdf, release, distribute, zip_pdfs, download_grades, 
                                        query_report_marker_grades, get_form_header, 
                                        assignment_to_sqlform, style_sqlform)
+from sharepoint import scan_files
 
 from staff_auth import staff_authorised
 import sharepoint
@@ -96,12 +97,94 @@ def submitted_files():
 
 
 @auth.requires_membership('admin')
-def scan_files():
-    """Exposes the scan function."""
-    
-    # TODO - turn this into something that doesn't just hang around and ? uses
-    # AJAX to populate the scan. Also - maybe only scan updated files.
-    return sharepoint.scan_files()
+def marking_files():
+    """Report on the matching of submitted files to student presentations."""
+
+    # This query left joins files onto student presentations and then groups by course
+    # to find total presentations and total submitted files for each course. Note that
+    # using count when some values are None only counts non-None values!
+
+    files_by_presentation = db(
+        db.student_presentations.academic_year == 2020
+    ).select(
+        db.student_presentations.course_presentation,
+        db.marking_files.student.count().with_alias('files_found'), 
+        db.student_presentations.course_presentation.count().with_alias('total'),
+        left = db.marking_files.on(
+            db.student_presentations.id == db.marking_files.student
+        ),
+        groupby = [db.student_presentations.course_presentation],
+    )
+
+    # Identify presentations with no files
+    pres_missing_file = db( 
+        (db.student_presentations.academic_year == 2020) & 
+        (db.marking_files.filename == None) 
+    ).select( 
+        db.student_presentations.student,
+        db.student_presentations.course_presentation, 
+        left = db.marking_files.on( 
+            db.student_presentations.id == db.marking_files.student 
+        ), 
+    )
+
+    # Identify files with no presentation
+    file_missing_pres = db( 
+        (db.marking_files.student == None) 
+    ).select( 
+        db.marking_files.filename,
+        db.marking_files.matching_issues 
+    )
+
+
+    # Format into nice tables
+    trows = [TR([TH(v) for v in [
+        'Coursework presentation', 'Total students', 'Files found', 'Files missing'
+    ]]),]
+
+    for row in files_by_presentation.render():
+
+        trows.append(TR([TD(v) for v in [
+            row.student_presentations.course_presentation,
+            row.total,
+            row.files_found,
+            row.total - row.files_found
+            ]]))
+
+    files_by_presentation = TABLE(*trows, _class='table table-striped table-sm')
+
+    if len(pres_missing_file):
+        missing_rows = list(pres_missing_file.render())
+        pres_missing_file = H3('Presentations missing files')
+
+        pres_missing_file += TABLE(*[list(m.values()) for m in missing_rows], 
+                                   _class='table table-striped table-sm')
+
+    else:
+        pres_missing_file = DIV()
+
+    if len(file_missing_pres):
+        missing_rows = list(file_missing_pres.render())
+        file_missing_pres = H3('Files missing presentations')
+
+        file_missing_pres += TABLE(*[list(m.values()) for m in missing_rows], 
+                                   _class='table table-striped table-sm')
+
+    else:
+        file_missing_pres = DIV()
+
+
+    return dict(files_by_presentation=files_by_presentation, 
+                pres_missing_file=pres_missing_file,
+                file_missing_pres=file_missing_pres)
+
+
+@auth.requires_membership('admin')
+def rescan_sharepoint():
+
+    scan_files()
+
+    redirect(URL('marking_files'))
 
 
 ## --------------------------------------------------------------------------------
@@ -254,16 +337,20 @@ def assignments():
 def marker_progress():
 
     db.markers._format = "%(last_name)s, %(first_name)s"
-    
-    status_count = db(db.assignments).select(
-                        db.assignments.marker, 
-                        db.assignments.marker_role_id, 
-                        db.assignments.marker_role_id.count().with_alias('n'),
-                        db.assignments.status,
-                        groupby=[db.assignments.marker, 
-                                 db.assignments.status,
-                                 db.assignments.marker_role_id])
-    
+
+    status_count = db(
+        (db.assignments.student_presentation == db.student_presentations.id) &
+        (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR),
+    ).select(
+        db.assignments.marker, 
+        db.assignments.marker_role_id, 
+        db.assignments.marker_role_id.count().with_alias('n'),
+        db.assignments.status,
+        groupby=[db.assignments.marker, 
+                    db.assignments.status,
+                    db.assignments.marker_role_id]
+    )
+
     # Render names and sort by marker
     status_count = list(status_count.render())
     status_count.sort(key=lambda x: x.assignments.marker)
@@ -670,26 +757,36 @@ def who_are_my_markers():
     # the ?all URL argument
     
     # Stop students knowing about or searching on the other fields
+    db.student_presentations.id.readable = False
     db.assignments.id.readable = False
-    db.assignments.academic_year.readable = False
     db.assignments.due_date.readable = False
     db.assignments.status.readable = False
-    
+    db.assignments.student_presentation.readable = False
+
     # create the SQLFORM grid to show the existing assignments
-    grid = SQLFORM.grid(db.assignments.marker_role_id.belongs([1,3]),
-                        fields = [db.assignments.student,
-                                  db.assignments.course_presentation_id,
-                                  db.assignments.marker,
-                                  db.assignments.marker_role_id],
-                        maxtextlength=100,
-                        csv=False,
-                        deletable=False,
-                        create=False,
-                        details=False,
-                        editable=False,
-                        headers= {'assignments.course_presentation_id': 'Course Presentation',
-                                  'assignments.marker_role_id': 'Role'},
-                        paginate = 50)
+    grid = SQLFORM.grid(
+        (db.student_presentations.id == db.assignments.student_presentation) &
+        (db.assignments.marker_role_id.belongs([1,3])) &
+        (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR),
+        fields = [
+            db.student_presentations.student,
+            db.student_presentations.academic_year,
+            db.student_presentations.course_presentation,
+            db.assignments.marker,
+            db.assignments.marker_role_id,
+        ],
+        maxtextlength=100,
+        csv=False,
+        deletable=False,
+        create=False,
+        details=False,
+        editable=False,
+        headers= {
+            'assignments.course_presentation_id': 'Course Presentation',
+            'assignments.marker_role_id': 'Role'
+        },
+        paginate = 50
+    )
     
     return dict(form=grid)
 
