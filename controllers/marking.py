@@ -126,13 +126,14 @@ def marking_files():
         left = db.marking_files.on( 
             db.student_presentations.id == db.marking_files.student 
         ), 
+        orderby = db.student_presentations.course_presentation,
     )
 
     # Identify files with no presentation
     file_missing_pres = db( 
         (db.marking_files.student == None) 
     ).select( 
-        db.marking_files.filename,
+        db.marking_files.relative_url,
         db.marking_files.matching_issues 
     )
 
