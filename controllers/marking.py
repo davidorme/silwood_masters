@@ -105,7 +105,7 @@ def marking_files():
     # using count when some values are None only counts non-None values!
 
     files_by_presentation = db(
-        db.student_presentations.academic_year == 2020
+        db.student_presentations.academic_year == CURRENT_PROJECT_YEAR
     ).select(
         db.student_presentations.course_presentation,
         db.marking_files.student.count().with_alias('files_found'), 
@@ -118,7 +118,7 @@ def marking_files():
 
     # Identify presentations with no files
     pres_missing_file = db( 
-        (db.student_presentations.academic_year == 2020) & 
+        (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR) & 
         (db.marking_files.filename == None) 
     ).select( 
         db.student_presentations.student,
