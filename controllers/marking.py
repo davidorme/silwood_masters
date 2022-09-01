@@ -378,7 +378,7 @@ def marker_progress():
         for this_count in data:
             details = this_count.assignments
             # Use a logical index to put completed/released in 1 and everything else in 0
-            marker_counts[details.marker_role_id][details.status in ['Completed', 'Released']] += this_count.n
+            marker_counts[details.marker_role_id][details.status in ['Submitted', 'Released']] += this_count.n
         
         # Style the row 
         row = [[TD(B(v[0]), _style='background-color:salmon') if v[0] else TD(v[0], _style='color:black'), 
