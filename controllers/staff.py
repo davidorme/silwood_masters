@@ -149,12 +149,9 @@ def authorise():
     
     # Check for expiry
     if magic_link.magic_links.expires < datetime.datetime.now():
-        
-        raise HTTP(403, P("This access link has expired. Please ", 
-                          A("request a new one", 
-                            _src=URL('staff_login', 
-                                     vars={'email': magic_link.teaching_staff.email},
-                                     scheme=True, host=True))))
+        session.flash = "This access link has expired. Please request a new one below"
+
+        redirect(URL('staff_login',  vars={'email': magic_link.teaching_staff.email}))
     
     # Store the marker details in the session to demonstrate that the link exists 
     # and has not expired. This can then be checked by functions that require authorised
