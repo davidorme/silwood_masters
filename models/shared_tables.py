@@ -145,9 +145,9 @@ db.define_table('freezer',
 FIRST_DAY = get_year_start_date()
 PROJECT_ROLLOVER_DAY = get_project_rollover_date()
 
-# Use the rollover day to get the current project year: 2021 - 2022 students have an
+# Use the first day to get the current project year: 2021 - 2022 students have an
 # academic year of 2021 and will have a project rollover day in Sept 2022.
-CURRENT_PROJECT_YEAR = (PROJECT_ROLLOVER_DAY.year - 1)
+CURRENT_PROJECT_YEAR = FIRST_DAY.year
 
 # Store FIRST_DAY  so it can be accessed in modules/timetabler_functions.py
 current.FIRST_DAY = FIRST_DAY

@@ -34,20 +34,24 @@ should speed up response times.
 
 
 def get_project_rollover_date():
-    """Get the project rollover date, defaulting to October 1st next year"""    
+    """Get the project rollover date.
+
+    This defaults to 20th September in current academic year.
+    """
+
     db = current.db
     project_rollover = db(
         db.college_dates.name == 'Project Rollover Date'
         ).select().first()
-    
+
     if project_rollover is not None:
         return project_rollover.event_startdate
     else:
         today = datetime.date.today()
         if today.month > 9:
-            return datetime.date(today.year + 1, 10, 1)
+            return datetime.date(today.year + 1, 9, 20)
         else:
-            return datetime.date(today.year, 10, 1)
+            return datetime.date(today.year, 9, 20)
 
 
 def div_radio_widget(field, value, **attributes):

@@ -3,65 +3,116 @@
 <H2>My Projects</H2>
 
 <p>
-	This table shows all of the projects for which you are the <strong>lead supervisor</strong>. 
-	This includes both <strong>filled projects</strong> - when the student you supervised and 
-	the year will be shown - and also <strong>open proposals</strong>. Students can see all project
-	proposals that were created within 60 days of the start of this academic year.
-	(<span class="fa fa-eye" style="font-size: 1em" ></span>).
+	This table shows all of the projects for which you are the <strong>lead
+	supervisor</strong>. As well as linking to the project details, the table also shows
+	the current availability of each project and provides actions to conceal or
+	readvertise projects: click on the tabs below for details.
 </p>
 
-<p>
-	The proposal database should show students the full range of research 
-	available through the courses. Please <strong>do not</strong> use the conceal 
-	option to manage your student numbers.
-</p>
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+	<li class="nav-item" role="presentation">
+		<button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab"
+			aria-controls="home" aria-selected="true">Creating and editing projects</button>
+	</li>
+	<li class="nav-item" role="presentation">
+		<button class="nav-link" id="profile-tab" data-toggle="tab" data-target="#profile" type="button" role="tab"
+			aria-controls="profile" aria-selected="false">Availability</button>
+	</li>
+	<li class="nav-item" role="presentation">
+		<button class="nav-link" id="contact-tab" data-toggle="tab" data-target="#contact" type="button" role="tab"
+			aria-controls="contact" aria-selected="false">Project actions</button>
+	</li>
+</ul>
 
-<p> From this page, you have a number of options:
-	<dl>
-		<dt>New Proposal</dt>
-		<dd>
-			<ul><li>
-		 	You can create a {{=A('completely new proposal ', 
-								  _href=URL('projects', 'project_details', scheme=True, host=True))}}.
-			</li></ul>
-		</dd>
+<div class="tab-content" id="myTabContent">
+	<div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+		<ul>
+			<li>
+				Follow {{=A('this link', _href=URL('projects', 'project_details', scheme=True,
+				host=True))}} to <strong>create a completely new proposal</strong>.
+			</li>
 
-		<dt>Clone a proposal</dt>
-		<dd>
-			<ul><li>
-			You can <strong>clone any proposal</strong> (
-			<span class="fa fa-clone" style="font-size: 1em;color: #007bff"></span>). This will 
-			duplicate the proposal and make that copy visible to students. If you clone a filled
-			project, the copy will become an open proposal.
-			</li></ul>
-		</dd>
-		<dt>Open Proposals</dt>
-		<dd>
-			<ul>
-				<li>
-					You can <strong>edit the details of a proposal</strong> (
-					<span class="fa fa-pencil" style="font-size: 1em;color: #007bff"></span>
-					). This link is also used to <strong>accept a student</strong> on to a project.
-				</li>
-				<li>
-					<p>You can <strong>toggle the visibility</strong> of open proposals to 
-					readvertise open proposals from previous years (
-					<span class="fa fa-eye" style="font-size: 1em;color: green"></span>
-					). It is also possible to conceal proposals that become impossible to support (
-					<span class="fa fa-eye-slash" style="font-size: 1em;color: red"></span>
-					), for example due to equipment failure or travel restrictions. </p>
-				</li>
-			</ul>
-		</dd>
-		<dt>Filled Proposals</dt>
-		<dd>
-			<ul><li>
-			You can <strong>update the title and descriptions of filled projects</strong> to reflect changes in 
-			the research that a student is following. The student cannot update these details.
-			</li></ul>
-		</dd>
-	</dl>
-</p>
+			<li>You can <strong>edit the details</strong> of existing proposals by clicking on
+				the project title in the table below.</li>
+
+			<li>The project detail page is also used to <strong>accept a student</strong> on to a
+				project.</li>
+		</ul>
+
+	</div>
+	<div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+
+		<table class="table table-sm">
+			<tr>
+				<td style="width: 50px;">
+					<span class="fa fa-eye-slash fa-lg" style="color: grey" title="Previous years"></span>
+				</td>
+				<td>
+					All projects from previous academic year are automatically hidden from students.
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<span class="fa fa-eye fa-lg" style="color: green" title="Available"></span>
+				</td>
+				<td>
+					Unallocated current projects are visible to students.
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<span class="fa fa-user fa-lg" style="color: grey" title="Available"></span>
+				</td>
+				<td>
+					Allocated current projects are also visible to students.
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<span class="fa fa-eye-slash fa-lg" style="color: red" title="Concealed"></span>
+				</td>
+				<td>
+					Unallocated current projects can also be concealed (see project actions tab).
+				</td>
+			</tr>
+
+		</table>
+
+	</div>
+	<div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+
+		<table class="table table-sm">
+			<tr>
+				<td style="width: 50px;">
+					<span class="fa fa-ban fa-lg" style="color: red" title="Conceal"></span>
+				</td>
+				<td>
+					Clicking on this action icon will <strong> conceal an unallocated
+					current project</strong> from students. This should be used to
+					withdraw projects that become impossible to support, for example due
+					to equipment failure or travel restrictions, and not to manage
+					student numbers. We want the proposal database to showcase the full
+					range of research available through the courses to current and
+					future students.
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<span class="fa fa-refresh fa-lg" style="color: green" title="Readvertise"></span>
+				</td>
+				<td>
+					Clicking on this action icon <strong>readvertises a 
+					project</strong>. If a project has already been allocated to current
+					or past student, the project details are duplicated to keep the
+					original project pairing and make it available to new students.
+					Otherwise, the project is simply updated to make it available to the
+					current academic year.
+				</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
 
 
 {{=form}}
