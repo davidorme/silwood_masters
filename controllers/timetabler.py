@@ -1062,7 +1062,7 @@ def get_events_by_week(start=None, end=None, timeZone=None):
                   resourceIds=ev.location_id,
                   extendedProps=dict(description=ev.description,
                                      teacher_id=ev.teacher_id),
-                  url=URL('events',args=[ev.module_id, ev.id]))
+                  url=URL('module_events',args=[ev.module_id, ev.id]))
         
         ev['color'] = 'grey'
         
