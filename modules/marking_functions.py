@@ -36,7 +36,7 @@ should speed up response times.
 def get_project_rollover_date():
     """Get the project rollover date.
 
-    This defaults to 20th September in current academic year.
+    This defaults to 20th September in the preceeding academic year.
     """
 
     db = current.db
@@ -49,9 +49,30 @@ def get_project_rollover_date():
     else:
         today = datetime.date.today()
         if today.month > 9:
-            return datetime.date(today.year + 1, 9, 20)
-        else:
             return datetime.date(today.year, 9, 20)
+        else:
+            return datetime.date(today.year - 1, 9, 20)
+
+
+def get_current_marking_year():
+    """Get the current academic marking year
+
+    This defaults to the current academic year, swapping on 1st October
+    """
+
+    db = current.db
+    marking_year = db(
+        db.college_dates.name == 'Current Marking Year'
+        ).select().first()
+
+    if marking_year is not None:
+        return marking_year.event_startdate.year
+    else:
+        today = datetime.date.today()
+        if today.month > 9:
+            return today.year
+        else:
+            return today.year - 1
 
 
 def div_radio_widget(field, value, **attributes):

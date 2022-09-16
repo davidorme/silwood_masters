@@ -1,6 +1,10 @@
 import secrets
 from timetabler_functions import get_year_start_date
-from marking_functions import get_project_rollover_date, div_checkbox_widget_list_group
+from marking_functions import (
+      get_project_rollover_date, 
+      get_current_marking_year, 
+      div_checkbox_widget_list_group
+)
 
 ## -----------------------------------------------------------------------------
 # Email log
@@ -137,17 +141,29 @@ db.define_table('recurring_events',
 db.define_table('freezer',
                 Field('is_frozen', 'boolean', default=False))
 
-# Calculate the global time variables - don't cache these as the update should be
-# immediate when they change and the functions aren't complex. Ideally something should
-# watch the relevant entries in the college dates table and update the cache when they
-# are changed.
+# Calculate the global time variables for which there are 3 parallel epochs:
+#
+#  * Timetabler year. This sets which date is the first day of the year for the current
+#    timetabler data. People need to be able to plan on next year's timetable from mid
+#    summer ideally, so this needs to be completely separated.
+#
+#  * Project proposal year. This sets what projects are visible to students and the
+#    status of the proposals on the 'my_projects' page. We want the current proposals
+#    database to be visible until fairly late in the current marking season, but at some
+#    point this rolls over to present the proposal planning for the following year.
+#
+#  * Marking year. This sets what marking is visible and we basically want current
+#    marking to be visible by default up until we don't, which could even be into the
+#    start of term.
+#
+# These values aren't currently cached, because updates should take effect immediately.
+# They do populate from functions rather than direct queries to fill in defaults.
+# Ideally something should watch the relevant entries in the college dates table and
+# update a cache when they are changed.
 
 FIRST_DAY = get_year_start_date()
 PROJECT_ROLLOVER_DAY = get_project_rollover_date()
-
-# Use the first day to get the current project year: 2021 - 2022 students have an
-# academic year of 2021 and will have a project rollover day in Sept 2022.
-CURRENT_PROJECT_YEAR = FIRST_DAY.year
+CURRENT_PROJECT_YEAR = get_current_marking_year()
 
 # Store FIRST_DAY  so it can be accessed in modules/timetabler_functions.py
 current.FIRST_DAY = FIRST_DAY
