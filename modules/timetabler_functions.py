@@ -170,7 +170,8 @@ def module_markdown(module_id, title=False, show_events=True):
                 if ev.courses is not None:
                     content += f'    *Courses*: {ev.courses}  \n'
                 if ev.description is not None:
-                    content += f'    *Description*: {ev.description}  \n\n'
+                    content += f'    *Description*: {ev.description}  \n'
+                content += '\n'
     
     content += '\n\n\n\n'
     
