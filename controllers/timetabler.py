@@ -720,17 +720,17 @@ def integrated_timetable():
                     ("Download DOCX",
                     lambda ids : redirect(
                         URL('timetabler', 'all_modules_doc', 
-                            args=[','.join([str(i) for i in ids]), 'docx', '1']))
+                            args=['_'.join([str(i) for i in ids]), 'docx', '1']))
                     ),
                     ("Download Latex",
                     lambda ids : redirect(
                         URL('timetabler', 'all_modules_doc', 
-                            args=[','.join([str(i) for i in ids]), 'latex', '1']))
+                            args=['_'.join([str(i) for i in ids]), 'latex', '1']))
                     ),
                     ("Download Markdown",
                     lambda ids : redirect(
                         URL('timetabler', 'all_modules_doc', 
-                            args=[','.join([str(i) for i in ids]), 'md', '1']))
+                            args=['_'.join([str(i) for i in ids]), 'md', '1']))
                     )
                 ],
                 details=False,
