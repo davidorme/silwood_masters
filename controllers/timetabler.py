@@ -736,6 +736,7 @@ def integrated_timetable():
                 details=False,
                 create=False,
                 deletable=False,
+                editable=False,
                 csv=False,
                 maxtextlength=100
     )
