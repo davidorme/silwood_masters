@@ -45,6 +45,12 @@ if auth.has_membership("timetabler") or auth.has_membership("admin"):
             (T("Modules"), False, URL("timetabler", "modules_table"), []),
             (T("Events"), False, URL("timetabler", "events_table"), []),
             (
+                T("Integrated timetable"), 
+                False, 
+                URL("timetabler", "integrated_timetable"), 
+                []
+            ),
+            (
                 T("Download timetable archive"),
                 False,
                 URL("timetabler", "archive_timetable"),
