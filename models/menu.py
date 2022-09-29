@@ -232,6 +232,7 @@ if session.magic_auth is not None:
                 (T("My students"), False, URL("marking", "my_students"), []),
                 (T("My projects"), False, URL("projects", "my_projects"), []),
                 (T("Create project"), False, URL("projects", "project_details"), []),
+                (T("Project management intro video"), False, URL("static", "video/project_management.mp4"), []),
                 (T("Checkout"), False, URL("staff", "checkout"), []),
             ],
         )
