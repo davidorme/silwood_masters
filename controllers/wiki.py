@@ -8,7 +8,7 @@ from wiki_functions import FoldingTOC
 def wiki():
 
     if not request.args:
-        slug = 'index'
+        slug = redirect(URL('wiki','wiki', args=['index']))
     else:
         slug = request.args[0]
 
@@ -23,6 +23,7 @@ def wiki():
         toc_row = db(db.wikicontent.slug == content_row.toc_slug).select().first()
         if toc_row is not None:
             toc = XML(markdown.markdown(toc_row.wikicontent, extensions=['extra']))
+            print(toc)
             ftoc = FoldingTOC()
             ftoc.feed(toc)
             toc = XML(ftoc.get_toc())
