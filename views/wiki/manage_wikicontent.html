@@ -1,7 +1,33 @@
 {{extend 'layout.html'}}
 
-<p>The table below shows all of the existing pages of wiki content. The search tools make 
-	it easy to find pages.</p>
+{{if request.args:}}
+
+<p>The form below shows the current content for a page.</p>
+
+{{else:}}
+
+<p>The table below shows all of the existing pages of wiki content. The search tools
+make it easy to find pages. You can click on the links in the 'slug' column to open the
+rendered page in the wiki.</p>
+
+<p> The instructions for creating or editing pages are:
+</p>
+
+{{pass}}
+
+<ul>
+	<li>The page <strong>slug</strong> should be a simple label that is used as a URL to
+	point to the page. It should only contain lowercase letters and hyphens:
+	<code>this-is-a-valid-slug</code> but <code>This_One_is_Not!</code>.</li>
+	<li>The page <strong>wikicontent</strong> contains the content of the wiki
+	 page, written using Markdown and including the extensions described 
+	 <a href="https://python-markdown.github.io/extensions/extra/"> here</a>.
+	<li>The <strong>Toc Slug</strong> is a link to a separate page that is used to
+	populate the table of contents. This page will typically be an unordered list,
+	possibly nested, containing links to other pages. You will need to edit
+	this page to add new pages into the navigation.
+	</li>
+</ul>
 
 
 {{=grid}}

@@ -62,7 +62,7 @@ if auth.has_membership("timetabler") or auth.has_membership("admin"):
 
 if auth.has_membership("wiki editor") or auth.has_membership("admin"):
     wiki_dropdown = (
-        T("Wiki"),
+        T("Info"),
         False,
         None,
         [
@@ -77,7 +77,7 @@ if auth.has_membership("wiki editor") or auth.has_membership("admin"):
         ],
     )
 else:
-    wiki_dropdown = (T("Wiki"), False, URL("wiki", "wiki"), [])
+    wiki_dropdown = (T("Info"), False, URL("wiki", "wiki"), [])
 
 
 marking_dropdown = [

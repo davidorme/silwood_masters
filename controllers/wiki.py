@@ -54,7 +54,8 @@ def manage_wikimedia():
     SQLFORM.grid interface to the contents of the wikimedia table
     """
 
-    grid = SQLFORM.grid(db.wikimedia, create=True, csv=False)
+    db.wikimedia.id.readable = False
+    grid = SQLFORM.grid(db.wikimedia, create=True, csv=False, details=False)
 
     return dict(grid=grid)
 
@@ -65,6 +66,8 @@ def manage_wikicontent():
     SQLFORM.grid interface to the contents of the wikicontent table
     """
 
-    grid = SQLFORM.grid(db.wikicontent, create=True, csv=False)
+    db.wikicontent.slug.represent = lambda x, row: A(x, _href=URL('wiki','wiki', args=[x]))
+    db.wikicontent.id.readable = False
+    grid = SQLFORM.grid(db.wikicontent, create=True, csv=False, details=False)
 
     return dict(grid=grid)
