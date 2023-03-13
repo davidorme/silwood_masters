@@ -125,15 +125,14 @@ class Mail:
             if isinstance(cc, str):
                 cc = [cc]
 
-            message["CC"] = ",".join(cc)
-            to = [to] + cc
+            message["Cc"] = ", ".join(cc)
 
         # If IMAP is not available to use for storage then BCC the message to the
         # account sending the email via SMTP and also add a header to the message that
         # can be used to manage rules for handling that incoming mail
         if not self.use_imap:
-            message["Bcc"] = self.smtp_user
-            message["Automator"] = "Silwood Masters"
+            message["Bcc"] = self.send_address
+            message["X-Automator"] = "Silwood Masters"
 
         # Get a rendered message as both text/plain and text/html, using message
         # as the content if provided
@@ -149,7 +148,7 @@ class Mail:
             raise RuntimeError("text or email template and data required")
 
         try:
-            self.smtp_server.sendmail(self.send_address, to, message.as_string())
+            self.smtp_server.send_message(message)
         except smtplib.SMTPException:
             self._logmail(
                 False,
