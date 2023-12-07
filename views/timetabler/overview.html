@@ -1,0 +1,137 @@
+{{extend 'layout.html'}}
+
+<h2>Silwood Timetabler</h2>
+	
+<p>Welcome to the Silwood Masters course timetabler pages. These replace the Excel spreadsheet 
+	previously used to collect timetable information. This page provides an overview on how this 
+	system works and guidance on using it. Some immediate advantages:</p>
+	
+<ul>
+	<li> The timetable data is kept in a proper relational database</li>
+	<li> Descriptive text is entered into a sensible text box and not pasted within a cell</li>
+	<li> Markdown syntax can now be used to format text (no more latex tags!)</li>
+	<li> A drag and drop interface to add or reschedule module events</li>
+	<li> Preview and download links for module data</li>
+</ul>
+
+<p>Look at the <a href="{{=URL('module_grid')}}">Module Grid</a> to see the layout of modules 
+	across courses. This is transposed from the original Excel sheet but otherwise contains the 
+	same information. Click on a module to go to the module view.</p>
+
+<h2>Modules</h2>
+
+<p>The module pages provide links:</p>
+
+<p style='text-align:center'><b>
+	<span style="margin:5px">Info</span> + 
+	<span style="margin:5px">Events</span> = 
+	<span style="margin:5px">HTML</span> &or; 
+	<span style="margin:5px">Word</span> &or; 
+	<span style="margin:5px">LaTeX</span>
+</b>
+</p>
+
+<ul>
+	<li> Edit the module <strong>information</strong> (the old module level tab)</li>
+	<li> Edit, reschedule and create <strong>events</strong> within a module (the old day level tab)</li>
+	<li> Create a live <strong>HTML</strong> view of the module information.</li>
+	<li> Download a formatted <strong>Word</strong> document of the module information.</li>
+	<li> Download a formatted <strong>LaTeX</strong> document of the module information.</li>
+</ul>
+
+<h2>Courses</h2>
+
+<p>The courses menu item will take you to a list of courses and provides links to view the 
+	module structure for a single course as a list. It also provides links to download the
+	<i>entire</i> course timetable as Word or LaTeX.</p>
+
+<p>There is also a <a href="{{=URL('room_grid')}}">Room Grid</a> that allows the room 
+	allocations of events across a week to be viewed together.</p>
+
+
+<H2>Timetabler details</H2>
+
+<H3>Access</H3>
+
+<p>All of the information in this website is <strong>publically visible</strong>, mostly so that you don't
+ have to log in to look things up. You will have to register, be approved, and then log in
+  to make any edits. Some changes can only be made by a higher level admin user.</p>
+
+<p>If you are logged in as a user, you can edit information in all modules and events: 
+	this is a collaborative data system!
+</p>
+
+<p>Although they can access it, this not intended to be a student-facing website - they should 
+	use the college calendars.</p>
+
+
+<H3>Timings and dates</H3>
+
+<p>All module and event dates and times in this system are set as academic weeks and days relative to
+the <strong>first day of autumn term</strong>. This is stored in in the College Date table (see below). There
+should be no need to recalculate dates between years - changing this single date should bring
+everything across. Obviously, if module orders change then their data will need to be edited.
+</p>
+
+<H3>Timetable database</H3>
+
+<p>The structure of the database is very like the old Excel workbook. It has seven tables that hold
+timetabling information.
+</p>
+
+<ul>
+	<li><strong>Locations</strong>: This currently simply maintains a list of location names. It may be expanded to
+include CELCAT identifiers and other information. Any user can add a new location if needed, but do
+look through first to see if the location is under a different name (e.g. `Computer Room` =
+`Hamilton Computer Lab`)</li>
+
+<p><strong>Teaching Staff</strong>: A simple table list of anyone convening a course or module or running a
+teaching event. Again, it might be extended to hold CELCAT information. Any user can add a new
+member of staff if needed.</p>
+
+<li><strong>College Dates</strong>: This table contains all the college dates for the academic year. It does need
+to be updated for each fresh academic year. It contains the all important reference date: <strong>first
+day of autumn term</strong>. Only the admin user can edit this table.</li>
+
+<li><strong>Recurring Events</strong>: This is extremely similar to College Dates - it should be used to add in
+recurring events outside of the course modules, such as seminar series and Wednesday pm club and
+sports times. Only the admin user can edit this table.
+</li>
+
+
+<li><strong>Courses</strong>: This is the master list of courses in the system. It contains the course name,
+abbreviation and course convenors. Only the admin user can edit this table.</li>
+
+<li><strong>Modules</strong>: This table contains the modules taught in a course or set of courses. This is
+basically any thematically linked set of _events_. It records the course convenors, higher level
+information about the module (description, aims etc) and which courses take the module.
+
+ <p>If a module has any associated events, then the start and end of the module will be taken from
+ that set of events, but the module table can also hold a placeholder week and duration so that
+ modules can be displayed in calendar views before events are added.
+ </p>
+ 
+ <p>There is an option to represent a module as a <strong>series module</strong>. This is intended to separate out
+ themed teaching that stretches out through the year, such as workshops or reading groups. Series
+ modules are not shown in the module grid to keep the format clean and are shown separately in the
+ course view pages and in course documents.</p></li>
+
+<li><strong>Events</strong>: These are the actual individual teaching events. Each event is associated with a
+single module and the table also holds an event teacher, a title and description and a location.
+You can also set which courses attending the module should attend a specific event - this can be
+used to filter a module description down for a course.</li>
+</ul>
+
+
+<h3>Hiding data</h3>
+
+Courses, modules and events can all be hidden - although only an admin can hide a course. This
+allows us to keep data in the system but switch components from year to year.
+
+
+
+
+
+
+
+ 

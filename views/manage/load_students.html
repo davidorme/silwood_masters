@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+
+<h2>Load students</h2>
+
+<p>
+	This page allows admin staff to bulk upload a set of students. The uploaded file must be a 
+	CSV file containing the fields 'student_cid', 'student_first_name', 'student_last_name', 
+	'student_email' and 'course'. The 'course' field must match one of the following values:
+	{{=', '.join(known_courses)}}
+</p>
+
+<p>
+	When students are successfully uploaded, then student presentations of any active coursework 
+	presentations associated with their course will be automatically created.
+</p>
+
+{{=form}}
+
+{{=html}}

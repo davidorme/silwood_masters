@@ -82,7 +82,7 @@ def show_users():
 def user_details():
     
     if not request.args:
-        redirect(URL('marking_reports','index.html'))
+        redirect(URL('sm_admin','show_users.html'))
     else:
         record = db.auth_user[int(request.args[0])]
     
@@ -171,3 +171,4 @@ def email_log():
                         deletable=False)
     
     return dict(form=form)
+

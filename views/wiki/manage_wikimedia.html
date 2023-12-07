@@ -1,0 +1,25 @@
+{{extend 'layout.html'}}
+
+{{if request.args:}}
+
+<p>The form below shows the current content for a page.</p>
+
+{{else:}}
+
+<p>The table below shows all of existing media uploaded for use in wiki pages. Each
+media file will need a slug, which is used to link to the file in wiki pages. 
+</p>
+
+{{pass}}
+
+<ul>
+	<li>The media <strong>slug</strong> should be a simple label that is used as a URL to
+	point to the page. It should only contain lowercase letters and hyphens:
+	<code>picture-of-a-cat</code> not <code>Picture_of_a_c@t</code>.</li>
+	<li>The file should be any file that can reasonably be displayed be a browser. Do
+	not use excessively large files!</li>
+</ul>
+
+
+{{pass}}
+{{=grid}}

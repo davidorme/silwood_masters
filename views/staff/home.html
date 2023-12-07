@@ -1,0 +1,48 @@
+{{extend 'layout.html'}}
+
+{{=header}}
+
+
+<p>
+	Your login authorisation has been accepted and you can now access projects and marking 
+	on this system. The Staff menu above provides links to your options, but these are:
+</p>
+
+<ul>
+	<li><strong>My marking</strong>: View <a href={{=URL('marking', 'my_marking')}}>your marking</a> assignments</li>
+	<li><strong>My projects</strong>: View <a href={{=URL('projects', 'my_projects')}}>your projects</a>, including open proposals and current and 
+		past filled projects.</li>
+	<li><strong>Create project</strong>: Create a <a href={{=URL('projects', 'project_details')}}> new project</a> proposal</li>
+	<li><strong>My students</strong>: Review <a href={{=URL('marking',
+	'my_students')}}> students you supervise</a> including completed marking</li>
+</ul>
+
+<p>A huge thanks for all the hard work put into supervising students and marking and grading
+	their reports. These projects are a major part of the assessment of Masters students and
+	an an equally major part of their learning experience during the course. The time you spend
+	supporting this is hugely appreciated by both course coordinators and students.
+</p>
+
+<!--
+<p>When you are assigned a report to complete, the process is as follows:</p>
+<ul>
+  <li>You will receive an email containing a link to your My Assignments page.</li>
+  <li>Your My Assignments page will contain a list of your assignments along with
+	   links to take you directly to the correct report form for each student. </li>
+  <li>You <strong>should not forward or share emails containing marking links</strong> -
+	  they contain security tokens providing access to your assignments .</li>
+  <li>For extra security, we now also need you to <strong>enter a session token</strong>.
+	  When you first access an assignment page, you will be forwarded to a page to enter
+	  a security token, which will be emailed to you.</li>
+  <li>Once you've started a report, you can <strong>save</strong> your progress
+	   in your report and come back to it.</li>
+  <li>Once you have finished your report, you <strong>must click on the
+	  submit button</strong>.</li>
+  <li>You will not be able to edit submitted reports but you <strong>will</strong> still
+	   be able to see your completed report and download a PDF file of the confidential
+	    report.</li>
+  <li>Once the project marking and examining has been completed, a link to download
+	  a public version of the report will be sent to the student. This public report
+	  excludes private comments to course organisers and the grade you assigned.</li>
+</ul>
+</div> -->

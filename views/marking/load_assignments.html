@@ -1,0 +1,40 @@
+{{extend 'layout.html'}}
+
+<style>
+  dt {
+    float: left;
+    clear: left;
+    width: 150px;
+    text-align: right;
+    font-weight: bold;
+  }
+  dt:after {
+    content: ":";
+  }
+  dd {
+    margin: 0 0 0 160px;
+    padding: 0 0 0.5em 0;
+  }
+</style>
+
+<h2>Load marking assignments</h2>
+
+<p>
+	Use the form below to upload a CSV file of marking assignments. The format of the file is the
+	same as the downloads from the <a href={{=URL('projects', 'project_allocations')}}> Project
+	Allocations</a> page. That format includes the lead supervisor but the workflow for assigning
+	marking is to download the set of project allocations from that page and then to add
+	columns (e.g. 'marker_1', 'marker_2') to that file containing the emails for other markers.
+</p>
+<p>The tricky bit is the <strong>mapping from markers to marking roles</strong>. Each marker may 
+	need to complete several assignments (e.g. marking a thesis and a presentation): each 
+	assignment needs a role name and a due date. The default mapping below is standard for Silwood, 
+	but can be altered. It uses the YAML format. The 'marker names' (e.g. 'marker_1') match the
+	emails in the file to each set of roles. The valid roles are: 
+	{{=', '.join(known_roles)}}.
+</p>
+
+
+{{=form}}
+
+{{=html}}

@@ -1,0 +1,124 @@
+{{extend 'layout.html'}}
+
+<h1>Marking assignments</h1>
+
+<p>The table below shows all the assignments created on the system along with their current 
+	status. Authorised users can use the view links to look at and edit reports: this ability 
+	is needed to fix problems or moderate reports. Each assignment has one of the following 
+	status indicators.
+	</p>
+
+<TABLE class='table'>
+	<TR>
+		<TD>
+			{{=status_dict['Created']}}
+		</TD>
+		<TD>
+			<strong>Created</strong>. When new assignments are <A href={{=URL('new_assignment')}}>
+			created</A> or <A href={{=URL('load_assignments')}}>uploaded</A>, they are given this 
+			status. This gives coordinators a chance to check assignments before they are sent to
+			markers and supervisors.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Not started']}}
+		</TD>
+		<TD>
+			<strong>Not started</strong>. These assignments have been distributed to their marker
+			but no marking data has yet been entered. 
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Started']}}
+		</TD>
+		<TD>
+			<strong>Started</strong>. The marker has entered some marking data and saved their
+			progress but the report has not yet been submitted.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Submitted']}}
+		</TD>
+		<TD>
+			<strong>Submitted</strong>. The marker has completed their report and submitted it.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			{{=status_dict['Released']}}
+		</TD>
+		<TD>
+			<strong>Released</strong>. These reports have been released to students.
+		</TD>
+	</TR>
+</TABLE>
+
+<h2>Actions</h2>
+
+<p>
+	There are five actions that can be applied to sets of records. The search box above the
+	table can be used to select subsets of records to run actions on.
+</p>
+
+<TABLE class='table'>
+	<TR>
+		<TD>
+			Send to Markers
+		</TD>
+		<TD>
+			This action will automatically distribute the marking links to markers. 
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			Download Confidential PDFs
+		</TD>
+		<TD>
+			This creates a zipfile containing the confidential versions of the report PDFs.
+			Note that only completed reports will be included.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			Download Public PDFs
+		</TD>
+		<TD>
+			This creates a zipfile containing the public versions of the report PDFs that are
+			released to students. Again, only completed reports will be included.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			Download Grades
+		</TD>
+		<TD>
+			This action downloads an Excel file containing the grades exported from each 
+			assignment form.
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			Release to Students
+		</TD>
+		<TD>
+			This action emails the students with links to their reports. They will receive an email 
+			containing a set of links that will allow them to download a PDF of the report, excluding 
+			any confidential report fields. The system will only release submitted and previously 
+			released reports, so you can resend links but not accidentally release partial reports.
+		</TD>
+	</TR>
+</TABLE>
+
+
+
+<h5>Current and old reports</h5>
+
+{{=old_new}}
+
+<hr>
+	{{=actions}}
+<hr>
+{{=form}}

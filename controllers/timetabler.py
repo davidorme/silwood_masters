@@ -12,19 +12,10 @@ from tempfile import NamedTemporaryFile
 import markdown # gluon provides MARKDOWN but lacks extensions.
 import os
 
-def index():
+def overview():
 
     return dict()
 
-
-def help():
-    
-    filepath = os.path.join(request.folder, 'static', 'docs', 'timetabler_help.md')
-    
-    with open(filepath, encoding="utf-8-sig") as help_file:
-        help_doc = XML(markdown.markdown(help_file.read()))
-    
-    return dict(help_doc=help_doc)
 
 ## TABLE VIEW CONTROLLERS 
 ## - These can all be viewed by anyone but you have to log in to edit
@@ -478,7 +469,7 @@ def courses():
     """
     
     # update the format of teaching_staff rows for either response
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    db.teaching_staff._format = lambda row: f" {row.first_name} {row.last_name}" 
     
     # if the URL has no arguments, present a list of courses with URLs
     if len(request.args) == 0:
@@ -617,7 +608,7 @@ def course_doc():
     content = ""
     
     # update the format of teaching_staff rows
-    db.teaching_staff._format = lambda row: f" {row.firstname} {row.lastname}" 
+    db.teaching_staff._format = lambda row: f" {row.first_name} {row.last_name}" 
     
     course = db.courses[course_id]
     
@@ -710,6 +701,214 @@ def course_doc():
         filename = f'{course.abbrname}_{datetime.date.today()}.tex'
         data = pypandoc.convert_text(content, 'latex', format='markdown+pipe_tables')
         ctype = 'application/x-tex'
+        
+    disposition = f'attachment; filename={filename}'
+    raise HTTP(200, data,
+               **{'Content-Type': ctype,
+               'Content-Disposition': disposition})
+
+
+def integrated_timetable():
+    """Creates a selectable list of courses to use in all_modules_doc"""
+
+    db.courses.id.readable = False
+
+    form =   SQLFORM.grid(
+                db.courses,
+                fields=[db.courses.fullname, db.courses.id],
+                selectable= [
+                    ("Download DOCX",
+                    lambda ids : redirect(
+                        URL('timetabler', 'all_modules_doc', 
+                            args=['_'.join([str(i) for i in ids]), 'docx', '1']))
+                    ),
+                    ("Download Latex",
+                    lambda ids : redirect(
+                        URL('timetabler', 'all_modules_doc', 
+                            args=['_'.join([str(i) for i in ids]), 'latex', '1']))
+                    ),
+                    ("Download Markdown",
+                    lambda ids : redirect(
+                        URL('timetabler', 'all_modules_doc', 
+                            args=['_'.join([str(i) for i in ids]), 'md', '1']))
+                    )
+                ],
+                details=False,
+                create=False,
+                deletable=False,
+                editable=False,
+                csv=False,
+                maxtextlength=100
+    )
+
+    return dict(form = form)
+
+
+
+def all_modules_doc():
+    """A controller to push out a DOCX version of all modules in the timetabler, across
+    a set of courses, using pandoc to convert markdown into the docx. Anyone can access.
+    """
+
+    # Something subsitutes commas for _ in parsed request.args
+    course_ids = [int(v) for v in request.args[0].split('_')]
+    output_format = request.args[1]
+    show_events = bool(int(request.args[2]))
+
+    content = "## Course listing\n\n"
+
+    # update the format of teaching_staff rows
+    db.teaching_staff._format = lambda row: f" {row.first_name} {row.last_name}" 
+
+    # Create a course table
+    courses_data = db(
+        (db.courses.id.belongs(course_ids)) &
+        (db.courses.convenor == db.teaching_staff.id)
+        ).select(orderby=db.courses.fullname)
+
+    table = '\nCourse|Convenor|Module link\n'
+    table += '-----|-----|-----|-----\n'
+
+    for crs in courses_data.render():
+        table += (f"{crs.courses.fullname}|"
+                  f"{crs.teaching_staff.first_name} {crs.teaching_staff.last_name}|"
+                  f"[Modules](#{IS_SLUG()(crs.courses.fullname)[0]})\n")
+
+    content += table
+
+    # Create course specific module summaries
+    content += "\n\n## Module overviews by course\n\n"
+
+    for crs in courses_data:
+
+        content += f"### {crs.courses.fullname}\n\n"
+
+        ## STANDARD MODULE DATA AND SUMMARY TABLE
+        modules = db(db.modules.courses.contains(crs.courses.id) &
+                    (db.modules.is_series != True)
+                    ).select(db.modules.id,
+                            db.modules.title,
+                            db.modules.convenors,
+                            db.modules.placeholder_week,
+                            db.modules.placeholder_n_weeks)
+        
+        # Convert ids to representation
+        modules = list(modules.render())
+        
+        # Add dates and sort in time order
+        _ = [update_module_record_with_dates(row) for row in modules]
+        modules.sort(key=lambda row: row.start)
+        
+        # Process into a simple pipe table
+        content += f'#### Standard module summary\n\n'
+        
+        table = 'Week|Starting|Module|Convenors\n'
+        table += '-----|-----|-----|-----\n'
+        for mod in modules:
+            week = ((mod.start - FIRST_DAY).days // 7) + 1
+            slug = IS_SLUG()(mod.title)[0]
+            table += f'{week}|{mod.start.strftime("%-d %b %Y")}|[{mod.title}](#{slug})|{mod.convenors}\n'
+        
+        content += table
+        
+        ## SERIES MODULE DATA AND SUMMARY TABLE
+        series = db(db.modules.courses.contains(crs.courses.id) &
+                    (db.modules.is_series == True)
+                    ).select(db.modules.id,
+                            db.modules.title,
+                            db.modules.convenors,
+                            db.modules.placeholder_week,
+                            db.modules.placeholder_n_weeks)
+        
+        if series:
+            # Convert ids to representation
+            series = list(series.render())
+        
+            # Add dates and sort in time order
+            _ = [update_module_record_with_dates(row) for row in series]
+            series.sort(key=lambda row: row.start)
+        
+            # Process into a simple pipe table
+            content += f'\n\n#### Series module summary\n\n'
+        
+            table = 'Start|End|Module|Convenors\n'
+            table += '-----|-----|-----|-----\n'
+            for mod in series:
+                slug = IS_SLUG()(mod.title)[0]
+                table += f'{mod.start.strftime("%-d %b %Y")}|{mod.end.strftime("%-d %b %Y")}|[{mod.title}](#{slug})|{mod.convenors}\n'
+
+            content += table
+    
+    ## STANDARD MODULE DETAILS ACROSS COURSES
+    content += '\n\n## Module listing\n\n'
+    
+    # The table definitions are unfortunate here - should have used normalised course to
+    # module table. There are two lists - the list[int] field from db.modules and a list
+    # of courses via request.args[0]. We want to known if _any_ values from the first
+    # list occur in the second. 
+    #
+    # * .contains(val) finds if a single course is in the list[int] field
+    # * .belongs(list) does the opposite, single value in list[int] occurs in args.
+    #
+    # So - post filter using sets.
+
+    all_modules = db(db.modules
+                ).select(db.modules.id,
+                        db.modules.title,
+                        db.modules.convenors,
+                        db.modules.placeholder_week,
+                        db.modules.placeholder_n_weeks,
+                        db.modules.is_series,
+                        db.modules.courses,
+                        orderby=db.modules.placeholder_week)
+
+    
+    modules  = [m for m in all_modules 
+                if set(m.courses).intersection(course_ids) and not m.is_series]
+
+    series = [m for m in all_modules 
+                if set(m.courses).intersection(course_ids) and m.is_series] 
+
+
+    for mod in modules:
+        content += module_markdown(mod.id, title=True, show_events=show_events)
+
+    if series:
+        content += '\n\n## Series module details\n\n'
+    
+        for mod in series:
+            content += module_markdown(mod.id, title=True, show_events=show_events)
+    
+    if output_format == 'docx':
+        # With docx, the output _has_ to be written to a file, not just handled internally
+        # as a string. Also, oddly, streaming the response from an open file directly 
+        # reuslt in weird stalling behaviour and failure, but loading it to bytes and 
+        # streaming the content of that works flawlessly. <shrug>
+        
+        filename = f'Module_download_{datetime.date.today()}.docx'
+        url = os.path.join('static', 'module_docx',  filename)
+        filepath = os.path.join(request.folder, url)
+        template = os.path.join(request.folder, 'static', 'module_docx',  'docx_template.docx')
+        pypandoc.convert_text(content, 'docx', format='markdown+pipe_tables', 
+                              outputfile=filepath,
+                              extra_args=[f"--reference-doc={template}"])
+    
+        with open(filepath, 'rb') as fin:
+            data = io.BytesIO(fin.read())
+        ctype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    
+    elif output_format == 'latex':
+        # With latex, can just directly pass the string
+        filename = f'Module_download_{datetime.date.today()}.tex'
+        data = pypandoc.convert_text(content, 'latex', format='markdown+pipe_tables')
+        ctype = 'application/x-tex'
+    elif output_format == 'md':
+        # With markdown, return content without modification
+        filename = f'Module_download_{datetime.date.today()}.md'
+        data = content
+        ctype = 'text/markdown'
+    else:
+        raise HTTP(406, "Unknown output format")
         
     disposition = f'attachment; filename={filename}'
     raise HTTP(200, data,
@@ -1071,7 +1270,7 @@ def get_events_by_week(start=None, end=None, timeZone=None):
                   resourceIds=ev.location_id,
                   extendedProps=dict(description=ev.description,
                                      teacher_id=ev.teacher_id),
-                  url=URL('events',args=[ev.module_id, ev.id]))
+                  url=URL('module_events',args=[ev.module_id, ev.id]))
         
         ev['color'] = 'grey'
         

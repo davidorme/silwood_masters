@@ -1,0 +1,32 @@
+{{extend 'layout.html'}}
+
+<h2>Marking files</h2>
+
+<p>The files for marking are stored on Sharepoint to make it easy to provide controlled
+access for markers. The folder structure and filenames in that coursework directory are
+then used to match files to individual student coursework preseentations.</p>
+
+<p>This page shows the matching of files to presentations. The first table shows the
+number of presentations bu course in this academic year. The following tables then:</p>
+
+<ul>
+<li>presentations that do not yet have a file and</li>
+<li>files that do not match a presentation.</li>
+</ul>
+
+<div class="card card-body bg-light">
+<p> The button below can be used to rescan the Sharepoint folder after files have been
+added or corrections made. It does take <bold>some time to run</bold> and will then
+reload this page with updated results: be patient!</p>
+
+{{=BUTTON(A('Rescan Sharepoint', _href=URL('rescan_sharepoint'),target="me"),_id="me", _class="button")}}
+</div>
+
+<h3>File matching</h3>
+
+{{=files_by_presentation}}
+
+{{=pres_missing_file}}
+
+{{=file_missing_pres}}
+

@@ -1,0 +1,59 @@
+{{extend 'layout.html'}}
+
+{{=H2('Marking for ', name)}}
+
+<ul>
+  <li>Once you've started a report, you can <strong>save</strong> your progress
+	   in your report and come back to it.</li>
+  <li>Once you have finished your report, you <strong>must click on the 
+	  submit button</strong>.</li>
+  <li>You will not be able to edit submitted reports but you <strong>will</strong> still
+	   be able to see your completed report and download a PDF file of the confidential
+	    report.</li>
+  <li>Once the project marking and examining has been completed, a link to download 
+	  a public version of the report will be sent to the student. This public report 
+	  excludes private comments to course organisers and the grade you assigned.</li>
+</ul>
+
+
+{{=header}}
+
+<p>The status icon shows the following:</p>
+	 
+<table class='table table-striped'>
+	<tr>
+		<td>
+			{{=status_dict['Not started']}}
+		</td>
+		<td>
+			<strong>Not started</strong>: No marking data has yet been saved.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			{{=status_dict['Started']}}
+		</td>
+		<td>
+			<strong>Started</strong>: Marking data has been saved but the final report has not been submitted.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			{{=status_dict['Submitted']}}
+		</td>
+		<td>
+			<strong>Submitted</strong>: You have completed this report and submitted it.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			{{=status_dict['Released']}}
+		</td>
+		<td>
+			<strong>Released</strong>: This report has been released to the student.
+		</td>
+	</tr>
+
+</table>	
+
+{{=form}}
