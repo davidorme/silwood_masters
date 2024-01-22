@@ -5,19 +5,19 @@ import io
 def teaching_staff():
     """Presents a view of teaching staff. 
     
-    Timetablers can add and edit, Admin also delete
+    Timetablers can add and edit
     """
     
     db.teaching_staff.id.readable = False
     
-    is_admin = auth.has_membership('admin')
-    is_timetabler= auth.has_membership('timetabler')
+    can_amend = auth.has_membership('timetabler') or auth.has_membership('admin')
     
     form = SQLFORM.grid(db.teaching_staff,
-                        create=is_timetabler | is_admin,
-                        editable=is_timetabler | is_admin,
-                        deletable=is_admin, 
-                        csv=is_admin)
+                        create=  can_amend ,
+                        editable= can_amend ,
+                        deletable=False, 
+                        csv= can_amend ,
+                        ignore_common_filters= can_amend )
     
     return dict(form=form)
 
