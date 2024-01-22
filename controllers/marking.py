@@ -249,9 +249,14 @@ def new_assignment():
 
     # The form should also only populate the marking role dropdown using _active_
     # marking roles.
+    db.assignments.marker_role_id.requires = IS_IN_DB(
+        db(db.marking_roles.is_active == True),
+        "marking_roles.id",
+        "%(name)s",
+    )
+
     form = SQLFORM(
-        (db.assignments.marker_role_id == db.marker_role.id)
-        & (db.marker_role.id == True),
+        db.assignments,
         fields=["student_presentation", "marker", "marker_role_id", "due_date"],
     )
 
