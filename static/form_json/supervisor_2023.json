@@ -1,0 +1,333 @@
+{
+	"role_name": "Supervisor",
+	"title": "Grading form for Master's Project Supervisors",
+	"marking_criteria": "Supervisor_Marking_Criteria.pdf",
+	"pdftitle": "Project Supervisor's Report",
+	"instructions": "<ul><li>Supervisor's reports for this course are <strong>not a review of the written project report</strong>, which is graded by two independent markers. Instead, this form is used to grade the student's performance as a member of your research group and their engagement with the research.</li><li>Tick one box in each row, using the centre box (Average) to indicate the normal, adequate standard. The endpoints of the scales show the expectations for the lowest and highest standards.</li><li> Comments can be made on individual assessment points as well as in the provided section for general comments and summary below.</li><li>Please note that all of this form <i>excluding the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li></ul>",
+	"grade_export": [
+		"grade"
+	],
+	"questions": [
+		{
+			"title": "How likely was the project to produce analysable results",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "analysable_rubric",
+					"label": "Rubric",
+					"options": [
+						"Almost Guaranteed",
+						"Above Average",
+						"Average",
+						"Below Average",
+						"Speculative"
+					],
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "analysable_comments",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How much did the project depend on the mastery of difficult techniques?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "difficulty_rubric",
+					"options": [
+						"Very easy",
+						"Below average",
+						"Average",
+						"Above average",
+						"Very difficult"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "difficulty_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "Were there unanticipated constraints to the project (bad weather, culture failure, etc.)?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "constraints_rubric",
+					"options": [
+						"None relevant",
+						"Below Average",
+						"Average",
+						"Above Average",
+						"Disasterous"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "constraints_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How much did the student put into the design of the project?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "design_rubric",
+					"options": [
+						"Almost Nothing",
+						"Below Average",
+						"Average",
+						"Above Average",
+						"Student's idea"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "design_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How diligently did the student work?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "diligence_rubric",
+					"options": [
+						"Indolently",
+						"Below Average",
+						"Average",
+						"Above Average",
+						"Intensively"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "diligence_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How well did the student perform in laboratory or field or in accessing other data sources?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "performance_rubric",
+					"options": [
+						"Slapdash",
+						"Below Average",
+						"Average",
+						"Above Average",
+						"Research Level"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "performance_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How much help did the student get (from _anyone_) during the project?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "assistance_rubric",
+					"options": [
+						"A great deal",
+						"Above Average",
+						"Average",
+						"Below Average",
+						"Hardly any"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "assistance_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How demanding was the analysis of the data, other materal or literature",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "analysis_rubric",
+					"options": [
+						"Simple",
+						"Below Average",
+						"Average",
+						"Above Average",
+						"Very Difficult"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "analysis_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "How much help did the student get in writing up the following parts of the thesis?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "text_support_rubric",
+					"options": [
+						"A Great Deal",
+						"Above Average",
+						"Average",
+						"Below Average",
+						"Virtually None"
+					],
+					"label": "The written text",
+					"required": true
+				},
+				{
+					"type": "rubric",
+					"variable": "theory_support_rubric",
+					"options": [
+						"A Great Deal",
+						"Above Average",
+						"Average",
+						"Below Average",
+						"Virtually None"
+					],
+					"label": "The theory and analysis",
+					"required": true
+				},
+				{
+					"type": "rubric",
+					"variable": "figures_support_rubric",
+					"options": [
+						"A Great Deal",
+						"Above Average",
+						"Average",
+						"Below Average",
+						"Virtually None"
+					],
+					"label": "Figures and tables",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "support_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "Comments",
+			"confidential": false,
+			"components": [
+				{
+					"type": "comment",
+					"variable": "comments",
+					"label": "Comment",
+					"nrow": 5,
+					"placeholder": "Use this box to provide general comments, which the student will see",
+					"required": true
+				}
+			]
+		},
+		{
+			"title": "Grade",
+			"confidential": true,
+			"components": [
+				{
+					"type": "select",
+					"variable": "grade",
+					"label": "Select a grade",
+					"options": [
+						"100% (A*)",
+						"95% (A*)",
+						"90% (A*)",
+						"85% (A*)",
+						"80% (A)",
+						"76% (A)",
+						"72% (A)",
+						"68% (B)",
+						"65% (B)",
+						"62% (B)",
+						"58% (C)",
+						"55% (C)",
+						"52% (C)",
+						"48% (D)",
+						"45% (D)",
+						"42% (D)",
+						"35% (D)",
+						"30% (D)",
+						"25% (D)",
+						"20% (D)",
+						"15% (D)",
+						"10% (D)",
+						"5% (D)",
+						"0% (D)"
+					],
+					"required": true
+				}
+			]
+		}
+	]
+}

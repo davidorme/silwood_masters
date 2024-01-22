@@ -101,10 +101,12 @@ db.define_table(
 
 db.define_table(
     "marking_roles",
-    Field("name", "string", notnull=True),
+    Field("name", "string", notnull=True, unique=True),
+    Field("role_class", "string", notnull=True),
     Field("marking_criteria", "string", notnull=True),
     Field("form_file", "string", notnull=True),
     Field("form_json", "json", notnull=True),
+    Field("is_active", "boolean", default=False),
     format="%(name)s",
 )
 

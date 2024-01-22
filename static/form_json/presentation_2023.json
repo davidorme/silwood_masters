@@ -1,0 +1,160 @@
+{
+	"role_name": "Presentation",
+	"title": "Grading form for Master's Project presentation",
+	"marking_criteria": "Presentation_Marking_Criteria.pdf",
+	"pdftitle": "Presentation Report",
+	"instructions": "<ul><li>Mark the student on their ability to <i>effectively communicate their work</i> to an audience, not on the content per se as this has already been assessed in their report marks. In each category below indicate a broad grade class and then use these as a guid to indicate an overall grade. For guidance: <ul> <li>Fail (F): <50%</li><li>Pass (P): 50-59%</li><li>Low Merit (LM): 60-64%</li><li>High Merit (HM): 65-69%</li><li>Low Distinction (LD): 70 -85%</li><li>High Distinction (HD): 85-100%</li></ul>li>Please note that all of this form <i>excluding the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li><ul>",
+	"grade_export": [
+		"grade"
+	],
+	"questions": [
+		{
+			"title": "Presentation marking rubrics",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "preparation_rubric",
+					"label": "Preparation",
+					"options": [
+						"F",
+						"P",
+						"LM",
+						"HM",
+						"LD",
+						"HD"
+					],
+					"required": true,
+					"info": "<div class='row'><div class='col-sm-2'></div><div class='col-sm-3'>Disorganised & confusing</div><div class='col-sm-4'></div><div class='col-sm-3 text-right'>Evidence of careful preparation of material</div></div><hr>"
+				},
+				{
+					"type": "rubric",
+					"variable": "message_rubric",
+					"label": "Message",
+					"options": [
+						"F",
+						"P",
+						"LM",
+						"HM",
+						"LD",
+						"HD"
+					],
+					"required": true,
+					"info": "<div class='row'><div class='col-sm-2'></div><div class='col-sm-3'>Unclear what is being tested & what are the conclusions</div><div class='col-sm-4'></div><div class='col-sm-3 text-right'>Objectives, hypotheses & take-home message clearly given</div></div><hr>"
+				},
+				{
+					"type": "rubric",
+					"variable": "understandable_rubric",
+					"label": "Understandable",
+					"options": [
+						"F",
+						"P",
+						"LM",
+						"HM",
+						"LD",
+						"HD"
+					],
+					"required": true,
+					"info": "<div class='row'><div class='col-sm-2'></div><div class='col-sm-3'>Does not explain complex terms and loses audience</div><div class='col-sm-4'></div><div class='col-sm-3 text-right'>Clear to a lay audience</div></div><hr>"
+				},
+				{
+					"type": "rubric",
+					"variable": "structure_rubric",
+					"label": "Structure",
+					"options": [
+						"F",
+						"P",
+						"LM",
+						"HM",
+						"LD",
+						"HD"
+					],
+					"required": true,
+					"info": "<div class='row'><div class='col-sm-2'></div><div class='col-sm-3'>Unclear how each slide is linked to the next slide(s)</div><div class='col-sm-4'></div><div class='col-sm-3 text-right'>Logical flow & slide order, & good story</div></div><hr>"
+				},
+				{
+					"type": "rubric",
+					"variable": "voice_rubric",
+					"label": "Voice and body language",
+					"options": [
+						"F",
+						"P",
+						"LM",
+						"HM",
+						"LD",
+						"HD"
+					],
+					"required": true,
+					"info": "<div class='row'><div class='col-sm-2'></div><div class='col-sm-3'>Does not engage with the audience, tentative & hard-to-hear</div><div class='col-sm-4'></div><div class='col-sm-3 text-right'>Clearly articulated, faces the audience & confidently presented</div></div><hr>"
+				},
+				{
+					"type": "rubric",
+					"variable": "presentation_rubric",
+					"label": "Presentation",
+					"options": [
+						"F",
+						"P",
+						"LM",
+						"HM",
+						"LD",
+						"HD"
+					],
+					"required": true,
+					"info": "<div class='row'><div class='col-sm-2'></div><div class='col-sm-3'>Too much info. per slide, cluttered & confusing</div><div class='col-sm-4'></div><div class='col-sm-3 text-right'>Good balance of text, figures & animation to tell story. Concise & uncluttered</div></div><hr>"
+				}
+			]
+		},
+		{
+			"title": "Comments",
+			"confidential": false,
+			"components": [
+				{
+					"type": "comment",
+					"variable": "comments",
+					"label": "Comment",
+					"nrow": 5,
+					"placeholder": "Use this box to provide general comments, which the student will see",
+					"required": true
+				}
+			]
+		},
+		{
+			"title": "Grade",
+			"confidential": true,
+			"components": [
+				{
+					"type": "select",
+					"variable": "grade",
+					"label": "Select a grade",
+					"options": [
+						"100% (A*)",
+						"95% (A*)",
+						"90% (A*)",
+						"85% (A*)",
+						"80% (A)",
+						"76% (A)",
+						"72% (A)",
+						"68% (B)",
+						"65% (B)",
+						"62% (B)",
+						"58% (C)",
+						"55% (C)",
+						"52% (C)",
+						"48% (D)",
+						"45% (D)",
+						"42% (D)",
+						"35% (D)",
+						"30% (D)",
+						"25% (D)",
+						"20% (D)",
+						"15% (D)",
+						"10% (D)",
+						"5% (D)",
+						"0% (D)"
+					],
+					"required": true
+				}
+			]
+		}
+	]
+}

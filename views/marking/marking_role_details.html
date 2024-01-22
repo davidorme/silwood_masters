@@ -1,0 +1,32 @@
+{{extend 'layout.html'}}
+
+<h2>
+	Marking Role details
+</h2>
+
+<p>
+	The form below can be used to create or amend marking roles. Each role needs:
+</p>
+<ul>
+	<li>An unique name. </li>
+	<li>A role class, which currently should be one of 'Marker', 'Supervisor',
+		'Presentation' or 'Viva'. These are used to allow different implementations of
+		marking roles to be grouped - for example to allow all different Supervisor role
+		definitions to be identified.</li>
+	<li>A marking criteria, chosen from a list of available uploaded criteria.</li>
+	<li>A marking form definition, again chosen from a list of available uploaded
+		form definitions.</li>
+
+</ul>
+
+<p>
+	Note that the JSON definition of a form is rather technical. There is not currently
+	a quick guide to creating new forms, so probably best to consult with the
+	application designers. Only existing defined JSON form definitions can be selected
+	for creating a new form and you <strong>cannot change the form definition</strong>
+	for an existing marking role as the form definition is required to match any marking
+	assignments completed for this role.
+</p>
+
+
+{{=form}}
