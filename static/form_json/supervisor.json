@@ -3,10 +3,8 @@
 	"title": "Grading form for Master's Project Supervisors",
 	"marking_criteria": "Supervisor_Marking_Criteria.pdf",
 	"pdftitle": "Project Supervisor's Report",
-	"instructions": "<ul><li>Supervisor's reports for this course are <strong>not a review of the written project report</strong>, which is graded by two independent markers. Instead, this form is used to grade the student's performance as a member of your research group and their engagement with the research.</li><li>Tick one box in each row, using the centre box (Average) to indicate the normal, adequate standard. The endpoints of the scales show the expectations for the lowest and highest standards.</li><li> Comments can be made on individual assessment points as well as in the provided section for general comments and summary below.</li><li>Please note that all of this form <i>excluding the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li></ul>",
-	"grade_export": [
-		"grade"
-	],
+	"instructions": "<ul><li>Supervisor's reports for this course are <strong>not a review of the written project report</strong>, which is graded by two independent markers. Instead, this form is used to grade the student's performance as a member of your research group and their engagement with the research.</li><li>Tick one box in each row, using the centre box (Average) to indicate the normal, adequate standard. The endpoints of the scales show the expectations for the lowest and highest standards.</li><li> Comments can be made on individual assessment points as well as in the provided section for general comments and summary below.</li><li>Please note that all of this form <i>excluding private comments and the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li></ul>",
+	"grade_export": ["grade"],
 	"questions": [
 		{
 			"title": "How likely was the project to produce analysable results",
@@ -278,16 +276,30 @@
 			]
 		},
 		{
-			"title": "Comments",
+			"title": "Public Comments",
 			"confidential": false,
 			"components": [
 				{
 					"type": "comment",
-					"variable": "comments",
+					"variable": "public_comments",
 					"label": "Comment",
 					"nrow": 5,
-					"placeholder": "Use this box to provide general comments, which the student will see",
+					"placeholder": "Use this box to provide public comments, which the student will see",
 					"required": true
+				}
+			]
+		},
+		{
+			"title": "Private Comments",
+			"confidential": true,
+			"components": [
+				{
+					"type": "comment",
+					"variable": "private_comments",
+					"label": "Comment",
+					"nrow": 5,
+					"placeholder": "Use this box to provide private comments if neccessary, which only staff will see",
+					"required": false
 				}
 			]
 		},

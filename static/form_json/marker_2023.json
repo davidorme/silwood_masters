@@ -1,31 +1,36 @@
 {
-	"role_name": "Supervisor",
-	"title": "Grading form for Master's Project Supervisors",
-	"marking_criteria": "Supervisor_Marking_Criteria.pdf",
-	"pdftitle": "Project Supervisor's Report",
-	"instructions": "<ul><li>Supervisor's reports for this course are <strong>not a review of the written project report</strong>, which is graded by two independent markers. Instead, this form is used to grade the student's performance as a member of your research group and their engagement with the research.</li><li>Tick one box in each row, using the centre box (Average) to indicate the normal, adequate standard. The endpoints of the scales show the expectations for the lowest and highest standards.</li><li> Comments can be made on individual assessment points as well as in the provided section for general comments and summary below.</li><li>Please note that all of this form <i>excluding private comments and the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li></ul>",
-	"grade_export": ["grade"],
+	"role_name": "Marker",
+	"title": "Grading form for Master's Project Markers",
+	"marking_criteria": "Project_Marking_Criteria.pdf",
+	"pdftitle": "Project Marker's Report",
+	"submitted_files": [
+		"Thesis"
+	],
+	"instructions": "<ul><li>Tick one box in each row, using the centre box (Average) to indicate the normal, adequate standard. The endpoints of the scales show the expectations for the lowest and highest standards.</li><li> Comments can be made on individual assessment points as well as in the provided section for general comments and summary below.</li><li>Please note that all of this form <i>excluding the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li></ul>",
+	"grade_export": [
+		"grade"
+	],
 	"questions": [
 		{
-			"title": "How likely was the project to produce analysable results",
+			"title": "Presentation standards",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "analysable_rubric",
+					"variable": "presentation_rubric",
 					"label": "Rubric",
 					"options": [
-						"Almost Guaranteed",
-						"Above Average",
-						"Average",
+						"Messy",
 						"Below Average",
-						"Speculative"
+						"Average",
+						"Above Average",
+						"Publication Standard"
 					],
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "analysable_comments",
+					"variable": "presentation_comments",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -34,25 +39,25 @@
 			]
 		},
 		{
-			"title": "How much did the project depend on the mastery of difficult techniques?",
+			"title": "Introduction to the project",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "difficulty_rubric",
+					"variable": "intro_rubric",
 					"options": [
-						"Very easy",
+						"Trivial",
 						"Below average",
 						"Average",
 						"Above average",
-						"Very difficult"
+						"Publishable"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "difficulty_comment",
+					"variable": "intro_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -61,25 +66,25 @@
 			]
 		},
 		{
-			"title": "Were there unanticipated constraints to the project (bad weather, culture failure, etc.)?",
+			"title": "Methods exposition",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "constraints_rubric",
+					"variable": "methods_rubric",
 					"options": [
-						"None relevant",
+						"Incomprehensible",
 						"Below Average",
 						"Average",
 						"Above Average",
-						"Disasterous"
+						"Perfectly Clear"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "constraints_comment",
+					"variable": "methods_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -88,25 +93,25 @@
 			]
 		},
 		{
-			"title": "How much did the student put into the design of the project?",
+			"title": "Quantity of work done (to-date for mid-project reports)",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "design_rubric",
+					"variable": "quantity_rubric",
 					"options": [
-						"Almost Nothing",
+						"Very little",
 						"Below Average",
 						"Average",
 						"Above Average",
-						"Student's idea"
+						"A great deal"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "design_comment",
+					"variable": "quantity_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -115,25 +120,25 @@
 			]
 		},
 		{
-			"title": "How diligently did the student work?",
+			"title": "Quality of underlying research (data, theory, or both)",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "diligence_rubric",
+					"variable": "research_quality_rubric",
 					"options": [
-						"Indolently",
+						"Very thin or provided",
 						"Below Average",
 						"Average",
 						"Above Average",
-						"Intensively"
+						"New and publishable"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "diligence_comment",
+					"variable": "research_quality_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -142,25 +147,25 @@
 			]
 		},
 		{
-			"title": "How well did the student perform in laboratory or field or in accessing other data sources?",
+			"title": "Technical quality (empirical / theoretical / computational / statistical)",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "performance_rubric",
+					"variable": "technical_quality_rubric",
 					"options": [
-						"Slapdash",
+						"Poor",
 						"Below Average",
 						"Average",
 						"Above Average",
-						"Research Level"
+						"Excellent"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "performance_comment",
+					"variable": "technical_quality_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -169,25 +174,25 @@
 			]
 		},
 		{
-			"title": "How much help did the student get (from _anyone_) during the project?",
+			"title": "Discussion (or Outlook for mid-project reports)",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "assistance_rubric",
+					"variable": "discussion_rubric",
 					"options": [
-						"A great deal",
-						"Above Average",
-						"Average",
+						"Very shallow",
 						"Below Average",
-						"Hardly any"
+						"Average",
+						"Above Average",
+						"Publication Standard"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "assistance_comment",
+					"variable": "discussion_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -196,25 +201,25 @@
 			]
 		},
 		{
-			"title": "How demanding was the analysis of the data, other materal or literature",
+			"title": "Understanding of research",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "analysis_rubric",
+					"variable": "understanding_rubric",
 					"options": [
-						"Simple",
+						"Very little",
 						"Below Average",
 						"Average",
 						"Above Average",
-						"Very Difficult"
+						"Research level"
 					],
 					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "analysis_comment",
+					"variable": "understanding_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -223,51 +228,25 @@
 			]
 		},
 		{
-			"title": "How much help did the student get in writing up the following parts of the thesis?",
+			"title": "Scientific rigour",
 			"confidential": false,
 			"components": [
 				{
 					"type": "rubric",
-					"variable": "text_support_rubric",
+					"variable": "rigour_rubric",
 					"options": [
-						"A Great Deal",
-						"Above Average",
-						"Average",
+						"Weak",
 						"Below Average",
-						"Virtually None"
-					],
-					"label": "The written text",
-					"required": true
-				},
-				{
-					"type": "rubric",
-					"variable": "theory_support_rubric",
-					"options": [
-						"A Great Deal",
-						"Above Average",
 						"Average",
-						"Below Average",
-						"Virtually None"
-					],
-					"label": "The theory and analysis",
-					"required": true
-				},
-				{
-					"type": "rubric",
-					"variable": "figures_support_rubric",
-					"options": [
-						"A Great Deal",
 						"Above Average",
-						"Average",
-						"Below Average",
-						"Virtually None"
+						"Strict"
 					],
-					"label": "Figures and tables",
+					"label": "Rubric",
 					"required": true
 				},
 				{
 					"type": "comment",
-					"variable": "support_comment",
+					"variable": "rigour_comment",
 					"label": "Comment",
 					"nrow": 2,
 					"placeholder": "Optional comments",
@@ -276,30 +255,43 @@
 			]
 		},
 		{
-			"title": "Public Comments",
+			"title": "Originality",
+			"confidential": false,
+			"components": [
+				{
+					"type": "rubric",
+					"variable": "originality_rubric",
+					"options": [
+						"Almost none",
+						"Below Average",
+						"Average",
+						"Above Average",
+						"Highly original"
+					],
+					"label": "Rubric",
+					"required": true
+				},
+				{
+					"type": "comment",
+					"variable": "originality_comment",
+					"label": "Comment",
+					"nrow": 2,
+					"placeholder": "Optional comments",
+					"required": false
+				}
+			]
+		},
+		{
+			"title": "Comments",
 			"confidential": false,
 			"components": [
 				{
 					"type": "comment",
-					"variable": "public_comments",
+					"variable": "comments",
 					"label": "Comment",
 					"nrow": 5,
-					"placeholder": "Use this box to provide public comments, which the student will see",
+					"placeholder": "Use this box to provide general comments, which the student will see",
 					"required": true
-				}
-			]
-		},
-		{
-			"title": "Private Comments",
-			"confidential": true,
-			"components": [
-				{
-					"type": "comment",
-					"variable": "private_comments",
-					"label": "Comment",
-					"nrow": 5,
-					"placeholder": "Use this box to provide private comments if neccessary, which only staff will see",
-					"required": false
 				}
 			]
 		},

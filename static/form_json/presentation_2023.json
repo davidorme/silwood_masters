@@ -3,8 +3,10 @@
 	"title": "Grading form for Master's Project presentation",
 	"marking_criteria": "Presentation_Marking_Criteria.pdf",
 	"pdftitle": "Presentation Report",
-	"instructions": "Mark the student on their ability to <i>effectively communicate their work</i> to an audience, not on the content per se as this has already been assessed in their report marks. In each category below indicate a broad grade class and then use these as a guid to indicate an overall grade. For guidance: <ul> <li>Fail (F): <50%</li><li>Pass (P): 50-59%</li><li>Low Merit (LM): 60-64%</li><li>High Merit (HM): 65-69%</li><li>Low Distinction (LD): 70 -85%</li><li>High Distinction (HD): 85-100%</li></ul>",
-	"grade_export": ["grade"],
+	"instructions": "<ul><li>Mark the student on their ability to <i>effectively communicate their work</i> to an audience, not on the content per se as this has already been assessed in their report marks. In each category below indicate a broad grade class and then use these as a guid to indicate an overall grade. For guidance: <ul> <li>Fail (F): <50%</li><li>Pass (P): 50-59%</li><li>Low Merit (LM): 60-64%</li><li>High Merit (HM): 65-69%</li><li>Low Distinction (LD): 70 -85%</li><li>High Distinction (HD): 85-100%</li></ul>li>Please note that all of this form <i>excluding the final grade</i> will be provided to students as feedback on their work. You should treat this report as you would responses to authors for a journal review and should provide constructive feedback with the aim of improving the work.</li><ul>",
+	"grade_export": [
+		"grade"
+	],
 	"questions": [
 		{
 			"title": "Presentation marking rubrics",
@@ -103,15 +105,15 @@
 			]
 		},
 		{
-			"title": "Public Comments",
+			"title": "Comments",
 			"confidential": false,
 			"components": [
 				{
 					"type": "comment",
-					"variable": "public_comments",
+					"variable": "comments",
 					"label": "Comment",
 					"nrow": 5,
-					"placeholder": "Use this box to provide public comments, which the student will see",
+					"placeholder": "Use this box to provide general comments, which the student will see",
 					"required": true
 				}
 			]
