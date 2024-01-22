@@ -69,9 +69,11 @@ def marking_roles():
             db.marking_roles.name,
             db.marking_roles.marking_criteria,
             db.marking_roles.form_file,
+            db.marking_roles.is_active,
         ],
         csv=False,
         deletable=False,
+        details=False,
     )
 
     return dict(form=form)
