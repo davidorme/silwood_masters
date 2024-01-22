@@ -39,18 +39,21 @@ db.define_table('email_log',
 #   that doesn't rely on having a second device and we're not in a position to do that.
 ## --------------------------------------------------------------------------------
 
-db.define_table('teaching_staff',
-                # Field('title', 'string'),
-                Field('first_name', 'string', notnull=True),
-                Field('last_name', 'string', notnull=True),
-                Field('institution', 'string'),
-                Field('email', 'string', requires=IS_EMAIL(), notnull=True, unique=True),
-                Field('phone', 'string'),
-                Field('specialisation', 'text'),
-                Field('is_internal', 'boolean', default=True),
-                Field('can_supervise', 'boolean', default=True),
-                format = lambda row: f" {row.last_name}, {row.first_name}")
-
+db.define_table(
+      'teaching_staff',
+      # Field('title', 'string'),
+      Field('first_name', 'string', notnull=True),
+      Field('last_name', 'string', notnull=True),
+      Field('institution', 'string'),
+      Field('email', 'string', requires=IS_EMAIL(), notnull=True, unique=True),
+      Field('phone', 'string'),
+      Field('specialisation', 'text'),
+      Field('is_internal', 'boolean', default=True),
+      Field('can_supervise', 'boolean', default=True),
+      Field('is_active', 'boolean', default=True),
+      format = lambda row: f" {row.last_name}, {row.first_name}",
+      common_filter = lambda query: db.teaching_staff.is_active == True
+)
 
 db.define_table('magic_links',
                 Field('staff_id','reference teaching_staff'),
