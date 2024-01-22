@@ -21,25 +21,6 @@ def overview():
 ## - These can all be viewed by anyone but you have to log in to edit
 ##   and many are locked down to admin staff only
 
-def teaching_staff_table():
-    """Presents a view of teaching staff. 
-    
-    Timetablers can add and edit, Admin delete
-    """
-    
-    db.teaching_staff.id.readable = False
-    
-    is_admin = auth.has_membership('admin')
-    is_timetabler= auth.has_membership('timetabler')
-    
-    form = SQLFORM.grid(db.teaching_staff,
-                        create=is_timetabler,
-                        editable=is_timetabler,
-                        deletable=is_admin, 
-                        csv=is_admin)
-    
-    return dict(form=form)
-
 
 def locations_table():
     """Presents a view of teaching staff. 
