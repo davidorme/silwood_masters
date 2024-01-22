@@ -77,7 +77,6 @@ def marking_roles():
                     "marking_role_details",
                     args=[row.id],
                 ),
-                _target="_blank",
             ),
         )
     ]
@@ -117,16 +116,12 @@ def marking_role_details():
     # Get dictionaries of the available marking form JSON and criteria
     json_form_options = {
         path.name: path
-        for path in (
-            Path("applications") / request.application / "static" / "form_json"
-        ).glob("*.json")
+        for path in (Path(request.folder) / "static" / "form_json").glob("*.json")
     }
 
     criteria_files = {
         path.name: path
-        for path in (
-            Path("applications") / request.application / "static" / "marking_criteria"
-        ).glob("*.pdf")
+        for path in (Path(request.folder) / "static" / "marking_criteria").glob("*.pdf")
     }
 
     # Force the form to only provide marking criteria files
@@ -135,7 +130,7 @@ def marking_role_details():
     # Is this amending an existing record? If so, lock down the form_file so the link
     # between the role and completed assignments cannot be broken. Otherwise offer a
     # selection of available form definitions.
-    record = request.args(0)
+    record = db.marking_roles[request.args(0)]
     if record is not None:
         db.marking_roles.form_file.writable = False
     else:
@@ -152,14 +147,25 @@ def marking_role_details():
     form.json_form_options = json_form_options
 
     if form.process(onvalidation=marking_role_validate).accepted:
-        db.marking_roles.insert(
+        # Need to handle case where an existing role is being edited and
+        # form.vars.form_file and form_var.form_json are not populated.
+        form_update_args = dict(
             name=form.vars.name,
             role_class=form.vars.role_class,
-            form_file=form.vars.form_file,
-            form_json=form.vars.form_json,
             marking_criteria=form.vars.marking_criteria,
-            is_active=True,
+            is_active=form.vars.is_active,
         )
+
+        if record is None:
+            form_update_args.update(
+                form_json=form.vars.form_json,
+                form_file=form.vars.form_file,
+            )
+            new_recid = db.marking_roles.insert(**form_update_args)
+        else:
+            record.update_record(**form_update_args)
+
+        redirect(URL("marking", "marking_roles"))
 
     return dict(form=form)
 
@@ -168,8 +174,13 @@ def marking_role_validate(form):
     """Validates the creation of a new marking role from the webform.
 
     It validates that the selected JSON form file contains JSON and then saves the
-    content as a minified JSON string.
+    content as a minified JSON string. It only validates when a marker role is created,
+    as when form_file is not writable it is not present in form.vars.
     """
+
+    if "form_file" not in form.vars:
+        return
+
     form_path = form.json_form_options[form.vars.form_file]
     with open(form_path, "rt") as json_file:
         try:
@@ -1559,7 +1570,7 @@ def criteria_and_forms():
 
     name = db.marking_roles.name
     name.represent = lambda value, rw: A(
-        value, _href=URL("marking", "show_form", args=rw.name)
+        value, _href=URL("marking", "show_form", args=rw.id)
     )
 
     marking_roles = SQLFORM.grid(
@@ -1583,7 +1594,7 @@ def show_form():
     way for students to be able to see the forms.
     """
 
-    role = db(db.marking_roles.name == request.args[0]).select().first()
+    role = db.marking_roles[request.args[0]]
 
     # Redirect back to form list if the role is unknown
     if role is None:
