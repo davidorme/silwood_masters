@@ -1,6 +1,7 @@
 import datetime
 import io
 import os
+from pathlib import Path
 import csv
 import itertools
 import random
@@ -63,6 +64,24 @@ def download():
 def marking_roles():
     # don't allow deleting as the referencing to project marks will
     # drop referenced rows from marking tables
+
+    # link to a non-default new edit page
+    links = [
+        dict(
+            header="Details",
+            body=lambda row: A(
+                "View",
+                _class="button btn btn-secondary",
+                _href=URL(
+                    "marking",
+                    "marking_role_details",
+                    args=[row.id],
+                ),
+                _target="_blank",
+            ),
+        )
+    ]
+
     form = SQLFORM.grid(
         db.marking_roles,
         fields=[
@@ -74,9 +93,91 @@ def marking_roles():
         csv=False,
         deletable=False,
         details=False,
+        create=False,
+        editable=False,
+        links=links,
     )
 
     return dict(form=form)
+
+
+@auth.requires_membership("admin")
+def marking_role_details():
+    """Create or edit marking roles.
+
+    This controller allows an admin member to add a new marking role to the system or
+    edit existing ones. It constrains the choice of form and criteria to those
+    available in the static files directory, and prevents the form definition associated
+    with existing marking roles from being changed.
+
+    TODO - currently there is no obvious route to upload those files, but this makes
+    sure the JSON content is synchronised with the file.
+    """
+
+    # Get dictionaries of the available marking form JSON and criteria
+    json_form_options = {
+        path.name: path
+        for path in (
+            Path("applications") / request.application / "static" / "form_json"
+        ).glob("*.json")
+    }
+
+    criteria_files = {
+        path.name: path
+        for path in (
+            Path("applications") / request.application / "static" / "marking_criteria"
+        ).glob("*.pdf")
+    }
+
+    # Force the form to only provide marking criteria files
+    db.marking_roles.marking_criteria.requires = IS_IN_SET(criteria_files.keys())
+
+    # Is this amending an existing record? If so, lock down the form_file so the link
+    # between the role and completed assignments cannot be broken. Otherwise offer a
+    # selection of available form definitions.
+    record = request.args(0)
+    if record is not None:
+        db.marking_roles.form_file.writable = False
+    else:
+        db.marking_roles.form_file.requires = IS_IN_SET(json_form_options.keys())
+
+    # Create the form, using an existing record if one is provided
+    form = SQLFORM(
+        db.marking_roles,
+        fields=["name", "role_class", "marking_criteria", "form_file", "is_active"],
+        record=record,
+        showid=False,
+    )
+
+    form.json_form_options = json_form_options
+
+    if form.process(onvalidation=marking_role_validate).accepted:
+        db.marking_roles.insert(
+            name=form.vars.name,
+            role_class=form.vars.role_class,
+            form_file=form.vars.form_file,
+            form_json=form.vars.form_json,
+            marking_criteria=form.vars.marking_criteria,
+            is_active=True,
+        )
+
+    return dict(form=form)
+
+
+def marking_role_validate(form):
+    """Validates the creation of a new marking role from the webform.
+
+    It validates that the selected JSON form file contains JSON and then saves the
+    content as a minified JSON string.
+    """
+    form_path = form.json_form_options[form.vars.form_file]
+    with open(form_path, "rt") as json_file:
+        try:
+            content = json.load(json_file)
+        except json.JSONDecodeError:
+            form.errors.form_file = "Content of form file is not valid JSON"
+
+    form.vars.form_json = content
 
 
 @auth.requires_membership("admin")
