@@ -411,7 +411,9 @@ def marker_progress():
 
     status_count = db(
         (db.assignments.student_presentation == db.student_presentations.id)
-        & (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR),
+        & (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR)
+        & (db.assignments.marker_role_id == db.marking_roles.id)
+        & (db.marking_roles.is_active == True)
     ).select(
         db.assignments.marker,
         db.assignments.marker_role_id,
@@ -429,7 +431,9 @@ def marker_progress():
     status_count.sort(key=lambda x: x.assignments.marker)
 
     # Get a template count (not completed, completed) by marker role
-    count_template = db(db.marking_roles).select(db.marking_roles.name)
+    count_template = db(db.marking_roles.is_active == True).select(
+        db.marking_roles.name
+    )
     count_template = {r.name: [0, 0] for r in count_template}
 
     # Build the table
