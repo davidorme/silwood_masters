@@ -105,6 +105,7 @@ db.define_table(
     Field("marking_criteria", "string", notnull=True),
     Field("form_file", "string", notnull=True),
     Field("form_json", "json", notnull=True),
+    Field("is_active", "boolean", default=False),
     format="%(name)s",
 )
 
