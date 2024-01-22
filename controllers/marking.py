@@ -92,8 +92,8 @@ def submitted_files():
             db.students.student_last_name,
             db.students.academic_year,
             db.student_presentations.course_presentation,
-            db.marking_files.filename,
             db.marking_files.marker_role_id,
+            db.marking_files.filename,
         ],
         maxtextlength=100,
         csv=False,
@@ -950,7 +950,6 @@ def who_are_my_markers():
     # create the SQLFORM grid to show the existing assignments
     grid = SQLFORM.grid(
         (db.student_presentations.id == db.assignments.student_presentation)
-        & (db.assignments.marker_role_id.belongs([1, 3]))
         & (db.student_presentations.academic_year == CURRENT_PROJECT_YEAR),
         fields=[
             db.student_presentations.student,
@@ -1096,7 +1095,7 @@ def my_students():
     grid = SQLFORM.grid(
         (db.assignments.marker == marker)
         & (db.assignments.marker_role_id == db.marking_roles.id)
-        & (db.marking_roles.name == "Supervisor")
+        & (db.marking_roles.role_class == "Supervisor")
         & (db.assignments.student_presentation == db.student_presentations.id)
         & (db.student_presentations.student == db.students.id),
         fields=[
