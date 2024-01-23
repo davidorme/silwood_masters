@@ -146,9 +146,11 @@ def marking_role_details():
 
     form.json_form_options = json_form_options
 
-    if form.process(onvalidation=marking_role_validate).accepted:
-        # Need to handle case where an existing role is being edited and
-        # form.vars.form_file and form_var.form_json are not populated.
+    # Validate the form without db IO to handle flow from cases where an existing role
+    # is being edited and form.vars.form_file and form_var.form_json are not populated.
+
+    if form.validate(onvalidation=marking_role_validate):
+
         form_update_args = dict(
             name=form.vars.name,
             role_class=form.vars.role_class,
