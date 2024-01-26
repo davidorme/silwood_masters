@@ -278,15 +278,29 @@
 			]
 		},
 		{
-			"title": "Comments",
+			"title": "What was good?",
 			"confidential": false,
 			"components": [
 				{
 					"type": "comment",
-					"variable": "comments",
+					"variable": "what_was_good",
 					"label": "Comment",
 					"nrow": 5,
-					"placeholder": "Use this box to provide general comments, which the student will see",
+					"placeholder": "Use this box to provide general comments on the strong points of the research and project.",
+					"required": true
+				}
+			]
+		},
+		{
+			"title": "What could be improved?",
+			"confidential": false,
+			"components": [
+				{
+					"type": "comment",
+					"variable": "what_could_be_improved",
+					"label": "Comment",
+					"nrow": 5,
+					"placeholder": "Use this box to provide general comments on how the research or project could be improved.",
 					"required": true
 				}
 			]
