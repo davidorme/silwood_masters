@@ -3,23 +3,27 @@ import csv
 import io
 
 
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def teaching_staff():
     """Presents a view of teaching staff.
 
-    Timetablers can add and edit
+    Admins and timetablers can add and edit, and see inactive staff.
     """
 
     db.teaching_staff.id.readable = True
-
-    can_amend = auth.has_membership("timetabler") or auth.has_membership("admin")
+    db.teaching_staff._common_filter = None
 
     form = SQLFORM.grid(
         db.teaching_staff,
-        create=can_amend,
-        editable=can_amend,
+        details=False,
+        create=True,
+        editable=True,
         deletable=False,
-        csv=can_amend,
-        ignore_common_filters=can_amend,
+        csv=True,
+        ignore_common_filters=True,
     )
 
     return dict(form=form)

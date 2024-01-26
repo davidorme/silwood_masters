@@ -102,6 +102,8 @@ def index():
         (
             (db.projects.date_created > PROJECT_ROLLOVER_DAY)
             & (db.projects.concealed == False)
+            & (db.projects.lead_supervisor == db.teaching_staff.id)
+            & (db.teaching_staff.is_active == True)
         ),
         fields=[
             db.projects.project_student,
