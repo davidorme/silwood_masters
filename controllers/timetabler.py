@@ -12,6 +12,11 @@ from tempfile import NamedTemporaryFile
 import markdown # gluon provides MARKDOWN but lacks extensions.
 import os
 
+
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def overview():
 
     return dict()
@@ -21,7 +26,10 @@ def overview():
 ## - These can all be viewed by anyone but you have to log in to edit
 ##   and many are locked down to admin staff only
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def locations_table():
     """Presents a view of teaching staff. 
     
@@ -40,7 +48,10 @@ def locations_table():
     
     return dict(form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def courses_table():
     """Presents a view of courses. Only admins can edit, delete or add
     """
@@ -58,7 +69,10 @@ def courses_table():
     
     return dict(form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def college_dates_table():
     """Presents a view of college dates. Only admins can edit or add. These are 
     not deletable because some timetabling features rely on key dates in here.
@@ -80,7 +94,10 @@ def college_dates_table():
     
     return dict(form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def recurring_events_table():
     """Presents a view of recurring events. Only admins can edit, delete or add.
     """
@@ -97,7 +114,10 @@ def recurring_events_table():
     
     return dict(form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def events_table():
     """Presents a view of module events. 
     
@@ -120,7 +140,10 @@ def events_table():
     
     return dict(form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def modules_table():
     """Presents a view of modules. These should be edited via module_information()
     but admins can create, delete and edit them here. 
@@ -143,7 +166,10 @@ def modules_table():
     
     return dict(form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def archive_timetable():
     """A controller to push out an archive file of the timetabler data.
     """
@@ -201,7 +227,10 @@ def _module_page_header(module_id, current):
     
     return module_header
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def module_information():
     """Controller to return a SQLFORM for module level information"""
     module_id = request.args[0]
@@ -226,7 +255,10 @@ def module_information():
     
     return dict(form=form, module_data=_module_page_header(module_id, 'Info'))
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def module_events():
     """Controller to deliver a module level calendar and handle event creation and update.
     Editing is only possible for logged in users, but anyone can view and click through."""
@@ -386,7 +418,10 @@ def module_events():
     return dict(module_data=_module_page_header(module_id, 'Events'),
                 event_data=event_data, form=form)
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def module_view():
     """A controller to combine module and event email and then display, converting
     markdown to HTML along the way. Anyone can view.
@@ -399,7 +434,10 @@ def module_view():
     return dict(content = XML(markdown.markdown(content, extensions=['def_list'])), 
                 module_data=_module_page_header(module_id, 'HTML'))
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def module_doc():
     """A controller to push out a document version of the view, using pandoc to convert 
     markdown into docx or latex. Anyone can access.
@@ -444,7 +482,10 @@ def module_doc():
 ## - courses/id shows a course level summary and links to modules
 ## - doc downloads the existing information as docx or latex
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def courses():
     """A controller to view the modules in a course
     """
@@ -577,6 +618,11 @@ def courses():
                 mod_table=mod_table,
                 series_table=series_table)
 
+
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def course_doc():
     """A controller to push out a DOCX version of a course, using pandoc to convert 
     markdown into the docx. Anyone can access.
@@ -688,7 +734,10 @@ def course_doc():
                **{'Content-Type': ctype,
                'Content-Disposition': disposition})
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def integrated_timetable():
     """Creates a selectable list of courses to use in all_modules_doc"""
 
@@ -725,7 +774,10 @@ def integrated_timetable():
     return dict(form = form)
 
 
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def all_modules_doc():
     """A controller to push out a DOCX version of all modules in the timetabler, across
     a set of courses, using pandoc to convert markdown into the docx. Anyone can access.
@@ -898,6 +950,10 @@ def all_modules_doc():
 
 ## Other views
 
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def module_grid():
     """A controller to expose the sequence of modules by course. Anyone can access.
     All of the actual work is done using clientside JS and JSON feeds.
@@ -912,17 +968,10 @@ def module_grid():
 
 
 
-def module_grid_old():
-    """A controller to view the sequence of modules by course. Anyone can access.
-    TODO - add admin level edit to move modules on calendar.
-    """
-    
-    # Use a div to pass the year academic start data to the client for use by fullcalendar
-    year_data = DIV(_id='year_data', _day_one=FIRST_DAY)
-    
-    return dict(year_data=year_data)
-
-
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def room_grid():
     """A controller to view the weekly use of rooms by module. Anyone can access.
     """
@@ -932,6 +981,10 @@ def room_grid():
     return dict(year_data=year_data)
 
 
+@auth.requires(
+    auth.has_membership(auth.id_group("admin"))
+    or auth.has_membership(auth.id_group("timetabler"))
+)
 def download_module_grid():
     
     """

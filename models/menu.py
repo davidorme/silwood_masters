@@ -9,57 +9,6 @@ response.title = request.application.replace("_", " ").title()
 response.subtitle = ""
 
 
-timetabler_dropdown = [
-    (T("Overview"), False, URL("timetabler", "overview"), []),
-    (T("Module Grid"), False, URL("timetabler", "module_grid"), []),
-    (T("Course List"), False, URL("timetabler", "courses"), []),
-    (T("Room Grid"), False, URL("timetabler", "room_grid"), []),
-    (T("Video tutorial"), False, URL("static", "video/timetabler_howto.mp4"), []),
-]
-
-if auth.has_membership("timetabler") or auth.has_membership("admin"):
-
-    timetabler_dropdown.extend(
-        [
-            (DIV(_class="dropdown-divider"), False, False, []),
-            (
-                DIV(
-                    "Tables and Tools",
-                    _class="dropdown-item",
-                    _style="color:grey;font-variant:small-caps",
-                ),
-                False,
-                False,
-                [],
-            ),
-            (T("College Dates"), False, URL("timetabler", "college_dates_table"), []),
-            (
-                T("Recurring Events"),
-                False,
-                URL("timetabler", "recurring_events_table"),
-                [],
-            ),
-            (T("Locations"), False, URL("timetabler", "locations_table"), []),
-            (T("Courses"), False, URL("timetabler", "courses_table"), []),
-            (T("Teaching Staff"), False, URL("manage", "teaching_staff"), []),
-            (T("Modules"), False, URL("timetabler", "modules_table"), []),
-            (T("Events"), False, URL("timetabler", "events_table"), []),
-            (
-                T("Integrated timetable"), 
-                False, 
-                URL("timetabler", "integrated_timetable"), 
-                []
-            ),
-            (
-                T("Download timetable archive"),
-                False,
-                URL("timetabler", "archive_timetable"),
-                [],
-            ),
-        ]
-    )
-
-
 if auth.has_membership("wiki editor") or auth.has_membership("admin"):
     wiki_dropdown = (
         T("Info"),
@@ -155,9 +104,57 @@ if auth.has_membership("admin"):
 response.menu = [
     (T("Projects"), False, None, projects_dropdown),
     (T("Marking"), False, None, marking_dropdown),
-    (T("Timetabler"), False, None, timetabler_dropdown),
     wiki_dropdown,
 ]
+
+
+
+if auth.has_membership("timetabler") or auth.has_membership("admin"):
+
+    timetabler_dropdown = [
+        (T("Overview"), False, URL("timetabler", "overview"), []),
+        (T("Module Grid"), False, URL("timetabler", "module_grid"), []),
+        (T("Course List"), False, URL("timetabler", "courses"), []),
+        (T("Room Grid"), False, URL("timetabler", "room_grid"), []),
+        (T("Video tutorial"), False, URL("static", "video/timetabler_howto.mp4"), []),
+        (DIV(_class="dropdown-divider"), False, False, []),
+        (
+            DIV(
+                "Tables and Tools",
+                _class="dropdown-item",
+                _style="color:grey;font-variant:small-caps",
+            ),
+            False,
+            False,
+            [],
+        ),
+        (T("College Dates"), False, URL("timetabler", "college_dates_table"), []),
+        (
+            T("Recurring Events"),
+            False,
+            URL("timetabler", "recurring_events_table"),
+            [],
+        ),
+        (T("Locations"), False, URL("timetabler", "locations_table"), []),
+        (T("Courses"), False, URL("timetabler", "courses_table"), []),
+        (T("Teaching Staff"), False, URL("manage", "teaching_staff"), []),
+        (T("Modules"), False, URL("timetabler", "modules_table"), []),
+        (T("Events"), False, URL("timetabler", "events_table"), []),
+        (
+            T("Integrated timetable"), 
+            False, 
+            URL("timetabler", "integrated_timetable"), 
+            []
+        ),
+        (
+            T("Download timetable archive"),
+            False,
+            URL("timetabler", "archive_timetable"),
+            [],
+        ),
+    ]
+    
+    response.menu.append((T("Timetabler"), False, None, timetabler_dropdown))
 
 
 if auth.has_membership("admin"):
